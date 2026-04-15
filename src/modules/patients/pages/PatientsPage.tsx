@@ -17,9 +17,10 @@ import { DataTable, Column } from '@/shared/components/DataTable';
 import { Patient } from '@/shared/types';
 import { SourceBadge } from '@/shared/components/StatusBadge';
 import { useNavigate } from 'react-router-dom';
-import { formatDate } from '@/shared/lib/formatters';
+import { formatDate, formatCurrency } from '@/shared/lib/formatters';
 import { StatCard } from '@/shared/components/StatCard';
 import { Users, UserPlus, Target } from 'lucide-react';
+import { cn } from '@/shared/lib/utils';
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -70,6 +71,18 @@ function PatientsPageContent() {
     },
     { header: 'Yosh', accessor: (p) => `${p.age} yosh` },
     { header: 'Telefon', accessor: 'phone' },
+    { 
+      header: 'Balans', 
+      accessor: (p) => {
+        const balance = p.balance || 0;
+        const colorClass = balance < 0 ? 'text-destructive' : balance > 0 ? 'text-success' : 'text-muted-foreground';
+        return (
+          <span className={cn('font-medium', colorClass)}>
+            {balance > 0 ? '+' : ''}{formatCurrency(balance)}
+          </span>
+        );
+      }
+    },
     { header: 'Manba', accessor: (p) => <SourceBadge source={p.source} /> },
     { 
       header: "Ro'yxatdan o'tgan", 

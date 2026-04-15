@@ -18,6 +18,7 @@ export interface Patient {
   allergies?: string;
   bloodType?: string;
   toothChart?: Record<number, ToothRecord>;
+  balance?: number;
 }
 
 export interface ToothRecord {

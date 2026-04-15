@@ -119,10 +119,17 @@ export default function PatientProfilePage() {
                   <p className="text-lg font-bold text-success">{fmt(totalPaid)}</p>
                   <p className="text-[10px] text-muted-foreground">To'langan</p>
                 </div>
-                <div className="px-4 py-2 rounded-lg bg-destructive/10">
-                  <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
-                  <p className="text-[10px] text-muted-foreground">Qarz</p>
-                </div>
+                {totalPaid > totalDue ? (
+                  <div className="px-4 py-2 rounded-lg bg-info/10">
+                    <p className="text-lg font-bold text-info">{fmt(totalPaid - totalDue)}</p>
+                    <p className="text-[10px] text-muted-foreground">Haqdorlik</p>
+                  </div>
+                ) : (
+                  <div className="px-4 py-2 rounded-lg bg-destructive/10">
+                    <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
+                    <p className="text-[10px] text-muted-foreground">Qarz</p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="px-4 py-2 rounded-lg bg-muted/30">

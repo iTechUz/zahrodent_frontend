@@ -1,5 +1,8 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
+import { bookingsApi, patientsApi, doctorsApi } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-keys';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
@@ -14,7 +17,22 @@ const MONTHS = [
 ];
 
 export function BookingCalendar() {
-  const { bookings, patients, doctors } = useStore();
+  const authed = useStore((s) => s.isAuthenticated);
+  const { data: bookings = [] } = useQuery({
+    queryKey: queryKeys.bookings,
+    queryFn: () => bookingsApi.list(),
+    enabled: authed,
+  });
+  const { data: patients = [] } = useQuery({
+    queryKey: queryKeys.patients,
+    queryFn: () => patientsApi.list(),
+    enabled: authed,
+  });
+  const { data: doctors = [] } = useQuery({
+    queryKey: queryKeys.doctors,
+    queryFn: () => doctorsApi.list(),
+    enabled: authed,
+  });
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 

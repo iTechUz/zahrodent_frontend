@@ -33,7 +33,7 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
       source: 'walk-in',
       notes: '',
       allergies: '',
-      bloodType: '',
+      bloodType: 'none',
     },
   });
 
@@ -47,7 +47,7 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
         source: editing.source,
         notes: editing.notes || '',
         allergies: editing.allergies || '',
-        bloodType: editing.bloodType || '',
+        bloodType: editing.bloodType || 'none',
       });
     } else {
       form.reset({
@@ -58,13 +58,17 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
         source: 'walk-in',
         notes: '',
         allergies: '',
-        bloodType: '',
+        bloodType: 'none',
       });
     }
   }, [editing, form, open]);
 
   const handleSubmit = (values: PatientFormValues) => {
-    onSave(values);
+    const bloodType =
+      values.bloodType === 'none' || !values.bloodType?.trim()
+        ? undefined
+        : values.bloodType;
+    onSave({ ...values, bloodType });
   };
 
   return (

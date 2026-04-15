@@ -13,7 +13,8 @@ export default function AnalyticsPage() {
     revenueGrowth,
     conversionData,
     sourceData,
-    colors
+    colors,
+    canViewPayments,
   } = useAnalytics();
 
   return (
@@ -31,7 +32,13 @@ export default function AnalyticsPage() {
 
         <div className="bg-card rounded-xl border border-border p-5">
           <h3 className="text-sm font-semibold mb-4">Daromad o'sishi (mln so'm)</h3>
-          <RevenueChart data={revenueGrowth} />
+          {canViewPayments ? (
+            <RevenueChart data={revenueGrowth} />
+          ) : (
+            <p className="text-sm text-muted-foreground py-12 text-center">
+              Daromad ma'lumotlari faqat administrator uchun.
+            </p>
+          )}
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5">

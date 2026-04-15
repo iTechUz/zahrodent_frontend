@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/shared/lib/formatters';
+import { DOCTOR_WEEKDAY_LABELS } from '@/shared/lib/doctor-schedule';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -15,8 +16,6 @@ interface DoctorCardProps {
   onAddVisit: (doctor: Doctor) => void;
   onEditVisit: (doctor: Doctor, visit: Visit) => void;
 }
-
-const DAYS = ['Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha', 'Ya'];
 
 export const DoctorCard = ({ 
   doctor, 
@@ -69,7 +68,7 @@ export const DoctorCard = ({
 
       {doctor.schedule && (
         <div className="flex gap-1 mb-4">
-          {DAYS.map((day, i) => {
+          {DOCTOR_WEEKDAY_LABELS.map((day, i) => {
             const sch = doctor.schedule?.find((s) => s.day === i);
             const isWorking = sch?.isWorking;
             return (

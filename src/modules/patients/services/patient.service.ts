@@ -13,7 +13,7 @@ export const PatientService = {
     source: 'walk-in',
     notes: '',
     allergies: '',
-    bloodType: '',
+    bloodType: 'none',
   }),
 
   /**
@@ -27,7 +27,7 @@ export const PatientService = {
     source: p.source,
     notes: p.notes || '',
     allergies: p.allergies || '',
-    bloodType: p.bloodType || '',
+    bloodType: p.bloodType || 'none',
   }),
 
   /**

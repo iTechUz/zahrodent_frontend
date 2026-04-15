@@ -17,7 +17,6 @@ import { StatCard } from '@/shared/components/StatCard';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { useDashboard } from '../hooks/useDashboard';
-import { DashboardService } from '../services/dashboard.service';
 import { formatUzS, formatDate } from '@/shared/lib/formatters';
 
 function DashboardPageContent() {
@@ -35,11 +34,13 @@ function DashboardPageContent() {
     activeDoctors,
     quickActions,
     navigate,
+    patientGrowth,
+    revenueData,
+    sourceData,
+    newPatientsTrend,
+    revenueTrend,
+    canViewPayments,
   } = useDashboard();
-
-  const patientGrowth = DashboardService.getPatientGrowth();
-  const revenueData = DashboardService.getRevenueData();
-  const sourceData = DashboardService.getSourceData();
 
   return (
     <div className="space-y-6">
@@ -55,7 +56,9 @@ function DashboardPageContent() {
       </div>
 
       {/* Tezkor amallar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div
+        className={`grid grid-cols-2 gap-3 ${quickActions.length >= 4 ? 'sm:grid-cols-4' : quickActions.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}
+      >
         {quickActions.map((action) => (
           <button
             key={action.label}
@@ -72,10 +75,28 @@ function DashboardPageContent() {
 
       {/* Statistikalar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Jami bemorlar" value={patients.length} icon={<Users className="w-5 h-5" />} trend="O'tgan oydan 12% ko'p" trendUp />
-        <StatCard title="Bugungi qabullar" value={todayBookings.length} icon={<CalendarDays className="w-5 h-5" />} trend={`${completedToday} ta yakunlangan`} trendUp />
-        <StatCard title="Daromad" value={formatUzS(totalRevenue)} icon={<DollarSign className="w-5 h-5" />} trend="O'tgan oydan 8% ko'p" trendUp />
-        <StatCard title="Yangi bemorlar" value={newPatients} icon={<CalendarDays className="w-5 h-5" />} trend="Shu oy" trendUp />
+        <StatCard title="Jami bemorlar" value={patients.length} icon={<Users className="w-5 h-5" />} />
+        <StatCard
+          title="Bugungi qabullar"
+          value={todayBookings.length}
+          icon={<CalendarDays className="w-5 h-5" />}
+          trend={`${completedToday} ta yakunlangan`}
+          trendUp={completedToday > 0}
+        />
+        <StatCard
+          title="Daromad"
+          value={canViewPayments ? formatUzS(totalRevenue) : '—'}
+          icon={<DollarSign className="w-5 h-5" />}
+          trend={canViewPayments ? revenueTrend?.text : "Faqat admin ko'radi"}
+          trendUp={canViewPayments ? revenueTrend?.up : undefined}
+        />
+        <StatCard
+          title="Yangi bemorlar"
+          value={newPatients}
+          icon={<CalendarDays className="w-5 h-5" />}
+          trend={newPatientsTrend?.text}
+          trendUp={newPatientsTrend?.up}
+        />
       </div>
 
       {/* Real-time ko'rsatkichlar */}
@@ -94,8 +115,12 @@ function DashboardPageContent() {
             <AlertCircle className="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <p className="text-2xl font-bold">{formatUzS(totalDebt)}</p>
-            <p className="text-xs text-muted-foreground">{unpaidCount} ta to'lanmagan hisob</p>
+            <p className="text-2xl font-bold">
+              {canViewPayments ? formatUzS(totalDebt) : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {canViewPayments ? `${unpaidCount} ta to'lanmagan hisob` : "To'lovlar — faqat admin"}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
@@ -138,15 +163,21 @@ function DashboardPageContent() {
             <DollarSign className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold">Daromad dinamikasi</h3>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 90%)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000000}M`} />
-              <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(214, 20%, 90%)', fontSize: '12px' }} formatter={(v: number) => [formatUzS(v), 'Daromad']} />
-              <Bar dataKey="revenue" fill="hsl(174, 62%, 38%)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {canViewPayments ? (
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 90%)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" axisLine={false} tickLine={false} tickFormatter={(v) => `${v / 1000000}M`} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(214, 20%, 90%)', fontSize: '12px' }} formatter={(v: number) => [formatUzS(v), 'Daromad']} />
+                <Bar dataKey="revenue" fill="hsl(174, 62%, 38%)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground py-16 text-center">
+              Daromad grafigi faqat administrator uchun.
+            </p>
+          )}
         </div>
       </div>
 
@@ -171,7 +202,7 @@ function DashboardPageContent() {
             {sourceData.map((s) => (
               <div key={s.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className="w-2 h-2 rounded-full" style={{ background: s.color }} />
-                {s.name} ({s.value}%)
+                {s.name} — {s.value} ta
               </div>
             ))}
           </div>

@@ -1,3 +1,4 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -5,35 +6,51 @@ import { Badge } from '@/components/ui/badge';
 import { Send, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
+import { patientsApi, notificationsApi } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-keys';
 
 const notifStatusLabels: Record<string, string> = {
   sent: 'Yuborilgan', delivered: 'Yetkazilgan', failed: 'Xatolik',
 };
 
 export default function NotificationsPage() {
-  const { notifications, patients, bookings, addNotification } = useStore();
+  const authed = useStore((s) => s.isAuthenticated);
+  const queryClient = useQueryClient();
 
-  const sendReminders = () => {
-    const upcoming = bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending');
-    upcoming.forEach((b) => {
-      const patient = patients.find((p) => p.id === b.patientId);
-      if (patient) {
-        addNotification({
-          id: `n${Date.now()}${Math.random()}`,
-          patientId: b.patientId,
-          type: patient.source === 'telegram' ? 'telegram' : 'sms',
-          message: `Eslatma: Sizning qabulingiz ${b.date} kuni soat ${b.time} da`,
-          sentAt: new Date().toISOString(),
-          status: 'sent',
-        });
-      }
-    });
-    toast.success(`${upcoming.length} ta eslatma yuborildi`);
-  };
+  const { data: notifications = [] } = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => notificationsApi.list(),
+    enabled: authed,
+  });
+
+  const { data: patients = [] } = useQuery({
+    queryKey: queryKeys.patients,
+    queryFn: () => patientsApi.list(),
+    enabled: authed,
+  });
+
+  const sendRemindersMut = useMutation({
+    mutationFn: () => notificationsApi.sendReminders(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+      toast.success(`${data.created} ta eslatma yuborildi`);
+    },
+  });
+
+  const sendReminders = () => sendRemindersMut.mutate();
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Bildirishnomalar" description="SMS va Telegram orqali xabarnomalar" action={<Button onClick={sendReminders}><Send className="w-4 h-4 mr-2" />Eslatma yuborish</Button>} />
+      <PageHeader
+        title="Bildirishnomalar"
+        description="SMS va Telegram orqali xabarnomalar"
+        action={
+          <Button onClick={sendReminders} disabled={sendRemindersMut.isPending}>
+            <Send className="w-4 h-4 mr-2" />
+            Eslatma yuborish
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">

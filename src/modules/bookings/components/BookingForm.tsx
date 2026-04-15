@@ -3,11 +3,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { BOOKING_SOURCES, BOOKING_SOURCE_LABELS } from '@/shared/constants';
-import { Booking, Patient, Doctor, BookingSource } from '@/shared/types';
+import {
+  BOOKING_SOURCES,
+  BOOKING_SOURCE_LABELS,
+  BOOKING_STATUSES,
+  BOOKING_STATUS_LABELS,
+} from '@/shared/constants';
+import { Booking, Patient, Doctor, BookingSource, BookingStatus } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { BookingSchema } from '@/shared/lib/validation';
 import * as z from 'zod';
@@ -174,6 +180,45 @@ export const BookingForm = ({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Holat</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {BOOKING_STATUSES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {BOOKING_STATUS_LABELS[s as BookingStatus]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Izoh</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Qabul bo‘yicha izoh..." rows={3} className="resize-none" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

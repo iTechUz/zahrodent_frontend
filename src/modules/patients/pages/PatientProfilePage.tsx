@@ -54,6 +54,7 @@ export default function PatientProfilePage() {
     handleToothSave,
     handleVisitSave,
     handlePaymentSave,
+    canManagePayments,
   } = usePatientProfile(id);
 
   if (!patient) return <div className="p-6 text-center text-muted-foreground">Bemor topilmadi</div>;
@@ -102,14 +103,24 @@ export default function PatientProfilePage() {
               <p className="text-lg font-bold">{patientVisits.length}</p>
               <p className="text-[10px] text-muted-foreground">Tashriflar</p>
             </div>
-            <div className="px-4 py-2 rounded-lg bg-success/10">
-              <p className="text-lg font-bold text-success">{fmt(totalPaid)}</p>
-              <p className="text-[10px] text-muted-foreground">To'langan</p>
-            </div>
-            {totalDebt > 0 && (
-              <div className="px-4 py-2 rounded-lg bg-destructive/10">
-                <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
-                <p className="text-[10px] text-muted-foreground">Qarz</p>
+            {canManagePayments ? (
+              <>
+                <div className="px-4 py-2 rounded-lg bg-success/10">
+                  <p className="text-lg font-bold text-success">{fmt(totalPaid)}</p>
+                  <p className="text-[10px] text-muted-foreground">To'langan</p>
+                </div>
+                {totalDebt > 0 && (
+                  <div className="px-4 py-2 rounded-lg bg-destructive/10">
+                    <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
+                    <p className="text-[10px] text-muted-foreground">Qarz</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="px-4 py-2 rounded-lg bg-muted/30">
+                <p className="text-[10px] text-muted-foreground text-left max-w-[140px]">
+                  To'lovlar faqat administrator ko'radi
+                </p>
               </div>
             )}
           </div>
@@ -123,7 +134,9 @@ export default function PatientProfilePage() {
         <TabsList>
           <TabsTrigger value="visits">Tashriflar ({patientVisits.length})</TabsTrigger>
           <TabsTrigger value="bookings">Qabullar ({patientBookings.length})</TabsTrigger>
-          <TabsTrigger value="payments">To'lovlar ({patientPayments.length})</TabsTrigger>
+          {canManagePayments && (
+            <TabsTrigger value="payments">To'lovlar ({patientPayments.length})</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="visits" className="space-y-3 mt-4">
@@ -176,27 +189,29 @@ export default function PatientProfilePage() {
           })}
         </TabsContent>
 
-        <TabsContent value="payments" className="space-y-3 mt-4">
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline" onClick={() => setPaymentModal(true)} className="gap-1.5">
-              <CreditCard className="w-3.5 h-3.5" /> To'lov qayd etish
-            </Button>
-          </div>
-          {patientPayments.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">To'lovlar yo'q</p>
-          ) : patientPayments.map(p => (
-            <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
-              <div>
-                <p className="text-sm font-medium">{p.description}</p>
-                <p className="text-xs text-muted-foreground">{p.date} • {METHOD_LABELS[p.method]}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold">{fmt(p.amount)} so'm</span>
-                <PaymentStatusBadge status={p.status} />
-              </div>
+        {canManagePayments && (
+          <TabsContent value="payments" className="space-y-3 mt-4">
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={() => setPaymentModal(true)} className="gap-1.5">
+                <CreditCard className="w-3.5 h-3.5" /> To'lov qayd etish
+              </Button>
             </div>
-          ))}
-        </TabsContent>
+            {patientPayments.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">To'lovlar yo'q</p>
+            ) : patientPayments.map(p => (
+              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
+                <div>
+                  <p className="text-sm font-medium">{p.description}</p>
+                  <p className="text-xs text-muted-foreground">{p.date} • {METHOD_LABELS[p.method]}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold">{fmt(p.amount)} so'm</span>
+                  <PaymentStatusBadge status={p.status} />
+                </div>
+              </div>
+            ))}
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Modals */}
@@ -282,34 +297,36 @@ export default function PatientProfilePage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={paymentModal} onOpenChange={setPaymentModal}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>To'lov qayd etish</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>Summa (so'm)</Label><Input type="number" placeholder="150000" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>To'lov usuli</Label>
-                <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+      {canManagePayments && (
+        <Dialog open={paymentModal} onOpenChange={setPaymentModal}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>To'lov qayd etish</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div><Label>Summa (so'm)</Label><Input type="number" placeholder="150000" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>To'lov usuli</Label>
+                  <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div><Label>Holat</Label>
+                  <Select value={payForm.status} onValueChange={(v: PaymentStatus) => setPayForm({ ...payForm, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(['paid','partial','unpaid'] as PaymentStatus[]).map(s => <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div><Label>Holat</Label>
-                <Select value={payForm.status} onValueChange={(v: PaymentStatus) => setPayForm({ ...payForm, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(['paid','partial','unpaid'] as PaymentStatus[]).map(s => <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div><Label>Tavsif</Label><Input placeholder="Xizmat nomi..." value={payForm.description} onChange={e => setPayForm({ ...payForm, description: e.target.value })} /></div>
+              <Button className="w-full" onClick={handlePaymentSave}>Qayd etish</Button>
             </div>
-            <div><Label>Tavsif</Label><Input placeholder="Xizmat nomi..." value={payForm.description} onChange={e => setPayForm({ ...payForm, description: e.target.value })} /></div>
-            <Button className="w-full" onClick={handlePaymentSave}>Qayd etish</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

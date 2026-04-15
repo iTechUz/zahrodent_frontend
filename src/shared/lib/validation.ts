@@ -45,12 +45,35 @@ export const PaymentSchema = z.object({
   description: z.string().min(3, "Tavsif kamida 3 ta belgidan iborat bo'lishi kerak"),
 });
 
-export const DoctorSchema = z.object({
-  name: requiredString('Ism familiya'),
-  specialty: requiredString('Mutaxassislik'),
-  phone: phoneSchema,
-  workingHours: requiredString('Ish vaqti'),
+export const doctorScheduleSlotSchema = z.object({
+  day: z.number().int().min(0).max(6),
+  startTime: z.string(),
+  endTime: z.string(),
+  isWorking: z.boolean(),
 });
+
+export const DoctorSchema = z
+  .object({
+    name: requiredString('Ism familiya'),
+    specialty: requiredString('Mutaxassislik'),
+    phone: phoneSchema,
+    workingHours: requiredString('Ish vaqti'),
+    /** Haftalik jadval (7 kun) — kartadagi katakchalar bilan mos */
+    schedule: z.array(doctorScheduleSlotSchema).length(7),
+    /** Vergul bilan ajratilgan sanalar, masalan: 2026-01-01, 2026-02-14 */
+    daysOffText: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    data.schedule.forEach((slot, index) => {
+      if (slot.isWorking && (!slot.startTime?.trim() || !slot.endTime?.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Ish kunlari uchun boshlanish va tugash vaqtini kiriting',
+          path: ['schedule', index, 'startTime'],
+        });
+      }
+    });
+  });
 
 export const VisitSchema = z.object({
   patientId: requiredString('Bemor'),

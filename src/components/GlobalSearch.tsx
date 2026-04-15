@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
+import { patientsApi, doctorsApi, bookingsApi } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-keys';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, Users, Stethoscope, CalendarDays } from 'lucide-react';
@@ -20,7 +23,22 @@ export function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
-  const { patients, doctors, bookings } = useStore();
+  const authed = useStore((s) => s.isAuthenticated);
+  const { data: patients = [] } = useQuery({
+    queryKey: queryKeys.patients,
+    queryFn: () => patientsApi.list(),
+    enabled: authed && open,
+  });
+  const { data: doctors = [] } = useQuery({
+    queryKey: queryKeys.doctors,
+    queryFn: () => doctorsApi.list(),
+    enabled: authed && open,
+  });
+  const { data: bookings = [] } = useQuery({
+    queryKey: queryKeys.bookings,
+    queryFn: () => bookingsApi.list(),
+    enabled: authed && open,
+  });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

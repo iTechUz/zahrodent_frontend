@@ -136,10 +136,11 @@ server {
 ```text
 src/
   components/     # Qayta ishlatiladigan UI komponentlar
-  pages/          # Sahifalar (Dashboard, Analytics, va h.k.)
-  store/          # Zustand store
-  mock/           # Demo/mock data
-  layouts/        # Layout komponentlari
+  lib/api/        # Backend API client va endpointlar
+  shared/config/  # Rol konfiguratsiyasi (UI)
+  shared/lib/     # reporting va boshqa yordamchilar
+  store/          # Zustand (auth + app)
+  modules/        # Sahifalar va feature hooklar
 ```
 
 ## Productionga chiqarish checklist

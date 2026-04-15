@@ -7,9 +7,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { Doctor, Patient, Visit, VisitStatus } from '@/shared/types';
 import { VISIT_STATUSES, VISIT_STATUS_LABELS } from '@/shared/constants';
 import { DoctorSchema, VisitSchema } from '@/shared/lib/validation';
+import {
+  defaultDoctorSchedule,
+  DOCTOR_WEEKDAY_LABELS,
+  normalizeDoctorSchedule,
+} from '@/shared/lib/doctor-schedule';
 import * as z from 'zod';
 
 type DoctorFormValues = z.infer<typeof DoctorSchema>;
@@ -29,6 +35,8 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
       specialty: '',
       phone: '',
       workingHours: '',
+      schedule: defaultDoctorSchedule(),
+      daysOffText: '',
     },
   });
 
@@ -38,7 +46,9 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
         name: editing.name,
         specialty: editing.specialty,
         phone: editing.phone,
-        workingHours: editing.workingHours,
+        workingHours: editing.workingHours ?? '',
+        schedule: normalizeDoctorSchedule(editing.schedule),
+        daysOffText: editing.daysOff?.length ? editing.daysOff.join(', ') : '',
       });
     } else {
       form.reset({
@@ -46,6 +56,8 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
         specialty: '',
         phone: '',
         workingHours: '',
+        schedule: defaultDoctorSchedule(),
+        daysOffText: '',
       });
     }
   }, [editing, form, open]);
@@ -56,7 +68,7 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editing ? "Shifokorni tahrirlash" : "Yangi shifokor qo'shish"}</DialogTitle>
         </DialogHeader>
@@ -106,14 +118,93 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
               name="workingHours"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ish vaqti</FormLabel>
+                  <FormLabel>Umumiy ish vaqti (matn)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Du-Ju 9:00-17:00" {...field} />
+                    <Input placeholder="Masalan: Du-Ju 9:00-17:00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-[11px] text-muted-foreground">
+                    Kartada ko‘rinadigan qisqa yozuv. Pastdagi jadval haftalik kunlarni batafsil boshqaradi.
+                  </p>
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Haftalik jadval</p>
+              <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/20">
+                {DOCTOR_WEEKDAY_LABELS.map((label, i) => {
+                  const working = form.watch(`schedule.${i}.isWorking`);
+                  return (
+                    <div
+                      key={label}
+                      className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="w-9 shrink-0 text-xs font-semibold text-muted-foreground">{label}</span>
+                      <FormField
+                        control={form.control}
+                        name={`schedule.${i}.isWorking`}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <FormLabel className="text-xs font-normal">Ish kuni</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex flex-1 flex-wrap items-center gap-2 min-w-[200px]">
+                        <FormField
+                          control={form.control}
+                          name={`schedule.${i}.startTime`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0">
+                              <FormLabel className="sr-only">Boshlanish</FormLabel>
+                              <FormControl>
+                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <span className="text-xs text-muted-foreground">—</span>
+                        <FormField
+                          control={form.control}
+                          name={`schedule.${i}.endTime`}
+                          render={({ field }) => (
+                            <FormItem className="space-y-0">
+                              <FormLabel className="sr-only">Tugash</FormLabel>
+                              <FormControl>
+                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="daysOffText"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dam olish kunlari (ixtiyoriy)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Sanalarni vergul bilan: 2026-01-01, 2026-03-08"
+                      rows={2}
+                      className="resize-none text-sm"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <Button type="submit" className="w-full">{editing ? "Yangilash" : "Qo'shish"}</Button>
           </form>
         </Form>

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useStore } from '@/store/useStore';
-import { roleAccess } from '@/mock/users';
+import { roleAccess } from '@/shared/config/roles';
 
 export function ProtectedRoute() {
   const { isAuthenticated, currentUser } = useStore();

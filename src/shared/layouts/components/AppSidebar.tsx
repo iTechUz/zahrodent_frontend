@@ -5,9 +5,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
-import { roleAccess } from '@/mock/users';
+import { roleAccess } from '@/shared/config/roles';
 import { Badge } from '@/components/ui/badge';
-import { roleConfig } from '@/mock/users';
+import { roleConfig } from '@/shared/config/roles';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 const allNavItems = [

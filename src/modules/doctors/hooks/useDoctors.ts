@@ -1,5 +1,5 @@
-// refactor using new hooks
 import { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import { Doctor, Visit } from '@/shared/types';
 import { toast } from 'sonner';
@@ -7,45 +7,94 @@ import { useDialogState } from '@/shared/hooks/useDialogState';
 import { DoctorService } from '../services/doctor.service';
 import { DoctorSchema, VisitSchema } from '@/shared/lib/validation';
 import { z } from 'zod';
+import { doctorsApi, type DoctorCreatePayload, visitsApi, patientsApi } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-keys';
 
 type DoctorFormValues = z.infer<typeof DoctorSchema>;
 type VisitFormValues = z.infer<typeof VisitSchema>;
 
 export const useDoctors = () => {
-  const doctors = useStore((state) => state.doctors);
-  const patients = useStore((state) => state.patients);
-  const visits = useStore((state) => state.visits);
-  const addDoctor = useStore((state) => state.addDoctor);
-  const updateDoctor = useStore((state) => state.updateDoctor);
-  const deleteDoctor = useStore((state) => state.deleteDoctor);
-  const addVisit = useStore((state) => state.addVisit);
-  const updateVisit = useStore((state) => state.updateVisit);
-  
+  const authed = useStore((s) => s.isAuthenticated);
+  const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [visitModal, setVisitModal] = useState(false);
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
 
+  const { data: doctors = [], isLoading: doctorsLoading } = useQuery({
+    queryKey: queryKeys.doctors,
+    queryFn: () => doctorsApi.list(),
+    enabled: authed,
+  });
+
+  const { data: patients = [] } = useQuery({
+    queryKey: queryKeys.patients,
+    queryFn: () => patientsApi.list(),
+    enabled: authed,
+  });
+
+  const { data: visits = [], isLoading: visitsLoading } = useQuery({
+    queryKey: queryKeys.visits,
+    queryFn: () => visitsApi.list(),
+    enabled: authed,
+  });
+
+  const saveDoctorMut = useMutation({
+    mutationFn: (args: { id?: string; body: DoctorCreatePayload }) =>
+      args.id != null
+        ? doctorsApi.update(args.id, args.body)
+        : doctorsApi.create(args.body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.doctors });
+      toast.success("Shifokor saqlandi");
+    },
+  });
+
+  const deleteDoctorMut = useMutation({
+    mutationFn: doctorsApi.remove,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.doctors });
+      toast.success("Shifokor o'chirildi");
+    },
+  });
+
+  const saveVisitMut = useMutation({
+    mutationFn: (args: { id?: string; body: Omit<Visit, 'id'> | Partial<Visit> }) =>
+      args.id ? visitsApi.update(args.id, args.body as Partial<Visit>) : visitsApi.create(args.body as Omit<Visit, 'id'>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.visits });
+      toast.success('Tashrif saqlandi');
+    },
+  });
+
   const dialog = useDialogState<Doctor>(DoctorService.initialState());
 
-  const handleSaveDoctor = useCallback((data: DoctorFormValues) => {
-    if (dialog.editingItem) { 
-      updateDoctor(dialog.editingItem.id, data); 
-      toast.success("Shifokor ma'lumotlari yangilandi"); 
-    } else { 
-      addDoctor({ id: `d${Date.now()}`, ...data } as Doctor); 
-      toast.success("Yangi shifokor qo'shildi"); 
-    }
-    dialog.closeDialog();
-  }, [dialog, addDoctor, updateDoctor]);
+  const handleSaveDoctor = useCallback(
+    (data: DoctorFormValues) => {
+      const { daysOffText, schedule, ...rest } = data;
+      const daysOff = daysOffText
+        ?.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const body: DoctorCreatePayload = {
+        ...rest,
+        schedule,
+        ...(daysOff != null && daysOff.length > 0 ? { daysOff } : {}),
+      };
+      const id = dialog.editingItem?.id;
+      saveDoctorMut.mutate(
+        id ? { id, body } : { body },
+        { onSettled: () => dialog.closeDialog() },
+      );
+    },
+    [dialog, saveDoctorMut],
+  );
 
-  const handleDeleteDoctor = useCallback(() => { 
-    if (deleteId) { 
-      deleteDoctor(deleteId); 
-      toast.success("Shifokor o'chirildi"); 
-      setDeleteId(null); 
-    } 
-  }, [deleteId, deleteDoctor]);
+  const handleDeleteDoctor = useCallback(() => {
+    if (deleteId) {
+      deleteDoctorMut.mutate(deleteId, { onSettled: () => setDeleteId(null) });
+    }
+  }, [deleteId, deleteDoctorMut]);
 
   const openVisitForm = useCallback((doctor: Doctor, visit?: Visit) => {
     setSelectedDoctor(doctor);
@@ -53,25 +102,37 @@ export const useDoctors = () => {
     setVisitModal(true);
   }, []);
 
-  const handleSaveVisit = useCallback((data: VisitFormValues) => {
-    if (!selectedDoctor) { 
-      toast.error('Iltimos, shifokorni tanlang'); 
-      return; 
-    }
-    if (editingVisit) { 
-      updateVisit(editingVisit.id, data); 
-      toast.success('Tashrif yangilandi'); 
-    } else { 
-      addVisit({ 
-        id: `v${Date.now()}`, 
-        doctorId: selectedDoctor.id, 
-        date: new Date().toISOString().split('T')[0], 
-        ...data 
-      } as Visit); 
-      toast.success('Yangi tashrif yaratildi'); 
-    }
-    setVisitModal(false);
-  }, [selectedDoctor, editingVisit, addVisit, updateVisit]);
+  const handleSaveVisit = useCallback(
+    (data: VisitFormValues) => {
+      if (!selectedDoctor) {
+        toast.error('Iltimos, shifokorni tanlang');
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      if (editingVisit) {
+        saveVisitMut.mutate(
+          { id: editingVisit.id, body: data },
+          { onSettled: () => setVisitModal(false) },
+        );
+      } else {
+        saveVisitMut.mutate(
+          {
+            body: {
+              patientId: data.patientId,
+              doctorId: selectedDoctor.id,
+              date: today,
+              status: data.status,
+              diagnosis: data.diagnosis ?? '',
+              treatment: data.treatment ?? '',
+              notes: data.notes ?? '',
+            },
+          },
+          { onSettled: () => setVisitModal(false) },
+        );
+      }
+    },
+    [selectedDoctor, editingVisit, saveVisitMut],
+  );
 
   return {
     doctors,
@@ -92,5 +153,6 @@ export const useDoctors = () => {
     handleDeleteDoctor,
     openVisitForm,
     handleSaveVisit,
+    isLoading: doctorsLoading || visitsLoading,
   };
 };

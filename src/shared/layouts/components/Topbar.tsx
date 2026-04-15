@@ -10,13 +10,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { roleConfig } from '@/mock/users';
+import { roleConfig } from '@/shared/config/roles';
 import { cn } from '@/shared/lib/utils';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { useQuery } from '@tanstack/react-query';
+import { notificationsApi } from '@/lib/api/endpoints';
+import { queryKeys } from '@/lib/api/query-keys';
+import { useLogout } from '@/hooks/useLogout';
 
 export function Topbar() {
-  const { darkMode, toggleDarkMode, notifications, currentUser, logout } = useStore();
+  const { darkMode, toggleDarkMode, currentUser } = useStore();
+  const authed = useStore((s) => s.isAuthenticated);
+  const logout = useLogout();
+  const { data: notifications = [] } = useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => notificationsApi.list(),
+    enabled: authed,
+  });
   const unread = notifications.filter((n) => n.status === 'sent').length;
   const navigate = useNavigate();
   const isMobile = useIsMobile();

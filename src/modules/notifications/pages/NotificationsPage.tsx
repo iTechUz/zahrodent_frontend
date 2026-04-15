@@ -1,3 +1,4 @@
+import React from 'react';
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
@@ -76,6 +77,24 @@ function NotificationsHistoryTab({ table, patients }: { table: any, patients: an
   );
 }
 
+const PRESET_TEMPLATES = [
+  { 
+    id: 'reminder', 
+    label: 'Eslatma', 
+    text: 'Eslatma: Sizning qabulingiz [sana] kuni soat [vaqt] da kutilmoqda. Zahro Dental.' 
+  },
+  { 
+    id: 'welcome', 
+    label: 'Salomlashish', 
+    text: 'Assalomu alaykum! Bizni tanlaganingiz uchun rahmat. Qabulingiz [sana] kuni soat [vaqt] da.' 
+  },
+  { 
+    id: 'followup', 
+    label: 'Xizmatdan so\'ng', 
+    text: 'Sizni ko\'rganimizdan xursandmiz! Savollaringiz bo\'lsa bizga murojaat qiling. Zahro Dental.' 
+  },
+];
+
 function BulkSmsTab() {
   const {
     recipients,
@@ -90,6 +109,34 @@ function BulkSmsTab() {
     handleSend,
     isSending,
   } = useBulkSms();
+
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const insertTag = (tag: string) => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+
+    const newMessage = before + tag + after;
+    setMessage(newMessage);
+
+    // Reset cursor after state update
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + tag.length, start + tag.length);
+    }, 0);
+  };
+
+  const previewMessage = React.useMemo(() => {
+    return message
+      .replace(/\[sana\]/g, '2024-04-16')
+      .replace(/\[vaqt\]/g, '14:30');
+  }, [message]);
 
   const presets: { id: DatePreset; label: string }[] = [
     { id: 'tomorrow', label: 'Ertaga' },
@@ -107,17 +154,17 @@ function BulkSmsTab() {
               variant={datePreset === p.id ? 'default' : 'outline'}
               size="sm"
               onClick={() => setDatePreset(p.id)}
-              className="rounded-full"
+              className="rounded-full px-5 transition-all active:scale-95"
             >
               {p.label}
             </Button>
           ))}
         </div>
 
-        <div className="bg-card rounded-2xl border border-border overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={toggleSelectAll} className="h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={toggleSelectAll} className="h-8 w-8 hover:bg-primary/5">
                 {selectedIds.length === recipients.length && recipients.length > 0 ? (
                   <CheckSquare className="w-5 h-5 text-primary" />
                 ) : (
@@ -127,21 +174,21 @@ function BulkSmsTab() {
               <span className="text-sm font-medium">Barchasini tanlash ({recipients.length})</span>
             </div>
             {selectedIds.length > 0 && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-none">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-semibold">
                 {selectedIds.length} ta tanlandi
               </Badge>
             )}
           </div>
 
-          <div className="max-h-[500px] overflow-y-auto">
+          <div className="max-h-[550px] overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <div className="p-8 text-center text-muted-foreground">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <div className="p-12 text-center text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 opacity-50" />
                 Yuklanmoqda...
               </div>
             ) : recipients.length === 0 ? (
-              <div className="p-12 text-center text-muted-foreground">
-                <Calendar className="w-10 h-10 mx-auto mb-2 opacity-20" />
+              <div className="p-16 text-center text-muted-foreground">
+                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-10" />
                 Bu muddat uchun SMS kutayotgan mijozlar topilmadi
               </div>
             ) : (
@@ -151,27 +198,29 @@ function BulkSmsTab() {
                     <tr 
                       key={r.id} 
                       className={cn(
-                        "hover:bg-muted/10 transition-colors cursor-pointer",
+                        "hover:bg-muted/10 transition-colors cursor-pointer group",
                         selectedIds.includes(r.id) && "bg-primary/5"
                       )}
                       onClick={() => toggleSelect(r.id)}
                     >
-                      <td className="w-12 px-4 py-3">
+                      <td className="w-12 px-4 py-4">
                         {selectedIds.includes(r.id) ? (
                           <CheckSquare className="w-5 h-5 text-primary" />
                         ) : (
-                          <Square className="w-5 h-5 text-muted-foreground" />
+                          <Square className="w-5 h-5 text-muted-foreground group-hover:text-primary/50 transition-colors" />
                         )}
                       </td>
-                      <td className="px-2 py-3">
-                        <div className="font-medium">{r.firstName} {r.lastName}</div>
-                        <div className="text-[10px] text-muted-foreground">{r.phone}</div>
+                      <td className="px-2 py-4">
+                        <div className="font-semibold text-foreground">{r.firstName} {r.lastName}</div>
+                        <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <MessageSquare className="w-3 h-3" /> {r.phone}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="text-[11px] font-medium text-primary">
+                      <td className="px-4 py-4 text-right">
+                        <div className="text-[11px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full inline-block">
                           {new Date(r.bookingDate).toLocaleDateString('uz-UZ')}
                         </div>
-                        <div className="text-[10px] text-muted-foreground">{r.bookingTime}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{r.bookingTime}</div>
                       </td>
                     </tr>
                   ))}
@@ -183,45 +232,86 @@ function BulkSmsTab() {
       </div>
 
       <div className="space-y-4">
-        <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm sticky top-4">
-          <CardContent className="p-5 space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                SMS Matni
+        <Card className="rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm shadow-xl sticky top-4">
+          <CardContent className="p-5 space-y-5">
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                <span>SMS Shablonlari</span>
+                <Info className="w-3 h-3" />
               </label>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_TEMPLATES.map(t => (
+                  <Button 
+                    key={t.id}
+                    variant="outline"
+                    size="xs"
+                    onClick={() => setMessage(t.text)}
+                    className="text-[10px] h-7 bg-background/50"
+                  >
+                    {t.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <label className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  SMS Matni
+                </label>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="xs" onClick={() => insertTag('[sana]')} className="h-6 text-[10px] text-primary hover:bg-primary/10 tracking-tight">+[sana]</Button>
+                  <Button variant="ghost" size="xs" onClick={() => insertTag('[vaqt]')} className="h-6 text-[10px] text-primary hover:bg-primary/10 tracking-tight">+[vaqt]</Button>
+                </div>
+              </div>
               <Textarea 
+                ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Xabar matnini kiriting..."
-                className="min-h-[150px] bg-background/50 resize-none border-border/50 focus:border-primary/50"
+                className="min-h-[120px] bg-background/50 resize-none border-border/50 focus:border-primary/50 text-sm leading-relaxed"
               />
-              <p className="text-[10px] text-muted-foreground text-right italic">
-                {message.length} belgi
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 flex flex-col gap-2">
-              <div className="flex gap-3">
-                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-[11px] text-primary/80 leading-relaxed">
-                  Xabarda <b>[sana]</b> va <b>[vaqt]</b> teglaridan foydalaning. Ular avtomatik tarzda mijozning qabul vaqti bilan almashtiriladi.
+              <div className="flex justify-between items-center px-1">
+                <span className="text-[10px] text-muted-foreground">Taxminiy: 1 ta SMS</span>
+                <p className="text-[10px] text-muted-foreground font-medium italic">
+                  {message.length} belgi
                 </p>
               </div>
-              <p className="text-[10px] text-primary/60 border-t border-primary/10 pt-2">
-                Diqqat! SMS xabarlar Eskiz.uz orqali yuboriladi.
-              </p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2 px-1">
+                <ShieldCheck className="w-3 h-3 text-success" />
+                SMS Ko'rinishi (Preview)
+              </label>
+              <div className="relative p-4 rounded-xl bg-muted/30 border border-border/50 min-h-[100px] flex items-start gap-3 overflow-hidden">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0 animate-pulse" />
+                <p className="text-[13px] leading-relaxed text-foreground/90 italic">
+                  "{previewMessage}"
+                </p>
+                <div className="absolute top-0 right-0 p-1 opacity-20"><Send className="w-12 h-12 -rotate-12" /></div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 flex flex-col gap-2">
+              <div className="flex gap-3">
+                <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-orange-600/80 leading-relaxed font-medium">
+                  Xabarda <b>[sana]</b> va <b>[vaqt]</b> teglaridan foydalaning.
+                </p>
+              </div>
             </div>
 
             <Button 
-              className="w-full gradient-primary py-6" 
+              className="w-full gradient-primary py-7 text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all" 
               onClick={handleSend}
               disabled={isSending || selectedIds.length === 0}
             >
               {isSending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 mr-3 animate-spin" />
               ) : (
-                <Send className="w-4 h-4 mr-2" />
+                <Send className="w-5 h-5 mr-3" />
               )}
               {selectedIds.length} ta SMS yuborish
             </Button>

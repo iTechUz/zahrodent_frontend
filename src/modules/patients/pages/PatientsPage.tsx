@@ -21,6 +21,7 @@ import { formatDate, formatCurrency } from '@/shared/lib/formatters';
 import { StatCard } from '@/shared/components/StatCard';
 import { Users, UserPlus, Target } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
+import { useStore } from '@/store/useStore';
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ function PatientsPageContent() {
     isLoading,
     stats,
   } = usePatients();
+
+  const role = useStore(s => s.currentUser?.role);
+  const isDoctor = role === 'doctor';
 
   const columns: Column<Patient>[] = [
     { 
@@ -96,12 +100,12 @@ function PatientsPageContent() {
       <PageHeader 
         title="Bemorlar" 
         description="Bemorlar ro'yxati va ularning ma'lumotlarini boshqarish" 
-        action={
+        action={!isDoctor && (
           <Button onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Bemor qo'shish
           </Button>
-        } 
+        )} 
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
@@ -161,7 +165,7 @@ function PatientsPageContent() {
         data={patients} 
         columns={columns} 
         onEdit={openEdit} 
-        onDelete={setDeleteId}
+        onDelete={!isDoctor ? setDeleteId : undefined}
         onView={(p) => navigate(`/patients/${p.id}`)}
         isLoading={isLoading}
       />

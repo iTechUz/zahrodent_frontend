@@ -12,6 +12,7 @@ import { BOOKING_STATUSES, BOOKING_SOURCES, BOOKING_STATUS_LABELS, BOOKING_SOURC
 import { useBookings } from '../hooks/useBookings';
 import { BookingForm, BookingDetails } from '../components/BookingForm';
 import { DataTable, Column } from '@/shared/components/DataTable';
+import { useStore } from '@/store/useStore';
 import { Booking } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { formatDate } from '@/shared/lib/formatters';
@@ -46,6 +47,9 @@ function BookingsPageContent() {
     stats,
   } = useBookings();
 
+  const role = useStore(s => s.currentUser?.role);
+  const isDoctor = role === 'doctor';
+
   const columns: Column<Booking>[] = [
     { 
       header: 'Bemor', 
@@ -73,7 +77,9 @@ function BookingsPageContent() {
     },
     { 
       header: 'Holat', 
-      accessor: (b) => (
+      accessor: (b) => isDoctor ? (
+        <StatusBadge status={b.status} />
+      ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="focus:outline-none">
@@ -97,12 +103,12 @@ function BookingsPageContent() {
       <PageHeader 
         title="Qabullar" 
         description="Qabullar va uchrashuvlarni boshqarish" 
-        action={
+        action={!isDoctor && (
           <Button onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Yangi qabul
           </Button>
-        } 
+        )} 
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
@@ -189,8 +195,8 @@ function BookingsPageContent() {
             data={bookings} 
             columns={columns} 
             onView={setViewBooking}
-            onEdit={openEdit} 
-            onDelete={setDeleteId} 
+            onEdit={!isDoctor ? openEdit : undefined} 
+            onDelete={!isDoctor ? setDeleteId : undefined} 
             isLoading={isLoading}
           />
           

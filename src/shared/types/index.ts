@@ -74,6 +74,7 @@ export interface Visit {
   bookingId?: string;
   date: string;
   status: VisitStatus;
+  price: number;
   diagnosis: string;
   treatment: string;
   notes: string;
@@ -89,6 +90,7 @@ export interface Payment {
   description: string;
   discount?: number;
   serviceId?: string;
+  visitId?: string;
 }
 
 export interface Notification {

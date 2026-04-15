@@ -18,21 +18,26 @@ const MONTHS = [
 
 export function BookingCalendar() {
   const authed = useStore((s) => s.isAuthenticated);
-  const { data: bookings = [] } = useQuery({
+  const { data: bookingsRes } = useQuery({
     queryKey: queryKeys.bookings,
     queryFn: () => bookingsApi.list(),
     enabled: authed,
   });
-  const { data: patients = [] } = useQuery({
+  const bookings = bookingsRes?.data ?? [];
+
+  const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list(),
     enabled: authed,
   });
-  const { data: doctors = [] } = useQuery({
+  const patients = patientsRes?.data ?? [];
+
+  const { data: doctorsRes } = useQuery({
     queryKey: queryKeys.doctors,
     queryFn: () => doctorsApi.list(),
     enabled: authed,
   });
+  const doctors = doctorsRes?.data ?? [];
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 

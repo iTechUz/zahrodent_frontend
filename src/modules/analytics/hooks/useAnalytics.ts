@@ -19,23 +19,26 @@ export const useAnalytics = () => {
   const canViewPayments = canAccessPayments(role);
   const buckets6 = useMemo(() => getLastNCalendarMonths(6), []);
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookingsRes } = useQuery({
     queryKey: queryKeys.bookings,
     queryFn: () => bookingsApi.list(),
     enabled: authed,
   });
+  const bookings = bookingsRes?.data ?? [];
 
-  const { data: patients = [] } = useQuery({
+  const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list(),
     enabled: authed,
   });
+  const patients = patientsRes?.data ?? [];
 
-  const { data: payments = [] } = useQuery({
+  const { data: paymentsRes } = useQuery({
     queryKey: queryKeys.payments,
     queryFn: () => paymentsApi.list(),
     enabled: authed && canViewPayments,
   });
+  const payments = paymentsRes?.data ?? [];
 
   const monthlyPatients = useMemo(
     () => aggregateNewPatientsByMonthCounts(patients, buckets6),

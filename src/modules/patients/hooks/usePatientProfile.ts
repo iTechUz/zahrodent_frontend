@@ -25,29 +25,33 @@ export const usePatientProfile = (patientId: string | undefined) => {
     enabled: !!patientId && authed,
   });
 
-  const { data: patientVisits = [] } = useQuery({
+  const { data: visitsRes } = useQuery({
     queryKey: [...queryKeys.visits, 'byPatient', patientId],
     queryFn: () => visitsApi.list({ patientId: patientId! }),
     enabled: !!patientId && authed,
   });
+  const patientVisits = visitsRes?.data ?? [];
 
-  const { data: patientBookings = [] } = useQuery({
+  const { data: bookingsRes } = useQuery({
     queryKey: [...queryKeys.bookings, 'byPatient', patientId],
     queryFn: () => bookingsApi.list({ patientId: patientId! }),
     enabled: !!patientId && authed,
   });
+  const patientBookings = bookingsRes?.data ?? [];
 
-  const { data: patientPayments = [] } = useQuery({
+  const { data: paymentsRes } = useQuery({
     queryKey: [...queryKeys.payments, 'byPatient', patientId],
     queryFn: () => paymentsApi.list({ patientId: patientId! }),
     enabled: !!patientId && authed && canManagePayments,
   });
+  const patientPayments = paymentsRes?.data ?? [];
 
-  const { data: doctors = [] } = useQuery({
+  const { data: doctorsRes } = useQuery({
     queryKey: queryKeys.doctors,
     queryFn: () => doctorsApi.list(),
     enabled: authed && !!patientId,
   });
+  const doctors = doctorsRes?.data ?? [];
 
   const updatePatientMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof patientsApi.update>[1] }) =>
@@ -97,21 +101,26 @@ export const usePatientProfile = (patientId: string | undefined) => {
   const [visitForm, setVisitForm] = useState({
     doctorId: '',
     diagnosis: '',
-    treatment: '',
-    notes: '',
-    status: 'not-started' as VisitStatus,
+    price: '',
+    status: 'completed' as VisitStatus,
+    shouldPayNow: false,
+    payAmount: '',
+    payMethod: 'cash' as PaymentMethod,
   });
 
   const [paymentModal, setPaymentModal] = useState(false);
+
   const [payForm, setPayForm] = useState({
     amount: '',
     method: 'cash' as PaymentMethod,
-    status: 'unpaid' as PaymentStatus,
+    status: 'paid' as PaymentStatus,
     description: '',
+    visitId: '' as string,
   });
 
-  const totalPaid = patientPayments.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
-  const totalDebt = patientPayments.filter((p) => p.status !== 'paid').reduce((s, p) => s + p.amount, 0);
+  const totalPaid = patientPayments.filter((p) => p.status === 'paid').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const totalDue = patientVisits.reduce((s, v) => s + (Number(v.price) || 0), 0);
+  const totalDebt = Math.max(0, totalDue - totalPaid);
 
   const handleEditSave = () => {
     if (!patient) return;
@@ -178,8 +187,23 @@ export const usePatientProfile = (patientId: string | undefined) => {
         diagnosis: visitForm.diagnosis,
         treatment: visitForm.treatment,
         notes: visitForm.notes,
+        price: Number(visitForm.price) || 0,
       },
       {
+        onSuccess: (newVisit) => {
+          if (visitForm.shouldPayNow && visitForm.payAmount) {
+            createPaymentMut.mutate({
+              patientId: patient.id,
+              amount: Number(visitForm.payAmount),
+              method: visitForm.payMethod,
+              status: 'paid',
+              date: today,
+              description: `${today} - Tashrif uchun to'lov`,
+              visitId: newVisit.id,
+            });
+          }
+          toast.success("Tashrif muvaffaqiyatli saqlandi");
+        },
         onSettled: () => {
           setVisitModal(false);
           setVisitForm({
@@ -187,7 +211,11 @@ export const usePatientProfile = (patientId: string | undefined) => {
             diagnosis: '',
             treatment: '',
             notes: '',
-            status: 'not-started',
+            price: '',
+            status: 'completed',
+            shouldPayNow: false,
+            payAmount: '',
+            payMethod: 'cash',
           });
         },
       },
@@ -209,11 +237,12 @@ export const usePatientProfile = (patientId: string | undefined) => {
         status: payForm.status,
         date: today,
         description: payForm.description,
+        visitId: payForm.visitId || undefined,
       },
       {
         onSettled: () => {
           setPaymentModal(false);
-          setPayForm({ amount: '', method: 'cash', status: 'unpaid', description: '' });
+          setPayForm({ amount: '', method: 'cash', status: 'paid', description: '', visitId: '' });
         },
       },
     );
@@ -234,6 +263,27 @@ export const usePatientProfile = (patientId: string | undefined) => {
     setEditOpen(true);
   };
 
+  const getVisitBalance = useCallback((visitId: string, visitPrice: number) => {
+    const price = Number(visitPrice) || 0;
+    const linkedPaid = patientPayments
+      .filter(p => p.visitId === visitId && p.status === 'paid')
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    return Math.max(0, price - linkedPaid);
+  }, [patientPayments]);
+
+  const openPaymentForVisit = (visit: Visit) => {
+    const balance = getVisitBalance(visit.id, visit.price);
+    const doctor = doctors.find(d => d.id === visit.doctorId);
+    setPayForm({
+      amount: String(balance),
+      method: 'cash',
+      status: 'paid',
+      description: `${visit.date} - ${doctor?.name || 'Tashrif'} uchun to'lov`,
+      visitId: visit.id
+    });
+    setPaymentModal(true);
+  };
+
   return {
     patient,
     patientVisits,
@@ -241,6 +291,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     patientPayments,
     canManagePayments,
     totalPaid,
+    totalDue,
     totalDebt,
     doctors,
     editOpen,
@@ -266,6 +317,8 @@ export const usePatientProfile = (patientId: string | undefined) => {
     handleToothSave,
     handleVisitSave,
     handlePaymentSave,
+    getVisitBalance,
+    openPaymentForVisit,
     isLoading: patientLoading,
   };
 };

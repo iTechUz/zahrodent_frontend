@@ -38,35 +38,40 @@ export const useDashboard = () => {
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = startOfCurrentMonth();
 
-  const { data: patients = [] } = useQuery({
+  const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list(),
+    queryFn: () => patientsApi.list({ limit: 1000 }),
     enabled: authed,
   });
+  const patients = patientsRes?.data ?? [];
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookingsRes } = useQuery({
     queryKey: queryKeys.bookings,
-    queryFn: () => bookingsApi.list(),
+    queryFn: () => bookingsApi.list({ limit: 1000 }),
     enabled: authed,
   });
+  const bookings = bookingsRes?.data ?? [];
 
-  const { data: payments = [] } = useQuery({
+  const { data: paymentsRes } = useQuery({
     queryKey: queryKeys.payments,
-    queryFn: () => paymentsApi.list(),
+    queryFn: () => paymentsApi.list({ limit: 1000 }),
     enabled: authed && canViewPayments,
   });
+  const payments = paymentsRes?.data ?? [];
 
-  const { data: doctors = [] } = useQuery({
+  const { data: doctorsRes } = useQuery({
     queryKey: queryKeys.doctors,
-    queryFn: () => doctorsApi.list(),
+    queryFn: () => doctorsApi.list({ limit: 100 }),
     enabled: authed,
   });
+  const doctors = doctorsRes?.data ?? [];
 
-  const { data: visits = [] } = useQuery({
+  const { data: visitsRes } = useQuery({
     queryKey: queryKeys.visits,
-    queryFn: () => visitsApi.list(),
+    queryFn: () => visitsApi.list({ limit: 1000 }),
     enabled: authed,
   });
+  const visits = visitsRes?.data ?? [];
 
   const todayBookings = bookings.filter((b) => b.date === today);
   const totalRevenue = payments.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);

@@ -104,6 +104,7 @@ export const paymentsApi = {
   list: (params?: ListParams & { status?: string; patientId?: string; method?: string; dateRange?: string }) =>
     apiRequest<PaginatedResponse<Payment>>(`/payments${qs(params ?? {})}`),
   stats: () => apiRequest<{ totalRevenue: number; pendingAmount: number; todayRevenue: number }>('/payments/stats'),
+  doctorStats: () => apiRequest<{ doctorId: string; total: number }[]>('/payments/doctor-stats'),
   get: (id: string) => apiRequest<Payment>(`/payments/${id}`),
   create: (body: Omit<Payment, 'id'> & { date?: string }) =>
     apiRequest<Payment>('/payments', { method: 'POST', body: JSON.stringify(body) }),

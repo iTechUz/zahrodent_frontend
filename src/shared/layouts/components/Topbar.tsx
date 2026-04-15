@@ -23,12 +23,12 @@ export function Topbar() {
   const { darkMode, toggleDarkMode, currentUser } = useStore();
   const authed = useStore((s) => s.isAuthenticated);
   const logout = useLogout();
-  const { data: notifications = [] } = useQuery({
+  const { data: notificationsRes } = useQuery({
     queryKey: queryKeys.notifications,
     queryFn: () => notificationsApi.list(),
     enabled: authed,
   });
-  const unread = notifications.filter((n) => n.status === 'sent').length;
+  const unread = (notificationsRes?.data ?? []).filter((n) => n.status === 'sent').length;
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 

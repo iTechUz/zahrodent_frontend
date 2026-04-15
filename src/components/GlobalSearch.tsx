@@ -24,21 +24,26 @@ export function GlobalSearch() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const authed = useStore((s) => s.isAuthenticated);
-  const { data: patients = [] } = useQuery({
+  const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list(),
     enabled: authed && open,
   });
-  const { data: doctors = [] } = useQuery({
+  const patients = patientsRes?.data ?? [];
+
+  const { data: doctorsRes } = useQuery({
     queryKey: queryKeys.doctors,
     queryFn: () => doctorsApi.list(),
     enabled: authed && open,
   });
-  const { data: bookings = [] } = useQuery({
+  const doctors = doctorsRes?.data ?? [];
+
+  const { data: bookingsRes } = useQuery({
     queryKey: queryKeys.bookings,
     queryFn: () => bookingsApi.list(),
     enabled: authed && open,
   });
+  const bookings = bookingsRes?.data ?? [];
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

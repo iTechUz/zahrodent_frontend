@@ -1,16 +1,19 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { Plus, Search, DollarSign, TrendingUp, AlertTriangle, Filter, CalendarDays, CreditCard } from 'lucide-react';
+import {
+  Plus, Search, DollarSign, TrendingUp, AlertTriangle,
+  Filter, CalendarDays, CreditCard, Stethoscope, BarChart3,
+} from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { PAYMENT_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/shared/constants';
 import { useFinance } from '../hooks/useFinance';
@@ -28,6 +31,8 @@ export function FinancePageContent() {
     page,
     setPage,
     patients,
+    doctors,
+    doctorRevenue,
     totalRevenue,
     thisMonth,
     totalDebt,
@@ -49,84 +54,138 @@ export function FinancePageContent() {
   } = useFinance();
 
   const columns: Column<Payment>[] = [
-    { 
-      header: 'Bemor', 
+    {
+      header: 'Bemor',
       accessor: (p) => {
         const pt = patients.find(pt => pt.id === p.patientId);
-        return `${pt?.firstName} ${pt?.lastName}`;
+        return `${pt?.firstName ?? ''} ${pt?.lastName ?? ''}`.trim() || '—';
       }
     },
     { header: 'Tavsif', accessor: 'description' },
-    { 
-      header: 'Summa', 
-      accessor: (p) => <span className="font-medium">{formatUzS(p.amount)}</span> 
+    {
+      header: 'Summa',
+      accessor: (p) => <span className="font-semibold">{formatUzS(p.amount)}</span>
     },
-    { 
-      header: 'Usul', 
-      accessor: (p) => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS] 
+    {
+      header: 'Usul',
+      accessor: (p) => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
     },
-    { 
-      header: 'Holat', 
-      accessor: (p) => <PaymentStatusBadge status={p.status} /> 
+    {
+      header: 'Holat',
+      accessor: (p) => <PaymentStatusBadge status={p.status} />
     },
-    { 
-      header: 'Sana', 
-      accessor: (p) => <span className="text-xs text-muted-foreground">{formatDate(p.date)}</span> 
+    {
+      header: 'Sana',
+      accessor: (p) => <span className="text-xs text-muted-foreground">{formatDate(p.date)}</span>
     },
   ];
 
+  const maxDoctorTotal = doctorRevenue[0]?.total ?? 1;
+
   return (
-    <div className="space-y-4">
-      <PageHeader 
-        title="Moliya" 
-        description="Daromad va to'lovlarni boshqarish" 
+    <div className="space-y-6">
+      <PageHeader
+        title="Moliya"
+        description="Daromad va to'lovlarni boshqarish"
         action={
           <Button onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
             To'lov qayd etish
           </Button>
-        } 
+        }
       />
 
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard 
-          title="Umumiy daromad" 
-          value={formatUzS(totalRevenue)} 
-          icon={<DollarSign className="w-5 h-5" />} 
-          trend="Barcha vaqt uchun" 
-          trendUp 
+        <StatCard
+          title="Umumiy daromad"
+          value={formatUzS(totalRevenue)}
+          icon={<DollarSign className="w-5 h-5" />}
+          trend="Barcha vaqt uchun"
+          trendUp
         />
-        <StatCard 
-          title="Shu oy" 
-          value={formatUzS(thisMonth)} 
-          icon={<TrendingUp className="w-5 h-5" />} 
-          trend="Joriy oy" 
-          trendUp 
+        <StatCard
+          title="Bugungi daromad"
+          value={formatUzS(thisMonth)}
+          icon={<TrendingUp className="w-5 h-5" />}
+          trend="Bugun to'langan"
+          trendUp
         />
-        <StatCard 
-          title="Qarzdorlik" 
-          value={formatUzS(totalDebt)} 
-          icon={<AlertTriangle className="w-5 h-5" />} 
-          trend={`${unpaidCount} ta to'lanmagan`} 
-          trendUp={false} 
+        <StatCard
+          title="Qarzdorlik"
+          value={formatUzS(totalDebt)}
+          icon={<AlertTriangle className="w-5 h-5" />}
+          trend={`${unpaidCount} ta to'lanmagan`}
+          trendUp={false}
         />
       </div>
 
+      {/* Doctor Revenue Breakdown */}
+      {doctorRevenue.length > 0 && (
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Stethoscope className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold">Shifokorlar bo'yicha daromad</h2>
+              <p className="text-[10px] text-muted-foreground">Faqat tashrifga bog'liq to'lovlar hisobi</p>
+            </div>
+            <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+              <BarChart3 className="w-3.5 h-3.5" />
+              Jami: {formatUzS(totalRevenue)}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {doctorRevenue.map((dr) => (
+              <div key={dr.doctorId} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {dr.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium leading-tight">{dr.name}</p>
+                      {dr.specialty && (
+                        <p className="text-[10px] text-muted-foreground">{dr.specialty}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold">{formatUzS(dr.total)}</p>
+                    <p className="text-[10px] text-muted-foreground">{dr.percent}% umumiy</p>
+                  </div>
+                </div>
+                {/* Progress bar */}
+                <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
+                    style={{ width: `${(dr.total / maxDoctorTotal) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            placeholder="Qidirish..." 
-            className="pl-9" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
+          <Input
+            placeholder="Bemor yoki tavsif bo'yicha qidirish..."
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select 
-          value={filters.dateRange || 'all'} 
+        <Select
+          value={filters.dateRange || 'all'}
           onValueChange={(val) => setFilters('dateRange', val)}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[150px]">
             <CalendarDays className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Vaqt" />
           </SelectTrigger>
@@ -137,11 +196,11 @@ export function FinancePageContent() {
             <SelectItem value="month">Shu oy</SelectItem>
           </SelectContent>
         </Select>
-        <Select 
-          value={filters.status || 'all'} 
+        <Select
+          value={filters.status || 'all'}
           onValueChange={(val) => setFilters('status', val)}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[150px]">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Holat" />
           </SelectTrigger>
@@ -152,11 +211,11 @@ export function FinancePageContent() {
             ))}
           </SelectContent>
         </Select>
-        <Select 
-          value={filters.method || 'all'} 
+        <Select
+          value={filters.method || 'all'}
           onValueChange={(val) => setFilters('method', val)}
         >
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-[150px]">
             <CreditCard className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Usul" />
           </SelectTrigger>
@@ -165,14 +224,16 @@ export function FinancePageContent() {
             <SelectItem value="cash">Naqd</SelectItem>
             <SelectItem value="card">Terminal</SelectItem>
             <SelectItem value="transfer">O'tkazma</SelectItem>
+            <SelectItem value="insurance">Sug'urta</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <DataTable 
-        data={payments} 
-        columns={columns} 
-        onEdit={openEdit} 
+      {/* Payments Table */}
+      <DataTable
+        data={payments}
+        columns={columns}
+        onEdit={openEdit}
         onDelete={setDeleteId}
         isLoading={isLoading}
       />
@@ -181,9 +242,9 @@ export function FinancePageContent() {
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
           <p className="text-xs text-muted-foreground">Jami: {totalCount} ta to'lov</p>
           <div className="flex gap-1">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
             >
@@ -192,9 +253,9 @@ export function FinancePageContent() {
             <div className="flex items-center px-4 text-sm font-medium">
               {page + 1} / {totalPages}
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
               disabled={page === totalPages - 1}
             >
@@ -204,18 +265,18 @@ export function FinancePageContent() {
         </div>
       )}
 
-      <TransactionForm 
-        open={modalOpen} 
-        onOpenChange={setModalOpen} 
-        editing={editing} 
-        patients={patients} 
-        onSave={handleSave} 
+      <TransactionForm
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        editing={editing}
+        patients={patients}
+        onSave={handleSave}
       />
 
-      <ConfirmDeleteDialog 
-        open={!!deleteId} 
-        onOpenChange={() => setDeleteId(null)} 
-        onConfirm={handleDelete} 
+      <ConfirmDeleteDialog
+        open={!!deleteId}
+        onOpenChange={() => setDeleteId(null)}
+        onConfirm={handleDelete}
       />
     </div>
   );
@@ -228,4 +289,3 @@ const FinancePage = () => (
 );
 
 export default FinancePage;
-

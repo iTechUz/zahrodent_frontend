@@ -8,7 +8,7 @@ import { useServerTable } from '@/shared/hooks/useServerTable';
 import { FinanceService } from '../services/finance.service';
 import { PaymentSchema } from '@/shared/lib/validation';
 import { z } from 'zod';
-import { paymentsApi, patientsApi } from '@/lib/api/endpoints';
+import { paymentsApi, patientsApi, doctorsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 
 type PaymentFormValues = z.infer<typeof PaymentSchema>;
@@ -32,9 +32,22 @@ export const useFinance = () => {
   });
   const patients = patientsData?.data ?? [];
 
+  const { data: doctorsData } = useQuery({
+    queryKey: queryKeys.doctors,
+    queryFn: () => doctorsApi.list({ limit: 1000 }),
+    enabled: authed,
+  });
+  const doctors = doctorsData?.data ?? [];
+
   const { data: stats } = useQuery({
     queryKey: ['payments', 'stats'],
     queryFn: () => paymentsApi.stats(),
+    enabled: authed,
+  });
+
+  const { data: doctorStatsData } = useQuery({
+    queryKey: ['payments', 'doctor-stats'],
+    queryFn: () => paymentsApi.doctorStats(),
     enabled: authed,
   });
 
@@ -42,6 +55,8 @@ export const useFinance = () => {
     mutationFn: paymentsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'doctor-stats'] });
       toast.success("To'lov qayd etildi");
     },
   });
@@ -51,6 +66,8 @@ export const useFinance = () => {
       paymentsApi.update(id, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'doctor-stats'] });
       toast.success("To'lov yangilandi");
     },
   });
@@ -59,6 +76,8 @@ export const useFinance = () => {
     mutationFn: paymentsApi.remove,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['payments', 'doctor-stats'] });
       toast.success("To'lov o'chirildi");
     },
   });
@@ -85,6 +104,21 @@ export const useFinance = () => {
     }
   }, [deleteId, deleteMut]);
 
+  // Map doctorStats to include doctor name and specialty
+  const totalRevenue = stats?.totalRevenue ?? 0;
+  const doctorRevenue = (doctorStatsData ?? [])
+    .map((ds) => {
+      const doctor = doctors.find((d) => d.id === ds.doctorId);
+      return {
+        doctorId: ds.doctorId,
+        total: ds.total,
+        name: doctor?.name ?? "Noma'lum",
+        specialty: doctor?.specialty ?? '',
+        percent: totalRevenue > 0 ? Math.round((ds.total / totalRevenue) * 100) : 0,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
   return {
     payments: table.data,
     totalCount: table.totalCount,
@@ -92,7 +126,9 @@ export const useFinance = () => {
     page: table.page,
     setPage: table.setPage,
     patients,
-    totalRevenue: stats?.totalRevenue ?? 0,
+    doctors,
+    doctorRevenue,
+    totalRevenue,
     thisMonth: stats?.todayRevenue ?? 0,
     totalDebt: stats?.pendingAmount ?? 0,
     unpaidCount: 0,
@@ -112,4 +148,3 @@ export const useFinance = () => {
     isLoading: table.isLoading || patientsLoading,
   };
 };
-

@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { StatusBadge, SourceBadge, PaymentStatusBadge } from '@/shared/components/StatusBadge';
 import { ArrowLeft, Phone, Calendar, Droplets, AlertTriangle, FileText, Pencil, Plus, CreditCard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Wallet, Receipt, ArrowRight } from 'lucide-react';
 import { ToothRecord, VisitStatus, PaymentMethod, PaymentStatus, BookingSource } from '@/shared/types';
 import { BOOKING_SOURCE_LABELS, PAYMENT_STATUS_LABELS, VISIT_STATUS_LABELS } from '@/shared/constants';
 import { ToothChart, CONDITION_KEYS, CONDITION_LABELS } from '../components/ToothChart';
@@ -29,6 +32,7 @@ export default function PatientProfilePage() {
     patientBookings,
     patientPayments,
     totalPaid,
+    totalDue,
     totalDebt,
     doctors,
     editOpen,
@@ -54,6 +58,8 @@ export default function PatientProfilePage() {
     handleToothSave,
     handleVisitSave,
     handlePaymentSave,
+    getVisitBalance,
+    openPaymentForVisit,
     canManagePayments,
   } = usePatientProfile(id);
 
@@ -105,16 +111,18 @@ export default function PatientProfilePage() {
             </div>
             {canManagePayments ? (
               <>
+                <div className="px-4 py-2 rounded-lg bg-primary/10">
+                  <p className="text-lg font-bold text-primary">{fmt(totalDue)}</p>
+                  <p className="text-[10px] text-muted-foreground">Jami summa</p>
+                </div>
                 <div className="px-4 py-2 rounded-lg bg-success/10">
                   <p className="text-lg font-bold text-success">{fmt(totalPaid)}</p>
                   <p className="text-[10px] text-muted-foreground">To'langan</p>
                 </div>
-                {totalDebt > 0 && (
-                  <div className="px-4 py-2 rounded-lg bg-destructive/10">
-                    <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
-                    <p className="text-[10px] text-muted-foreground">Qarz</p>
-                  </div>
-                )}
+                <div className="px-4 py-2 rounded-lg bg-destructive/10">
+                  <p className="text-lg font-bold text-destructive">{fmt(totalDebt)}</p>
+                  <p className="text-[10px] text-muted-foreground">Qarz</p>
+                </div>
               </>
             ) : (
               <div className="px-4 py-2 rounded-lg bg-muted/30">
@@ -150,20 +158,85 @@ export default function PatientProfilePage() {
           ) : patientVisits.map(v => {
             const doctor = doctors.find(d => d.id === v.doctorId);
             return (
-              <div key={v.id} className="bg-card rounded-xl border border-border p-4">
-                <div className="flex items-center justify-between mb-2">
+              <div key={v.id} className="relative bg-card rounded-xl border border-border p-5 hover:shadow-sm transition-all group overflow-hidden">
+                {/* Billing Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 last:mb-0">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium">{v.date}</span>
-                    <span className="text-xs text-muted-foreground">• {doctor?.name}</span>
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      <Receipt className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold">{v.date}</span>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor?.name}</p>
+                    </div>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${v.status === 'completed' ? 'bg-success/15 text-success' : v.status === 'in-progress' ? 'bg-warning/15 text-warning' : 'bg-muted text-muted-foreground'}`}>
-                    {VISIT_STATUS_LABELS[v.status]}
-                  </span>
+                  
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="px-3 py-1.5 rounded-lg bg-muted/40 border border-border/50 text-center min-w-[80px]">
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Jami</p>
+                      <p className="text-sm font-bold">{fmt(v.price)}</p>
+                    </div>
+                    <div className="px-3 py-1.5 rounded-lg bg-success/5 border border-success/10 text-center min-w-[80px]">
+                      <p className="text-[9px] text-success/70 uppercase font-bold">To'langan</p>
+                      <p className="text-sm font-bold text-success">{fmt((Number(v.price) || 0) - getVisitBalance(v.id, Number(v.price) || 0))}</p>
+                    </div>
+                    {getVisitBalance(v.id, v.price) > 0 && (
+                      <div className="px-3 py-1.5 rounded-lg bg-destructive/5 border border-destructive/10 text-center min-w-[80px]">
+                        <p className="text-[9px] text-destructive/70 uppercase font-bold">Qarz</p>
+                        <p className="text-sm font-bold text-destructive">{fmt(getVisitBalance(v.id, v.price))}</p>
+                      </div>
+                    )}
+                    {getVisitBalance(v.id, v.price) === 0 && (
+                      <div className="p-1.5 rounded-full bg-success/10 text-success">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {v.diagnosis && <p className="text-sm"><span className="text-muted-foreground">Tashxis:</span> {v.diagnosis}</p>}
-                {v.treatment && <p className="text-sm"><span className="text-muted-foreground">Davolash:</span> {v.treatment}</p>}
-                {v.notes && <p className="text-xs text-muted-foreground mt-1">{v.notes}</p>}
+
+                {/* Patient Info Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-2">
+                  <div className="space-y-2">
+                    {v.diagnosis && (
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground text-xs shrink-0 mt-0.5">Tashxis:</span>
+                        <p className="font-medium text-xs leading-relaxed">{v.diagnosis}</p>
+                      </div>
+                    )}
+                    {v.treatment && (
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground text-xs shrink-0 mt-0.5">Davolash:</span>
+                        <p className="font-medium text-xs leading-relaxed">{v.treatment}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-end justify-end gap-2">
+                    {canManagePayments && getVisitBalance(v.id, v.price) > 0 && (
+                      <Button 
+                        size="sm" 
+                        variant="default" 
+                        onClick={() => openPaymentForVisit(v)} 
+                        className="h-8 text-[11px] gap-1.5 rounded-lg"
+                      >
+                        <Wallet className="w-3.5 h-3.5" /> To'lov qilish
+                      </Button>
+                    )}
+                    <span className={`text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-tighter ${
+                      v.status === 'completed' ? 'bg-success/15 text-success' : 
+                      v.status === 'in-progress' ? 'bg-warning/15 text-warning' : 
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {VISIT_STATUS_LABELS[v.status]}
+                    </span>
+                  </div>
+                </div>
+                
+                {v.notes && (
+                  <div className="mt-3 p-2 rounded-lg bg-orange-50/50 border border-orange-100/50 text-[10px] text-orange-800">
+                    <span className="font-bold opacity-70 uppercase tracking-widest mr-2">Izoh:</span> {v.notes}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -281,18 +354,60 @@ export default function PatientProfilePage() {
                 <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Holat</Label>
-              <Select value={visitForm.status} onValueChange={(v: VisitStatus) => setVisitForm({ ...visitForm, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(['not-started','in-progress','completed'] as VisitStatus[]).map(s => <SelectItem key={s} value={s}>{VISIT_STATUS_LABELS[s]}</SelectItem>)}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Narxi (so'm)</Label><Input type="number" placeholder="Narxni kiriting" value={visitForm.price} onChange={e => setVisitForm({ ...visitForm, price: e.target.value })} /></div>
+              <div><Label>Holat</Label>
+                <Select value={visitForm.status} onValueChange={(v: VisitStatus) => setVisitForm({ ...visitForm, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(['not-started','in-progress','completed'] as VisitStatus[]).map(s => <SelectItem key={s} value={s}>{VISIT_STATUS_LABELS[s]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div><Label>Tashxis</Label><Textarea placeholder="Tashxis..." value={visitForm.diagnosis} onChange={e => setVisitForm({ ...visitForm, diagnosis: e.target.value })} /></div>
             <div><Label>Davolash</Label><Textarea placeholder="Bajarilgan davolash..." value={visitForm.treatment} onChange={e => setVisitForm({ ...visitForm, treatment: e.target.value })} /></div>
             <div><Label>Izoh</Label><Textarea placeholder="Qo'shimcha izoh..." value={visitForm.notes} onChange={e => setVisitForm({ ...visitForm, notes: e.target.value })} /></div>
-            <Button className="w-full" onClick={handleVisitSave}>Yaratish</Button>
+            
+            <div className="p-4 rounded-xl bg-muted/40 border border-border/50 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-primary" />
+                  <Label className="text-sm font-semibold">To'lovni hozir qayd etish</Label>
+                </div>
+                <Switch 
+                  checked={visitForm.shouldPayNow} 
+                  onCheckedChange={v => setVisitForm({ ...visitForm, shouldPayNow: v, payAmount: v ? visitForm.price : '' })} 
+                />
+              </div>
+
+              {visitForm.shouldPayNow && (
+                <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground">To'langan summa</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="Masalan: 500 000" 
+                      value={visitForm.payAmount} 
+                      onChange={e => setVisitForm({ ...visitForm, payAmount: e.target.value })} 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase font-bold text-muted-foreground">Usuli</Label>
+                    <Select value={visitForm.payMethod} onValueChange={(v: PaymentMethod) => setVisitForm({ ...visitForm, payMethod: v })}>
+                      <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button className="w-full h-12 gap-2 text-primary-foreground font-bold" onClick={handleVisitSave}>
+              Tashrifni saqlash <ArrowRight className="w-4 h-4" />
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -302,9 +417,42 @@ export default function PatientProfilePage() {
           <DialogContent>
             <DialogHeader><DialogTitle>To'lov qayd etish</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Summa (so'm)</Label><Input type="number" placeholder="150000" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>To'lov usuli</Label>
+              {payForm.visitId && (
+                <div className="bg-muted/50 rounded-lg p-3 border border-border/50 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Tashrif:</span>
+                    <span className="font-medium">{patientVisits.find(v => v.id === payForm.visitId)?.date}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Xizmat narxi:</span>
+                    <span className="font-medium">{fmt(patientVisits.find(v => v.id === payForm.visitId)?.price || 0)} so'm</span>
+                  </div>
+                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                    <span className="font-semibold">Qolgan qarz:</span>
+                    <span className="font-bold text-destructive">
+                      {fmt(getVisitBalance(payForm.visitId, patientVisits.find(v => v.id === payForm.visitId)?.price || 0))} so'm
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1 block">To'lov summasi (so'm)</Label>
+                <div className="relative">
+                  <Input 
+                    type="number" 
+                    placeholder="Masalan: 500 000" 
+                    className="pl-9 h-11 text-lg font-semibold"
+                    value={payForm.amount} 
+                    onChange={e => setPayForm({ ...payForm, amount: e.target.value })} 
+                  />
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">To'lov usuli</Label>
                   <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -312,7 +460,8 @@ export default function PatientProfilePage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Holat</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Holat</Label>
                   <Select value={payForm.status} onValueChange={(v: PaymentStatus) => setPayForm({ ...payForm, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -321,8 +470,44 @@ export default function PatientProfilePage() {
                   </Select>
                 </div>
               </div>
-              <div><Label>Tavsif</Label><Input placeholder="Xizmat nomi..." value={payForm.description} onChange={e => setPayForm({ ...payForm, description: e.target.value })} /></div>
-              <Button className="w-full" onClick={handlePaymentSave}>Qayd etish</Button>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Bog'langan tashrif (ixtiyoriy)</Label>
+                <Select value={payForm.visitId || 'none'} onValueChange={v => {
+                  const val = v === 'none' ? '' : v;
+                  const visit = patientVisits.find(vis => vis.id === val);
+                  if (visit) {
+                    const balance = getVisitBalance(visit.id, visit.price);
+                    setPayForm({ 
+                      ...payForm, 
+                      visitId: val, 
+                      amount: String(balance), 
+                      description: `${visit.date} - Tashrif uchun to'lov` 
+                    });
+                  } else {
+                    setPayForm({ ...payForm, visitId: val });
+                  }
+                }}>
+                  <SelectTrigger><SelectValue placeholder="Tashrifni tanlang" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Hech qaysi (Umumiy to'lov)</SelectItem>
+                    {patientVisits.map(v => (
+                        <SelectItem key={v.id} value={v.id}>{v.date} — {v.treatment?.slice(0, 30) || 'Tashrif'} ({fmt(getVisitBalance(v.id, v.price))} so'm qolgan)</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Tavsif / Izoh</Label>
+                <Input placeholder="Xizmat nomi yoki qo'shimcha izoh..." value={payForm.description} onChange={e => setPayForm({ ...payForm, description: e.target.value })} />
+              </div>
+
+              <div className="pt-2">
+                <Button className="w-full h-11" onClick={handlePaymentSave}>
+                  To'lovni saqlash
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

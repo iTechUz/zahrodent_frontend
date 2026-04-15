@@ -15,7 +15,7 @@ export const useBulkSms = () => {
     end: endOfDay(addDays(new Date(), 1)),
   });
 
-  const [message, setMessage] = useState('Eslatma: Sizning qabulingiz yaqinda kutilmoqda. Zahro Dental.');
+  const [message, setMessage] = useState('Eslatman: Qabulingiz [sana] kuni soat [vaqt] da kutilmoqda. Zahro Dental.');
 
   const dateRange = useMemo(() => {
     const now = new Date();

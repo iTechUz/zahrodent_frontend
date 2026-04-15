@@ -201,10 +201,15 @@ function BulkSmsTab() {
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 flex gap-3">
-              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <p className="text-[11px] text-primary/80 leading-relaxed">
-                Diqqat! SMS xabarlar Eskiz.uz balansi orqali yuboriladi. Xabarlarni yuborishdan oldin matnni qayta tekshiring.
+            <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 flex flex-col gap-2">
+              <div className="flex gap-3">
+                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-[11px] text-primary/80 leading-relaxed">
+                  Xabarda <b>[sana]</b> va <b>[vaqt]</b> teglaridan foydalaning. Ular avtomatik tarzda mijozning qabul vaqti bilan almashtiriladi.
+                </p>
+              </div>
+              <p className="text-[10px] text-primary/60 border-t border-primary/10 pt-2">
+                Diqqat! SMS xabarlar Eskiz.uz orqali yuboriladi.
               </p>
             </div>
 

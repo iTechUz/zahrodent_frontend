@@ -24,6 +24,12 @@ export const usePatients = () => {
     perPage: 10,
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ['patients', 'stats'],
+    queryFn: () => patientsApi.stats(),
+    enabled: authed,
+  });
+
   const createMut = useMutation({
     mutationFn: patientsApi.create,
     onSuccess: () => {
@@ -94,5 +100,6 @@ export const usePatients = () => {
     handleDelete,
     isLoading: table.isLoading,
     isSaving: createMut.isPending || updateMut.isPending,
+    stats,
   };
 };

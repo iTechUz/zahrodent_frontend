@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, List, CalendarDays } from 'lucide-react';
+import { Plus, Search, List, CalendarDays, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { BOOKING_STATUSES, BOOKING_SOURCES, BOOKING_STATUS_LABELS, BOOKING_SOURCE_LABELS } from '@/shared/constants';
 import { useBookings } from '../hooks/useBookings';
@@ -15,6 +15,7 @@ import { DataTable, Column } from '@/shared/components/DataTable';
 import { Booking } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { formatDate } from '@/shared/lib/formatters';
+import { StatCard } from '@/shared/components/StatCard';
 
 function BookingsPageContent() {
   const {
@@ -42,6 +43,7 @@ function BookingsPageContent() {
     handleDelete,
     handleStatusChange,
     isLoading,
+    stats,
   } = useBookings();
 
   const columns: Column<Booking>[] = [
@@ -102,6 +104,28 @@ function BookingsPageContent() {
           </Button>
         } 
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <StatCard 
+          title="Bugungi qabullar" 
+          value={stats?.today ?? 0} 
+          icon={<Clock className="w-5 h-5 text-primary" />} 
+          trend="Bugun uchun jami"
+        />
+        <StatCard 
+          title="Kutilmoqda" 
+          value={stats?.pending ?? 0} 
+          icon={<AlertCircle className="w-5 h-5 text-warning" />} 
+          trend="Tasdiqlanishi kerak"
+        />
+        <StatCard 
+          title="Bugun yakunlandi" 
+          value={stats?.completedToday ?? 0} 
+          icon={<CheckCircle2 className="w-5 h-5 text-success" />} 
+          trend="Muvaffaqiyatli qabullar"
+          trendUp={true}
+        />
+      </div>
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="mb-4">

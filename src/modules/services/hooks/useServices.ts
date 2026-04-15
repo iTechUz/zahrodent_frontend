@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import { Service } from '@/shared/types';
 import { toast } from 'sonner';
@@ -25,6 +25,12 @@ export const useServices = () => {
     fetchFn: (params) => servicesApi.list(params),
     initialFilters: { category: 'all' },
     perPage: 20,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['services', 'stats'],
+    queryFn: () => servicesApi.stats(),
+    enabled: authed,
   });
 
   const createMut = useMutation({
@@ -112,5 +118,6 @@ export const useServices = () => {
     handleSave,
     handleDelete,
     isLoading: table.isLoading,
+    stats,
   };
 };

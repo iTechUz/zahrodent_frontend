@@ -27,6 +27,12 @@ export const useBookings = () => {
     perPage: 10,
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ['bookings', 'stats'],
+    queryFn: () => bookingsApi.stats(),
+    enabled: authed,
+  });
+
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list({ limit: 1000 }), // Fetching for lookups, ideally use searchable dropdown
@@ -126,6 +132,7 @@ export const useBookings = () => {
       }
     },
     isLoading: table.isLoading || patientsLoading || doctorsLoading,
+    stats,
   };
 };
 

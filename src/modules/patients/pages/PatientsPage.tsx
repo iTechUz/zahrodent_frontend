@@ -18,6 +18,8 @@ import { Patient } from '@/shared/types';
 import { SourceBadge } from '@/shared/components/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '@/shared/lib/formatters';
+import { StatCard } from '@/shared/components/StatCard';
+import { Users, UserPlus, Target } from 'lucide-react';
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ function PatientsPageContent() {
     handleSave,
     handleDelete,
     isLoading,
+    stats,
   } = usePatients();
 
   const columns: Column<Patient>[] = [
@@ -87,6 +90,27 @@ function PatientsPageContent() {
           </Button>
         } 
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <StatCard 
+          title="Jami bemorlar" 
+          value={stats?.total ?? 0} 
+          icon={<Users className="w-5 h-5" />} 
+        />
+        <StatCard 
+          title="Shu oyda yangi" 
+          value={stats?.newThisMonth ?? 0} 
+          icon={<UserPlus className="w-5 h-5 text-success" />} 
+          trend="Yangi qo'shilganlar"
+          trendUp={true}
+        />
+        <StatCard 
+          title="Asosiy manba" 
+          value={stats?.topSource ?? '—'} 
+          icon={<Target className="w-5 h-5 text-primary" />} 
+          trend="Eng ko'p kelish"
+        />
+      </div>
 
       <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
         <div className="relative w-full max-w-sm">

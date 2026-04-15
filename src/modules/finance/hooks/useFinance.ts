@@ -32,13 +32,11 @@ export const useFinance = () => {
   });
   const patients = patientsData?.data ?? [];
 
-  // Note: These stats might need a separate API endpoint for accurate global totals
-  // For now, these are based on the currently fetched page (or all if we were fetching all)
-  // To keep it "premium", I'll assume we might need a stats endpoint later.
-  // For now, I'll just provide placeholders or keep as is if they were intended for all data.
-  const totalRevenue = 0; // Placeholder or separate fetch
-  const totalDebt = 0;
-  const thisMonth = 0;
+  const { data: stats } = useQuery({
+    queryKey: ['payments', 'stats'],
+    queryFn: () => paymentsApi.stats(),
+    enabled: authed,
+  });
 
   const createMut = useMutation({
     mutationFn: paymentsApi.create,
@@ -94,10 +92,10 @@ export const useFinance = () => {
     page: table.page,
     setPage: table.setPage,
     patients,
-    totalRevenue,
-    thisMonth,
-    totalDebt,
-    unpaidCount: 0, // Placeholder
+    totalRevenue: stats?.totalRevenue ?? 0,
+    thisMonth: stats?.todayRevenue ?? 0,
+    totalDebt: stats?.pendingAmount ?? 0,
+    unpaidCount: 0,
     search: table.search,
     setSearch: table.setSearch,
     filters: table.filters,

@@ -28,6 +28,12 @@ export const useDoctors = () => {
     perPage: 10,
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ['doctors', 'stats'],
+    queryFn: () => doctorsApi.stats(),
+    enabled: authed,
+  });
+
   const { data: patientsData } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list({ limit: 1000 }),
@@ -165,6 +171,7 @@ export const useDoctors = () => {
     openVisitForm,
     handleSaveVisit,
     isLoading: table.isLoading || visitsLoading,
+    stats,
   };
 };
 

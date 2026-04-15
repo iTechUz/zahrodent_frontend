@@ -14,6 +14,8 @@ import {
 import { useDoctors } from '../hooks/useDoctors';
 import { DoctorCard } from '../components/DoctorCard';
 import { DoctorForm, DoctorVisitForm } from '../components/DoctorForm';
+import { StatCard } from '@/shared/components/StatCard';
+import { Users, HeartPulse, ClipboardCheck } from 'lucide-react';
 
 function DoctorsPageContent() {
   const {
@@ -44,6 +46,7 @@ function DoctorsPageContent() {
     openVisitForm,
     handleSaveVisit,
     isLoading,
+    stats,
   } = useDoctors();
 
   return (
@@ -58,6 +61,28 @@ function DoctorsPageContent() {
           </Button>
         } 
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <StatCard 
+          title="Jami shifokorlar" 
+          value={stats?.total ?? 0} 
+          icon={<Users className="w-5 h-5 text-primary" />} 
+          trend="Bizning jamoa"
+        />
+        <StatCard 
+          title="Bugun faol" 
+          value={stats?.activeToday ?? 0} 
+          icon={<HeartPulse className="w-5 h-5 text-success" />} 
+          trend="Xizmat ko'rsatmoqda"
+          trendUp={true}
+        />
+        <StatCard 
+          title="Jami tashriflar" 
+          value={stats?.totalVisits ?? 0} 
+          icon={<ClipboardCheck className="w-5 h-5 text-info" />} 
+          trend="Tizimdagi jami"
+        />
+      </div>
 
       <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
         <div className="relative w-full max-w-sm">

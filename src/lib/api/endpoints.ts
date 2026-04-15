@@ -41,6 +41,7 @@ export type ListParams = {
 export const patientsApi = {
   list: (params?: ListParams & { source?: string }) =>
     apiRequest<PaginatedResponse<Patient>>(`/patients${qs(params ?? {})}`),
+  stats: () => apiRequest<{ total: number; newThisMonth: number; topSource: string }>('/patients/stats'),
   get: (id: string) => apiRequest<Patient>(`/patients/${id}`),
   create: (body: Partial<Patient> & Pick<Patient, 'firstName' | 'lastName' | 'age' | 'phone' | 'source'>) =>
     apiRequest<Patient>('/patients', { method: 'POST', body: JSON.stringify(body) }),
@@ -56,6 +57,7 @@ export type DoctorCreatePayload = Pick<Doctor, 'name' | 'specialty' | 'phone' | 
 export const doctorsApi = {
   list: (params?: ListParams & { specialty?: string }) =>
     apiRequest<PaginatedResponse<Doctor>>(`/doctors${qs(params ?? {})}`),
+  stats: () => apiRequest<{ total: number; activeToday: number; totalVisits: number }>('/doctors/stats'),
   get: (id: string) => apiRequest<Doctor>(`/doctors/${id}`),
   create: (body: DoctorCreatePayload) =>
     apiRequest<Doctor>('/doctors', { method: 'POST', body: JSON.stringify(body) }),
@@ -67,6 +69,7 @@ export const doctorsApi = {
 export const bookingsApi = {
   list: (params?: ListParams & { status?: string; source?: string; patientId?: string; dateRange?: string }) =>
     apiRequest<PaginatedResponse<Booking>>(`/bookings${qs(params ?? {})}`),
+  stats: () => apiRequest<{ today: number; pending: number; completedToday: number }>('/bookings/stats'),
   get: (id: string) => apiRequest<Booking>(`/bookings/${id}`),
   create: (body: Omit<Booking, 'id' | 'createdAt'> & { createdAt?: string }) =>
     apiRequest<Booking>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
@@ -88,6 +91,7 @@ export const visitsApi = {
 export const servicesApi = {
   list: (params?: ListParams & { category?: string }) =>
     apiRequest<PaginatedResponse<Service>>(`/services${qs(params ?? {})}`),
+  stats: () => apiRequest<{ totalCount: number; categoriesCount: number; avgPrice: number }>('/services/stats'),
   get: (id: string) => apiRequest<Service>(`/services/${id}`),
   create: (body: Omit<Service, 'id'>) =>
     apiRequest<Service>('/services', { method: 'POST', body: JSON.stringify(body) }),
@@ -99,6 +103,7 @@ export const servicesApi = {
 export const paymentsApi = {
   list: (params?: ListParams & { status?: string; patientId?: string; method?: string; dateRange?: string }) =>
     apiRequest<PaginatedResponse<Payment>>(`/payments${qs(params ?? {})}`),
+  stats: () => apiRequest<{ totalRevenue: number; pendingAmount: number; todayRevenue: number }>('/payments/stats'),
   get: (id: string) => apiRequest<Payment>(`/payments/${id}`),
   create: (body: Omit<Payment, 'id'> & { date?: string }) =>
     apiRequest<Payment>('/payments', { method: 'POST', body: JSON.stringify(body) }),

@@ -3,9 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import { useServerTable } from '@/shared/hooks/useServerTable';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { StatCard } from '@/shared/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Send, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Send, MessageSquare, ChevronLeft, ChevronRight, Bell, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 import { patientsApi, notificationsApi } from '@/lib/api/endpoints';
@@ -57,14 +58,19 @@ function NotificationsPageContent() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-info/15 flex items-center justify-center"><MessageSquare className="w-5 h-5 text-info" /></div>
-          <div><p className="text-sm font-semibold">SMS xabarnomalar</p><p className="text-xs text-muted-foreground">{table.totalCount} ta bildirishnoma</p></div>
-        </div>
-        <div className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-info/15 flex items-center justify-center"><Send className="w-5 h-5 text-info" /></div>
-          <div><p className="text-sm font-semibold">Bildirishnomalar holati</p><p className="text-xs text-muted-foreground">Oxirgi yuborilganlar</p></div>
-        </div>
+        <StatCard 
+          title="SMS xabarnomalar" 
+          value={table.totalCount} 
+          icon={<MessageSquare className="w-5 h-5 text-info" />} 
+          trend="Jami yuborilgan"
+        />
+        <StatCard 
+          title="Tizim holati" 
+          value="Faol" 
+          icon={<ShieldCheck className="w-5 h-5 text-success" />} 
+          trend="Xizmatlar ishlamoqda"
+          trendUp={true}
+        />
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">

@@ -1,7 +1,10 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { Plus, Search, Tag } from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
+import { StatCard } from '@/shared/components/StatCard';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Layers, ListChecks, Coins } from 'lucide-react';
+import { formatUzS } from '@/shared/lib/formatters';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +34,7 @@ function ServicesPageContent() {
     handleSave,
     handleDelete,
     isLoading,
+    stats,
   } = useServices();
 
   return (
@@ -45,6 +49,28 @@ function ServicesPageContent() {
           </Button>
         } 
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <StatCard 
+          title="Jami xizmatlar" 
+          value={stats?.totalCount ?? 0} 
+          icon={<ListChecks className="w-5 h-5 text-primary" />} 
+          trend="Katalog hajmi"
+        />
+        <StatCard 
+          title="Kategoriyalar" 
+          value={stats?.categoriesCount ?? 0} 
+          icon={<Layers className="w-5 h-5 text-success" />} 
+          trend="Guruhlar soni"
+          trendUp={true}
+        />
+        <StatCard 
+          title="O'rtacha narx" 
+          value={formatUzS(stats?.avgPrice ?? 0)} 
+          icon={<Coins className="w-5 h-5 text-warning" />} 
+          trend="Xizmatlar bo'yicha"
+        />
+      </div>
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">

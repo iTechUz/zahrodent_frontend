@@ -125,6 +125,13 @@ export const notificationsApi = {
   }) => apiRequest<Notification>('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   sendReminders: () =>
     apiRequest<{ created: number }>('/notifications/send-reminders', { method: 'POST', body: '{}' }),
+  getRecipients: (params: { startDate: string; endDate: string }) =>
+    apiRequest<any[]>(`/notifications/recipients${qs(params)}`),
+  bulkSend: (body: { patientIds: string[]; message: string }) =>
+    apiRequest<{ sent: number; failed: number; total: number }>('/notifications/bulk-send', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 export const usersApi = {

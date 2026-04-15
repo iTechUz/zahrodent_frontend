@@ -11,11 +11,16 @@ import { ServiceCard, ServiceForm } from '../components/ServiceForm';
 function ServicesPageContent() {
   const {
     services,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     groupedServices,
+    categories,
     search,
     setSearch,
-    filterCategory,
-    setFilterCategory,
+    filters,
+    setFilters,
     modalOpen,
     setModalOpen,
     editing,
@@ -25,6 +30,7 @@ function ServicesPageContent() {
     openEdit,
     handleSave,
     handleDelete,
+    isLoading,
   } = useServices();
 
   return (
@@ -52,29 +58,32 @@ function ServicesPageContent() {
         </div>
         <div className="flex gap-1.5 flex-wrap">
           <Button 
-            variant={filterCategory === 'all' ? 'default' : 'outline'} 
+            variant={filters.category === 'all' ? 'default' : 'outline'} 
             size="sm" 
-            onClick={() => setFilterCategory('all')}
+            onClick={() => setFilters('category', 'all')}
           >
             Barchasi
           </Button>
-          {CATEGORIES.map(c => {
-            const count = services.filter(s => s.category === c).length;
-            return count > 0 ? (
-              <Button 
-                key={c} 
-                variant={filterCategory === c ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setFilterCategory(c)}
-              >
-                {c}
-              </Button>
-            ) : null;
-          })}
+          {categories.map(c => (
+            <Button 
+              key={c} 
+              variant={filters.category === c ? 'default' : 'outline'} 
+              size="sm" 
+              onClick={() => setFilters('category', c)}
+            >
+              {c}
+            </Button>
+          ))}
         </div>
       </div>
 
-      {Object.keys(groupedServices).length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="h-24 rounded-xl bg-card animate-pulse border border-border" />
+          ))}
+        </div>
+      ) : Object.keys(groupedServices).length === 0 ? (
         <EmptyState />
       ) : (
         <div className="space-y-6">
@@ -95,6 +104,33 @@ function ServicesPageContent() {
               </div>
             </div>
           ))}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-xl border">
+              <p className="text-xs text-muted-foreground">Jami: {totalCount} ta xizmat</p>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                >
+                  Oldingi
+                </Button>
+                <div className="flex items-center px-4 text-sm font-medium">
+                  {page + 1} / {totalPages}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                  disabled={page === totalPages - 1}
+                >
+                  Keyingi
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

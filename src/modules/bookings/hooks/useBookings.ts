@@ -4,8 +4,8 @@ import { useStore } from '@/store/useStore';
 import { Booking, BookingStatus } from '@/shared/types';
 import { BOOKING_STATUS_LABELS } from '@/shared/constants';
 import { toast } from 'sonner';
-import { useDataTable } from '@/shared/hooks/useDataTable';
 import { useDialogState } from '@/shared/hooks/useDialogState';
+import { useServerTable } from '@/shared/hooks/useServerTable';
 import { BookingService } from '../services/booking.service';
 import { BookingSchema } from '@/shared/lib/validation';
 import { z } from 'zod';
@@ -20,23 +20,26 @@ export const useBookings = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewBooking, setViewBooking] = useState<Booking | null>(null);
 
-  const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
+  const table = useServerTable<Booking, { status?: string; source?: string; dateRange?: string }>({
     queryKey: queryKeys.bookings,
-    queryFn: () => bookingsApi.list(),
-    enabled: authed,
+    fetchFn: (params) => bookingsApi.list(params),
+    initialFilters: { status: 'all', source: 'all', dateRange: 'all' },
+    perPage: 10,
   });
 
-  const { data: patients = [], isLoading: patientsLoading } = useQuery({
+  const { data: patientsData, isLoading: patientsLoading } = useQuery({
     queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list(),
+    queryFn: () => patientsApi.list({ limit: 1000 }), // Fetching for lookups, ideally use searchable dropdown
     enabled: authed,
   });
+  const patients = patientsData?.data ?? [];
 
-  const { data: doctors = [], isLoading: doctorsLoading } = useQuery({
+  const { data: doctorsData, isLoading: doctorsLoading } = useQuery({
     queryKey: queryKeys.doctors,
-    queryFn: () => doctorsApi.list(),
+    queryFn: () => doctorsApi.list({ limit: 100 }),
     enabled: authed,
   });
+  const doctors = doctorsData?.data ?? [];
 
   const createMut = useMutation({
     mutationFn: (body: BookingFormValues) => bookingsApi.create(body),
@@ -63,20 +66,6 @@ export const useBookings = () => {
   });
 
   const dialog = useDialogState<Booking>(BookingService.initialState());
-
-  const table = useDataTable<Booking>({
-    data: bookings,
-    filterFn: (b, search, filters) => {
-      const patient = patients.find((p) => p.id === b.patientId);
-      const matchSearch =
-        !search ||
-        `${patient?.firstName} ${patient?.lastName}`.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filters.status === 'all' || b.status === filters.status;
-      const matchSource = filters.source === 'all' || b.source === filters.source;
-      return matchSearch && matchStatus && matchSource;
-    },
-    initialFilters: { status: 'all', source: 'all' },
-  });
 
   const handleSave = useCallback(
     (data: BookingFormValues) => {
@@ -116,10 +105,8 @@ export const useBookings = () => {
     setPage: table.setPage,
     search: table.search,
     setSearch: table.setSearch,
-    filterStatus: table.filters.status,
-    setFilterStatus: (v: string) => table.setFilters('status', v),
-    filterSource: table.filters.source,
-    setFilterSource: (v: string) => table.setFilters('source', v),
+    filters: table.filters,
+    setFilters: table.setFilters,
     modalOpen: dialog.isOpen,
     setModalOpen: dialog.setIsOpen,
     editing: dialog.editingItem,
@@ -138,6 +125,7 @@ export const useBookings = () => {
         deleteMut.mutate(deleteId, { onSettled: () => setDeleteId(null) });
       }
     },
-    isLoading: bookingsLoading || patientsLoading || doctorsLoading,
+    isLoading: table.isLoading || patientsLoading || doctorsLoading,
   };
 };
+

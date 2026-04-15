@@ -24,10 +24,8 @@ function BookingsPageContent() {
     doctors,
     search,
     setSearch,
-    filterStatus,
-    setFilterStatus,
-    filterSource,
-    setFilterSource,
+    filters,
+    setFilters,
     modalOpen,
     setModalOpen,
     editing,
@@ -43,6 +41,7 @@ function BookingsPageContent() {
     handleSave,
     handleDelete,
     handleStatusChange,
+    isLoading,
   } = useBookings();
 
   const columns: Column<Booking>[] = [
@@ -121,7 +120,25 @@ function BookingsPageContent() {
                 onChange={(e) => setSearch(e.target.value)} 
               />
             </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select 
+              value={filters.dateRange || 'all'} 
+              onValueChange={(val) => setFilters('dateRange', val)}
+            >
+              <SelectTrigger className="w-[160px]">
+                <CalendarDays className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Vaqt oralig'i" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Barcha vaqtlar</SelectItem>
+                <SelectItem value="today">Bugun</SelectItem>
+                <SelectItem value="week">Shu hafta</SelectItem>
+                <SelectItem value="month">Shu oy</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select 
+              value={filters.status || 'all'} 
+              onValueChange={(val) => setFilters('status', val)}
+            >
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Holat" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barcha holatlar</SelectItem>
@@ -130,7 +147,10 @@ function BookingsPageContent() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filterSource} onValueChange={setFilterSource}>
+            <Select 
+              value={filters.source || 'all'} 
+              onValueChange={(val) => setFilters('source', val)}
+            >
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Manba" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barcha manbalar</SelectItem>
@@ -147,23 +167,32 @@ function BookingsPageContent() {
             onView={setViewBooking}
             onEdit={openEdit} 
             onDelete={setDeleteId} 
+            isLoading={isLoading}
           />
           
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
               <p className="text-xs text-muted-foreground">Jami: {totalBookings} ta qabul</p>
               <div className="flex gap-1">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <Button 
-                    key={i} 
-                    variant={page === i ? 'default' : 'ghost'} 
-                    size="sm" 
-                    className="h-7 w-7 p-0" 
-                    onClick={() => setPage(i)}
-                  >
-                    {i + 1}
-                  </Button>
-                ))}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                >
+                  Oldingi
+                </Button>
+                <div className="flex items-center px-4 text-sm font-medium">
+                  {page + 1} / {totalPages}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                  disabled={page === totalPages - 1}
+                >
+                  Keyingi
+                </Button>
               </div>
             </div>
           )}

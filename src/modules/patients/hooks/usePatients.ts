@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import { Patient } from '@/shared/types';
 import { toast } from 'sonner';
-import { useDataTable } from '@/shared/hooks/useDataTable';
+import { useServerTable } from '@/shared/hooks/useServerTable';
 import { useDialogState } from '@/shared/hooks/useDialogState';
 import { PatientService } from '../services/patient.service';
 import { PatientSchema } from '@/shared/lib/validation';
@@ -18,10 +18,10 @@ export const usePatients = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data: patients = [], isLoading } = useQuery({
+  const table = useServerTable<Patient, { source?: string }>({
     queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list(),
-    enabled: authed,
+    fetchFn: (params) => patientsApi.list(params),
+    perPage: 10,
   });
 
   const createMut = useMutation({
@@ -52,12 +52,6 @@ export const usePatients = () => {
 
   const dialog = useDialogState<Patient>(PatientService.initialState());
 
-  const table = useDataTable<Patient>({
-    data: patients,
-    filterFn: (p, search) =>
-      !search ||
-      `${p.firstName} ${p.lastName} ${p.phone}`.toLowerCase().includes(search.toLowerCase()),
-  });
 
   const handleSave = useCallback(
     (data: PatientFormValues) => {
@@ -87,6 +81,8 @@ export const usePatients = () => {
     setPage: table.setPage,
     search: table.search,
     setSearch: table.setSearch,
+    filters: table.filters,
+    setFilters: table.setFilters,
     modalOpen: dialog.isOpen,
     setModalOpen: dialog.setIsOpen,
     editing: dialog.editingItem,
@@ -96,7 +92,7 @@ export const usePatients = () => {
     deleteId,
     setDeleteId,
     handleDelete,
-    isLoading,
+    isLoading: table.isLoading,
     isSaving: createMut.isPending || updateMut.isPending,
   };
 };

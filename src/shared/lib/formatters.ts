@@ -11,9 +11,9 @@ export const formatCurrency = (amount: number): string => {
 export const formatDate = (dateString: string): string => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString('uz-UZ', {
+    day: '2-digit',
+    month: '2-digit',
     year: 'numeric',
-    month: 'long',
-    day: 'numeric',
   });
 };
 

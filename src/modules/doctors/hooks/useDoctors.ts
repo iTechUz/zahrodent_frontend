@@ -4,6 +4,7 @@ import { useStore } from '@/store/useStore';
 import { Doctor, Visit } from '@/shared/types';
 import { toast } from 'sonner';
 import { useDialogState } from '@/shared/hooks/useDialogState';
+import { useServerTable } from '@/shared/hooks/useServerTable';
 import { DoctorService } from '../services/doctor.service';
 import { DoctorSchema, VisitSchema } from '@/shared/lib/validation';
 import { z } from 'zod';
@@ -21,23 +22,25 @@ export const useDoctors = () => {
   const [visitModal, setVisitModal] = useState(false);
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
 
-  const { data: doctors = [], isLoading: doctorsLoading } = useQuery({
+  const table = useServerTable<Doctor, { specialty?: string }>({
     queryKey: queryKeys.doctors,
-    queryFn: () => doctorsApi.list(),
-    enabled: authed,
+    fetchFn: (params) => doctorsApi.list(params),
+    perPage: 10,
   });
 
-  const { data: patients = [] } = useQuery({
+  const { data: patientsData } = useQuery({
     queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list(),
+    queryFn: () => patientsApi.list({ limit: 1000 }),
     enabled: authed,
   });
+  const patients = patientsData?.data ?? [];
 
-  const { data: visits = [], isLoading: visitsLoading } = useQuery({
+  const { data: visitsData, isLoading: visitsLoading } = useQuery({
     queryKey: queryKeys.visits,
-    queryFn: () => visitsApi.list(),
+    queryFn: () => visitsApi.list({ limit: 100 }),
     enabled: authed,
   });
+  const visits = visitsData?.data ?? [];
 
   const saveDoctorMut = useMutation({
     mutationFn: (args: { id?: string; body: DoctorCreatePayload }) =>
@@ -135,7 +138,15 @@ export const useDoctors = () => {
   );
 
   return {
-    doctors,
+    doctors: table.data,
+    totalDoctors: table.totalCount,
+    totalPages: table.totalPages,
+    page: table.page,
+    setPage: table.setPage,
+    search: table.search,
+    setSearch: table.setSearch,
+    filters: table.filters,
+    setFilters: table.setFilters,
     patients,
     visits,
     modalOpen: dialog.isOpen,
@@ -153,6 +164,7 @@ export const useDoctors = () => {
     handleDeleteDoctor,
     openVisitForm,
     handleSaveVisit,
-    isLoading: doctorsLoading || visitsLoading,
+    isLoading: table.isLoading || visitsLoading,
   };
 };
+

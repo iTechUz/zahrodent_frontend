@@ -18,18 +18,29 @@ export async function loginRequest(body: { email: string; password: string }) {
   });
 }
 
-function qs(params: Record<string, string | undefined>) {
+function qs(params: Record<string, string | number | undefined>) {
   const u = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== '') u.set(k, v);
+    if (v !== undefined && v !== '') u.set(k, String(v));
   });
   const s = u.toString();
   return s ? `?${s}` : '';
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+}
+
+export type ListParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
 export const patientsApi = {
-  list: (search?: string) =>
-    apiRequest<Patient[]>(`/patients${qs({ search })}`),
+  list: (params?: ListParams & { source?: string }) =>
+    apiRequest<PaginatedResponse<Patient>>(`/patients${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Patient>(`/patients/${id}`),
   create: (body: Partial<Patient> & Pick<Patient, 'firstName' | 'lastName' | 'age' | 'phone' | 'source'>) =>
     apiRequest<Patient>('/patients', { method: 'POST', body: JSON.stringify(body) }),
@@ -43,7 +54,8 @@ export type DoctorCreatePayload = Pick<Doctor, 'name' | 'specialty' | 'phone' | 
   Partial<Doctor>;
 
 export const doctorsApi = {
-  list: () => apiRequest<Doctor[]>('/doctors'),
+  list: (params?: ListParams & { specialty?: string }) =>
+    apiRequest<PaginatedResponse<Doctor>>(`/doctors${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Doctor>(`/doctors/${id}`),
   create: (body: DoctorCreatePayload) =>
     apiRequest<Doctor>('/doctors', { method: 'POST', body: JSON.stringify(body) }),
@@ -53,8 +65,8 @@ export const doctorsApi = {
 };
 
 export const bookingsApi = {
-  list: (params?: { search?: string; status?: string; source?: string; patientId?: string }) =>
-    apiRequest<Booking[]>(`/bookings${qs(params ?? {})}`),
+  list: (params?: ListParams & { status?: string; source?: string; patientId?: string; dateRange?: string }) =>
+    apiRequest<PaginatedResponse<Booking>>(`/bookings${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Booking>(`/bookings/${id}`),
   create: (body: Omit<Booking, 'id' | 'createdAt'> & { createdAt?: string }) =>
     apiRequest<Booking>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
@@ -64,8 +76,8 @@ export const bookingsApi = {
 };
 
 export const visitsApi = {
-  list: (params?: { patientId?: string; doctorId?: string }) =>
-    apiRequest<Visit[]>(`/visits${qs(params ?? {})}`),
+  list: (params?: ListParams & { patientId?: string; doctorId?: string }) =>
+    apiRequest<PaginatedResponse<Visit>>(`/visits${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Visit>(`/visits/${id}`),
   create: (body: Omit<Visit, 'id'>) =>
     apiRequest<Visit>('/visits', { method: 'POST', body: JSON.stringify(body) }),
@@ -74,8 +86,8 @@ export const visitsApi = {
 };
 
 export const servicesApi = {
-  list: (params?: { search?: string; category?: string }) =>
-    apiRequest<Service[]>(`/services${qs(params ?? {})}`),
+  list: (params?: ListParams & { category?: string }) =>
+    apiRequest<PaginatedResponse<Service>>(`/services${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Service>(`/services/${id}`),
   create: (body: Omit<Service, 'id'>) =>
     apiRequest<Service>('/services', { method: 'POST', body: JSON.stringify(body) }),
@@ -85,8 +97,8 @@ export const servicesApi = {
 };
 
 export const paymentsApi = {
-  list: (params?: { search?: string; status?: string; patientId?: string }) =>
-    apiRequest<Payment[]>(`/payments${qs(params ?? {})}`),
+  list: (params?: ListParams & { status?: string; patientId?: string; method?: string; dateRange?: string }) =>
+    apiRequest<PaginatedResponse<Payment>>(`/payments${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Payment>(`/payments/${id}`),
   create: (body: Omit<Payment, 'id'> & { date?: string }) =>
     apiRequest<Payment>('/payments', { method: 'POST', body: JSON.stringify(body) }),
@@ -96,7 +108,8 @@ export const paymentsApi = {
 };
 
 export const notificationsApi = {
-  list: () => apiRequest<Notification[]>('/notifications'),
+  list: (params?: ListParams) =>
+    apiRequest<PaginatedResponse<Notification>>(`/notifications${qs(params ?? {})}`),
   create: (body: {
     patientId: string;
     type: Notification['type'];
@@ -107,3 +120,4 @@ export const notificationsApi = {
   sendReminders: () =>
     apiRequest<{ created: number }>('/notifications/send-reminders', { method: 'POST', body: '{}' }),
 };
+

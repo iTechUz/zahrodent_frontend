@@ -51,7 +51,7 @@ function DashboardPageContent() {
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card px-3 py-1.5 rounded-full border border-border">
           <Clock className="w-3.5 h-3.5 text-primary" />
-          {new Date().toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' })}
         </div>
       </div>
 

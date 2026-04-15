@@ -132,18 +132,35 @@ export const DataTable = memo(<T extends { id?: string | number }>({
             </tr>
           </thead>
           <tbody>
-            {data.map((item, index) => (
-              <DataTableRow 
-                key={String(item[idAccessor] || index)}
-                item={item}
-                columns={columns}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onView={onView}
-                idAccessor={idAccessor}
-                rowIndex={index}
-              />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-border last:border-0 h-12">
+                  {columns.map((_, j) => (
+                    <td key={j} className="px-4 py-3">
+                      <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                    </td>
+                  ))}
+                  {(onEdit || onDelete || onView) && (
+                    <td className="px-4 py-3">
+                      <div className="h-8 w-8 bg-muted animate-pulse rounded ml-auto" />
+                    </td>
+                  )}
+                </tr>
+              ))
+            ) : (
+              data.map((item, index) => (
+                <DataTableRow 
+                  key={String(item[idAccessor] || index)}
+                  item={item}
+                  columns={columns}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onView={onView}
+                  idAccessor={idAccessor}
+                  rowIndex={index}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>

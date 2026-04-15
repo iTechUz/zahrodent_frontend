@@ -1,11 +1,17 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { Plus, Search, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Plus, Search, DollarSign, TrendingUp, AlertTriangle, Filter, CalendarDays, CreditCard } from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { PAYMENT_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/shared/constants';
 import { useFinance } from '../hooks/useFinance';
 import { TransactionForm } from '../components/TransactionForm';
@@ -17,6 +23,10 @@ import { PaymentStatusBadge } from '@/shared/components/StatusBadge';
 export function FinancePageContent() {
   const {
     payments,
+    totalCount,
+    totalPages,
+    page,
+    setPage,
     patients,
     totalRevenue,
     thisMonth,
@@ -24,8 +34,8 @@ export function FinancePageContent() {
     unpaidCount,
     search,
     setSearch,
-    filterStatus,
-    setFilterStatus,
+    filters,
+    setFilters,
     modalOpen,
     setModalOpen,
     editing,
@@ -35,6 +45,7 @@ export function FinancePageContent() {
     openEdit,
     handleSave,
     handleDelete,
+    isLoading,
   } = useFinance();
 
   const columns: Column<Payment>[] = [
@@ -89,7 +100,7 @@ export function FinancePageContent() {
           title="Shu oy" 
           value={formatUzS(thisMonth)} 
           icon={<TrendingUp className="w-5 h-5" />} 
-          trend="Mart 2024" 
+          trend="Joriy oy" 
           trendUp 
         />
         <StatCard 
@@ -111,15 +122,49 @@ export function FinancePageContent() {
             onChange={(e) => setSearch(e.target.value)} 
           />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <Select 
+          value={filters.dateRange || 'all'} 
+          onValueChange={(val) => setFilters('dateRange', val)}
+        >
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Holat" />
+            <CalendarDays className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Vaqt" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Barchasi</SelectItem>
+            <SelectItem value="today">Bugun</SelectItem>
+            <SelectItem value="week">Shu hafta</SelectItem>
+            <SelectItem value="month">Shu oy</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select 
+          value={filters.status || 'all'} 
+          onValueChange={(val) => setFilters('status', val)}
+        >
+          <SelectTrigger className="w-[160px]">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Holat" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Barcha holatlar</SelectItem>
             {PAYMENT_STATUSES.map((s) => (
               <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select 
+          value={filters.method || 'all'} 
+          onValueChange={(val) => setFilters('method', val)}
+        >
+          <SelectTrigger className="w-[160px]">
+            <CreditCard className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Usul" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Barcha usullar</SelectItem>
+            <SelectItem value="cash">Naqd</SelectItem>
+            <SelectItem value="card">Terminal</SelectItem>
+            <SelectItem value="transfer">O'tkazma</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -128,8 +173,36 @@ export function FinancePageContent() {
         data={payments} 
         columns={columns} 
         onEdit={openEdit} 
-        onDelete={setDeleteId} 
+        onDelete={setDeleteId}
+        isLoading={isLoading}
       />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
+          <p className="text-xs text-muted-foreground">Jami: {totalCount} ta to'lov</p>
+          <div className="flex gap-1">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+            >
+              Oldingi
+            </Button>
+            <div className="flex items-center px-4 text-sm font-medium">
+              {page + 1} / {totalPages}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+              disabled={page === totalPages - 1}
+            >
+              Keyingi
+            </Button>
+          </div>
+        </div>
+      )}
 
       <TransactionForm 
         open={modalOpen} 

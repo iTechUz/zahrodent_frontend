@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Stethoscope,
-  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList,
+  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList, ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -20,6 +20,7 @@ const allNavItems = [
   { title: 'Tahlillar', path: '/analytics', icon: BarChart3 },
   { title: 'Bildirishnomalar', path: '/notifications', icon: Bell },
   { title: 'Sozlamalar', path: '/settings', icon: Settings },
+  { title: 'Qabulxona', path: '/users', icon: ShieldCheck },
 ];
 
 interface AppSidebarProps {

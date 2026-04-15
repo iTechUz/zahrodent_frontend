@@ -22,7 +22,8 @@ import {
   serviceRoutes,
   analyticsRoutes,
   notificationRoutes,
-  settingRoutes
+  settingRoutes,
+  userRoutes
 } from "@/modules";
 
 import NotFound from "./pages/NotFound.tsx";
@@ -64,6 +65,7 @@ const AppRoutes = () => {
             ...analyticsRoutes,
             ...notificationRoutes,
             ...settingRoutes,
+            ...userRoutes,
           ],
         },
       ],

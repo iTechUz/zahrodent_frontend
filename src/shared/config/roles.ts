@@ -17,6 +17,7 @@ export const roleAccess: Record<UserRole, string[]> = {
     '/analytics',
     '/notifications',
     '/settings',
+    '/users',
   ],
   doctor: ['/', '/bookings', '/patients', '/doctors', '/services', '/notifications', '/settings'],
   receptionist: ['/', '/bookings', '/patients', '/services', '/notifications', '/settings'],

@@ -127,3 +127,11 @@ export const notificationsApi = {
     apiRequest<{ created: number }>('/notifications/send-reminders', { method: 'POST', body: '{}' }),
 };
 
+export const usersApi = {
+  list: () => apiRequest<SessionUser[]>('/users'),
+  get: (id: string) => apiRequest<SessionUser>(`/users/${id}`),
+  create: (body: any) => apiRequest<SessionUser>('/users', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: any) => apiRequest<SessionUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  remove: (id: string) => apiRequest<{ id: string }>(`/users/${id}`, { method: 'DELETE' }),
+};
+

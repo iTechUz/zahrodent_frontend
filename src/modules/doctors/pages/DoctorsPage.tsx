@@ -15,7 +15,11 @@ import { useDoctors } from '../hooks/useDoctors';
 import { DoctorCard } from '../components/DoctorCard';
 import { DoctorForm, DoctorVisitForm } from '../components/DoctorForm';
 import { StatCard } from '@/shared/components/StatCard';
-import { Users, HeartPulse, ClipboardCheck } from 'lucide-react';
+import { Users, HeartPulse, ClipboardCheck, BarChart3, List } from 'lucide-react';
+import { DoctorEfficiencyStats } from '../components/DoctorEfficiencyStats';
+import { useState } from 'react';
+import { useStore } from '@/store/useStore';
+import { cn } from '@/shared/lib/utils';
 
 function DoctorsPageContent() {
   const {
@@ -48,6 +52,10 @@ function DoctorsPageContent() {
     isLoading,
     stats,
   } = useDoctors();
+
+  const [activeTab, setActiveTab] = useState<'list' | 'efficiency'>('list');
+  const role = useStore(s => s.currentUser?.role);
+  const isAdmin = role === 'admin';
 
   return (
     <div className="space-y-4">
@@ -84,86 +92,121 @@ function DoctorsPageContent() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            placeholder="Shifokor ismi yoki telefon bo'yicha..." 
-            className="pl-9" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-          />
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex p-1 bg-muted rounded-lg w-full md:w-auto">
+          <button
+            onClick={() => setActiveTab('list')}
+            className={cn(
+              "flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all flex-1 md:flex-none",
+              activeTab === 'list' 
+                ? "bg-card text-foreground shadow-sm" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <List className="w-4 h-4" /> Ro'yxat
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('efficiency')}
+              className={cn(
+                "flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all flex-1 md:flex-none",
+                activeTab === 'efficiency' 
+                  ? "bg-card text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="w-4 h-4" /> Samaradorlik
+            </button>
+          )}
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
-          <Select 
-            value={filters.specialty || 'all'} 
-            onValueChange={(val) => setFilters('specialty', val)}
-          >
-            <SelectTrigger className="w-full md:w-[180px]">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Mutaxassislik" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Barchasi</SelectItem>
-              <SelectItem value="Stomatolog-terapevt">Terapevt</SelectItem>
-              <SelectItem value="Stomatolog-ortoped">Ortoped</SelectItem>
-              <SelectItem value="Stomatolog-ximurg">Xirurg</SelectItem>
-              <SelectItem value="Ortodont">Ortodont</SelectItem>
-              <SelectItem value="Bolalar stomatologi">Bolalar stomatologi</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {activeTab === 'list' && (
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1 justify-end">
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Shifokor ismi yoki telefon bo'yicha..." 
+                className="pl-9" 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+              />
+            </div>
+
+            <Select 
+              value={filters.specialty || 'all'} 
+              onValueChange={(val) => setFilters('specialty', val)}
+            >
+              <SelectTrigger className="w-full md:w-[180px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Mutaxassislik" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Barchasi</SelectItem>
+                <SelectItem value="Stomatolog-terapevt">Terapevt</SelectItem>
+                <SelectItem value="Stomatolog-ortoped">Ortoped</SelectItem>
+                <SelectItem value="Stomatolog-ximurg">Xirurg</SelectItem>
+                <SelectItem value="Ortodont">Ortodont</SelectItem>
+                <SelectItem value="Bolalar stomatologi">Bolalar stomatologi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-48 rounded-xl bg-card animate-pulse border border-border" />
-          ))}
-        </div>
+      {activeTab === 'efficiency' ? (
+        <DoctorEfficiencyStats />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {doctors.map((d) => (
-            <DoctorCard 
-              key={d.id} 
-              doctor={d} 
-              visits={visits} 
-              patients={patients}
-              onEdit={openEdit}
-              onDelete={setDeleteId}
-              onAddVisit={openVisitForm}
-              onEditVisit={openVisitForm}
-            />
-          ))}
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-xl border">
-          <p className="text-xs text-muted-foreground">Jami: {totalDoctors} ta shifokor</p>
-          <div className="flex gap-1">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setPage(Math.max(0, page - 1))}
-              disabled={page === 0}
-            >
-              Oldingi
-            </Button>
-            <div className="flex items-center px-4 text-sm font-medium">
-              {page + 1} / {totalPages}
+        <>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-48 rounded-xl bg-card animate-pulse border border-border" />
+              ))}
             </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-              disabled={page === totalPages - 1}
-            >
-              Keyingi
-            </Button>
-          </div>
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {doctors.map((d) => (
+                <DoctorCard 
+                  key={d.id} 
+                  doctor={d} 
+                  visits={visits} 
+                  patients={patients}
+                  onEdit={openEdit}
+                  onDelete={setDeleteId}
+                  onAddVisit={openVisitForm}
+                  onEditVisit={openVisitForm}
+                />
+              ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-xl border">
+              <p className="text-xs text-muted-foreground">Jami: {totalDoctors} ta shifokor</p>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                >
+                  Oldingi
+                </Button>
+                <div className="flex items-center px-4 text-sm font-medium">
+                  {page + 1} / {totalPages}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                  disabled={page === totalPages - 1}
+                >
+                  Keyingi
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <DoctorForm 

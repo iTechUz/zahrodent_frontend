@@ -58,6 +58,7 @@ export const doctorsApi = {
   list: (params?: ListParams & { specialty?: string }) =>
     apiRequest<PaginatedResponse<Doctor>>(`/doctors${qs(params ?? {})}`),
   stats: () => apiRequest<{ total: number; activeToday: number; totalVisits: number }>('/doctors/stats'),
+  efficiency: () => apiRequest<any[]>('/doctors/efficiency'),
   get: (id: string) => apiRequest<Doctor>(`/doctors/${id}`),
   create: (body: DoctorCreatePayload) =>
     apiRequest<Doctor>('/doctors', { method: 'POST', body: JSON.stringify(body) }),

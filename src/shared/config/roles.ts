@@ -19,7 +19,7 @@ export const roleAccess: Record<UserRole, string[]> = {
     '/settings',
     '/users',
   ],
-  doctor: ['/', '/bookings', '/patients', '/doctors', '/services', '/notifications', '/settings'],
+  doctor: ['/', '/bookings', '/patients', '/settings'],
   receptionist: ['/', '/bookings', '/patients', '/services', '/notifications', '/settings'],
 };
 

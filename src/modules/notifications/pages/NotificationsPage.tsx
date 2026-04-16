@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
 import { patientsApi, notificationsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
-import { Notification } from '@/shared/types';
+import type { Notification, Patient, NotificationRecipient } from '@/shared/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +26,22 @@ const notifStatusLabels: Record<string, string> = {
   sent: 'Yuborilgan', delivered: 'Yetkazilgan', failed: 'Xatolik',
 };
 
-function NotificationsHistoryTab({ table, patients }: { table: any, patients: any[] }) {
+type NotificationsTable = {
+  data: Notification[];
+  isLoading: boolean;
+  totalPages: number;
+  totalCount: number;
+  page: number;
+  setPage: (n: number) => void;
+};
+
+function NotificationsHistoryTab({
+  table,
+  patients,
+}: {
+  table: NotificationsTable;
+  patients: Patient[];
+}) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="overflow-x-auto">
@@ -194,7 +209,7 @@ function BulkSmsTab() {
             ) : (
               <table className="w-full text-sm">
                 <tbody className="divide-y divide-border/50">
-                  {recipients.map((r: any) => (
+                  {recipients.map((r: NotificationRecipient) => (
                     <tr 
                       key={r.id} 
                       className={cn(
@@ -332,12 +347,17 @@ function NotificationsPageContent() {
     perPage: 15,
   });
 
+  const patientIds = React.useMemo(() => {
+    const ids = table.data.map((n) => n.patientId).filter(Boolean);
+    return Array.from(new Set(ids)).sort();
+  }, [table.data]);
+
   const { data: patientsData } = useQuery({
-    queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list({ limit: 1000 }),
-    enabled: authed,
+    queryKey: ['patients-by-ids', patientIds.join(',')],
+    enabled: authed && patientIds.length > 0,
+    queryFn: async () => Promise.all(patientIds.map((id) => patientsApi.get(id))),
   });
-  const patients = patientsData?.data ?? [];
+  const patients = patientsData ?? [];
 
   return (
     <div className="space-y-6">

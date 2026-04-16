@@ -40,21 +40,21 @@ export const useDashboard = () => {
 
   const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
-    queryFn: () => patientsApi.list({ limit: 1000 }),
+    queryFn: () => patientsApi.list({ limit: 300 }),
     enabled: authed,
   });
   const patients = patientsRes?.data ?? [];
 
   const { data: bookingsRes } = useQuery({
     queryKey: queryKeys.bookings,
-    queryFn: () => bookingsApi.list({ limit: 1000 }),
+    queryFn: () => bookingsApi.list({ limit: 300 }),
     enabled: authed,
   });
   const bookings = bookingsRes?.data ?? [];
 
   const { data: paymentsRes } = useQuery({
     queryKey: queryKeys.payments,
-    queryFn: () => paymentsApi.list({ limit: 1000 }),
+    queryFn: () => paymentsApi.list({ limit: 300 }),
     enabled: authed && canViewPayments,
   });
   const payments = paymentsRes?.data ?? [];
@@ -68,7 +68,7 @@ export const useDashboard = () => {
 
   const { data: visitsRes } = useQuery({
     queryKey: queryKeys.visits,
-    queryFn: () => visitsApi.list({ limit: 1000 }),
+    queryFn: () => visitsApi.list({ limit: 300 }),
     enabled: authed,
   });
   const visits = visitsRes?.data ?? [];

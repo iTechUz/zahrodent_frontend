@@ -6,6 +6,8 @@ import type {
   Payment,
   Service,
   Notification,
+  NotificationRecipient,
+  DoctorEfficiencyStats,
 } from '@/shared/types';
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
@@ -58,7 +60,7 @@ export const doctorsApi = {
   list: (params?: ListParams & { specialty?: string }) =>
     apiRequest<PaginatedResponse<Doctor>>(`/doctors${qs(params ?? {})}`),
   stats: () => apiRequest<{ total: number; activeToday: number; totalVisits: number }>('/doctors/stats'),
-  efficiency: () => apiRequest<any[]>('/doctors/efficiency'),
+  efficiency: () => apiRequest<DoctorEfficiencyStats[]>('/doctors/efficiency'),
   get: (id: string) => apiRequest<Doctor>(`/doctors/${id}`),
   create: (body: DoctorCreatePayload) =>
     apiRequest<Doctor>('/doctors', { method: 'POST', body: JSON.stringify(body) }),
@@ -127,7 +129,7 @@ export const notificationsApi = {
   sendReminders: () =>
     apiRequest<{ created: number }>('/notifications/send-reminders', { method: 'POST', body: '{}' }),
   getRecipients: (params: { startDate: string; endDate: string }) =>
-    apiRequest<any[]>(`/notifications/recipients${qs(params)}`),
+    apiRequest<NotificationRecipient[]>(`/notifications/recipients${qs(params)}`),
   bulkSend: (body: { patientIds: string[]; message: string }) =>
     apiRequest<{ sent: number; failed: number; total: number }>('/notifications/bulk-send', {
       method: 'POST',
@@ -138,8 +140,26 @@ export const notificationsApi = {
 export const usersApi = {
   list: () => apiRequest<SessionUser[]>('/users'),
   get: (id: string) => apiRequest<SessionUser>(`/users/${id}`),
-  create: (body: any) => apiRequest<SessionUser>('/users', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id: string, body: any) => apiRequest<SessionUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  create: (body: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'doctor' | 'receptionist';
+    specialty?: string;
+    avatar?: string;
+  }) => apiRequest<SessionUser>('/users', { method: 'POST', body: JSON.stringify(body) }),
+  update: (
+    id: string,
+    body: Partial<{
+      name: string;
+      email: string;
+      password: string;
+      role: 'admin' | 'doctor' | 'receptionist';
+      specialty?: string;
+      avatar?: string;
+    }>,
+  ) =>
+    apiRequest<SessionUser>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   remove: (id: string) => apiRequest<{ id: string }>(`/users/${id}`, { method: 'DELETE' }),
 };
 

@@ -5,6 +5,16 @@ export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 export type VisitStatus = 'not-started' | 'in-progress' | 'completed';
 export type NotificationType = 'sms' | 'telegram';
 
+export interface NotificationRecipient {
+  id: string; // patient id
+  firstName: string;
+  lastName: string;
+  phone: string;
+  bookingId: string;
+  bookingDate: string; // YYYY-MM-DD
+  bookingTime: string; // HH:mm
+}
+
 export interface Patient {
   id: string;
   firstName: string;
@@ -101,4 +111,15 @@ export interface Notification {
   message: string;
   sentAt: string;
   status: 'sent' | 'delivered' | 'failed';
+}
+
+export interface DoctorEfficiencyStats {
+  id: string;
+  name: string;
+  specialty: string;
+  totalBookings: number;
+  totalVisits: number;
+  totalRevenue: number;
+  conversionRate: number;
+  avgCheck: number;
 }

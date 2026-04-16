@@ -3,6 +3,7 @@ import { doctorsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/button'; // Using basics if shadcn cards aren't separate
 import { formatCurrency } from '@/shared/lib/formatters';
+import type { ReactNode } from 'react';
 import { 
   TrendingUp, 
   Users, 
@@ -126,7 +127,7 @@ export function DoctorEfficiencyStats() {
   );
 }
 
-function StatMini({ icon, label, value }: { icon: any, label: string, value: any }) {
+function StatMini({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
   return (
     <div className="bg-muted/30 rounded-lg p-2.5">
       <div className="flex items-center gap-1.5 text-muted-foreground mb-0.5">

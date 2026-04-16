@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { Plus, Shield, Mail, Trash2, Edit2, ShieldCheck, UserCog, Search } from 'lucide-react';
+import { Plus, Shield, Phone, Trash2, Edit2, ShieldCheck, UserCog, Search } from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,16 +34,16 @@ export function UsersPageContent() {
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
       const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || 
-                           u.email.toLowerCase().includes(search.toLowerCase());
-      return matchesSearch && u.role === 'receptionist';
+                           u.phone.toLowerCase().includes(search.toLowerCase());
+      return matchesSearch;
     });
   }, [users, search]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Qabulxona xodimlari"
-        description="Registratura (Reception) xodimlarini boshqarish"
+        title="Tizim xodimlari"
+        description="Foydalanuvchilarni (Admin, Shifokor, Reception) boshqarish"
         action={
           <Button onClick={openCreate} className="gradient-primary">
             <Plus className="w-4 h-4 mr-2" />
@@ -57,7 +57,7 @@ export function UsersPageContent() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Xodim ismi yoki emaili bo'yicha qidirish..." 
+            placeholder="Xodim ismi yoki telefon raqami bo'yicha qidirish..." 
             className="pl-9 bg-card/50 backdrop-blur-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -115,9 +115,9 @@ export function UsersPageContent() {
                 <div className="mt-5 pt-5 border-t border-border/30 space-y-3">
                   <div className="flex items-center gap-2.5 text-xs text-muted-foreground/80">
                     <div className="p-1.5 rounded-lg bg-secondary/50">
-                      <Mail className="h-3.5 w-3.5" />
+                      <Phone className="h-3.5 w-3.5" />
                     </div>
-                    <span className="font-medium">{u.email}</span>
+                    <span className="font-medium">{u.phone}</span>
                   </div>
                   {u.specialty && (
                     <div className="flex items-center gap-2.5 text-xs text-muted-foreground/80">

@@ -5,12 +5,12 @@ import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Sparkles, Eye, EyeOff, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
   const setSession = useStore((s) => s.setSession);
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,18 +20,23 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.trim() || !password.trim()) {
+    if (!phone.trim() || !password.trim()) {
       setError("Iltimos, barcha maydonlarni to'ldiring");
+      return;
+    }
+
+    if (!/^\+998\d{9}$/.test(phone.trim())) {
+      setError("Telefon raqami noto'g'ri formatda (+998XXXXXXXXX)");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await loginRequest({ email: email.trim(), password });
+      const res = await loginRequest({ phone: phone.trim(), password });
       setSession(res.access_token, res.user);
       toast.success(`Xush kelibsiz, ${res.user.name}!`);
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : "Email yoki parol noto'g'ri";
+      const msg = err instanceof ApiError ? err.message : "Telefon raqami yoki parol noto'g'ri";
       setError(msg);
     } finally {
       setLoading(false);
@@ -63,18 +68,9 @@ export default function LoginPage() {
               boshqaruv tizimi
             </h2>
             <p className="text-primary-foreground/70 mt-3 text-sm leading-relaxed max-w-md">
-              Barcha ma&apos;lumotlar backend API orqali PostgreSQL da saqlanadi. Kirish uchun
-              administrator berilgan email va paroldan foydalaning (lokal rivojlantirishda
-              <code className="mx-1 rounded bg-primary-foreground/10 px-1">npm run prisma:seed</code>
-              yordamida foydalanuvchilar yaratiladi).
+              Tizimga kirish uchun administrator tomonidan berilgan telefon raqami va paroldan foydalaning.
             </p>
           </div>
-          <ul className="flex flex-col gap-2 text-primary-foreground/70 text-sm list-disc list-inside max-w-md">
-            <li>JWT bilan xavfsiz sessiya</li>
-            <li>Rolga qarab sahifalar cheklanadi</li>
-            <li>Swagger: backend <code className="rounded bg-primary-foreground/10 px-1">/swagger</code>
-            </li>
-          </ul>
         </div>
         <p className="relative z-10 text-primary-foreground/40 text-xs">© Zahro Dental</p>
       </div>
@@ -95,19 +91,21 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email
+              <Label htmlFor="phone" className="text-sm font-medium">
+                Telefon raqami
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground flex items-center justify-center font-bold text-[10px]">
+                  UZ
+                </div>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@zahro.dental"
+                  id="phone"
+                  type="text"
+                  placeholder="+998901234567"
                   className="pl-10 h-11"
-                  value={email}
+                  value={phone}
                   onChange={(e) => {
-                    setEmail(e.target.value);
+                    setPhone(e.target.value);
                     setError('');
                   }}
                   autoComplete="username"

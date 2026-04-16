@@ -28,7 +28,7 @@ import {
 
 const userSchema = z.object({
   name: z.string().min(2, "Kamida 2 ta belgi bo'lishi kerak"),
-  email: z.string().email("Noto'g'ri email"),
+  phone: z.string().regex(/^\+998\d{9}$/, "Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak"),
   role: z.enum(['admin', 'doctor', 'receptionist']),
   password: z.string().min(6, "Kamida 6 ta belgi").optional().or(z.literal('')),
   specialty: z.string().optional(),
@@ -46,7 +46,7 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
     resolver: zodResolver(userSchema),
     defaultValues: {
       name: '',
-      email: '',
+      phone: '',
       role: 'receptionist',
       password: '',
     },
@@ -55,7 +55,7 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
 
   const handleSubmit = (values: any) => {
     // If empty password on edit, remove it from payload
-    const payload = { ...values, role: 'receptionist' };
+    const payload = { ...values };
     if (!payload.password && editing) delete payload.password;
     onSave(payload);
   };
@@ -64,7 +64,7 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{editing ? 'Xodimni tahrirlash' : 'Qabulxonaga xodim qo\'shish'}</DialogTitle>
+          <DialogTitle>{editing ? 'Xodimni tahrirlash' : 'Xodim qo\'shish'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
@@ -81,11 +81,33 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
             />
             <FormField
               control={form.control}
-              name="email"
+              name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl><Input {...field} type="email" placeholder="example@zahro.dental" /></FormControl>
+                  <FormLabel>Telefon raqami</FormLabel>
+                  <FormControl><Input {...field} placeholder="+998901234567" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rol</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Rolni tanlang" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrator</SelectItem>
+                      <SelectItem value="doctor">Shifokor</SelectItem>
+                      <SelectItem value="receptionist">Qabulxona (Reception)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

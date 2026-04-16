@@ -4,7 +4,7 @@ export type UserRole = 'admin' | 'doctor' | 'receptionist';
 export interface SessionUser {
   id: string;
   name: string;
-  email: string;
+  phone: string;
   role: UserRole;
   specialty?: string;
   avatar?: string;

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const phoneSchema = z.string().regex(/^\+?[\d\s-]{10,20}$/, "Noto'g'ri telefon raqami");
+export const phoneSchema = z.string().regex(/^\+998\d{9}$/, "Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
 export const requiredString = (name: string) => z.string().min(1, `${name} kiritilishi shart`);
 export const positiveNumber = (name: string) => z.preprocess(
   (val) => Number(val),
@@ -57,6 +57,7 @@ export const DoctorSchema = z
     name: requiredString('Ism familiya'),
     specialty: requiredString('Mutaxassislik'),
     phone: phoneSchema,
+    password: z.string().min(6, "Kamida 6 ta belgi").optional().or(z.literal('')),
     workingHours: requiredString('Ish vaqti'),
     /** Haftalik jadval (7 kun) — kartadagi katakchalar bilan mos */
     schedule: z.array(doctorScheduleSlotSchema).length(7),

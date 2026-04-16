@@ -12,7 +12,7 @@ import type {
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
 
-export async function loginRequest(body: { email: string; password: string }) {
+export async function loginRequest(body: { phone: string; password: string }) {
   return apiRequest<{ access_token: string; user: SessionUser }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(body),
@@ -142,7 +142,7 @@ export const usersApi = {
   get: (id: string) => apiRequest<SessionUser>(`/users/${id}`),
   create: (body: {
     name: string;
-    email: string;
+    phone: string;
     password: string;
     role: 'admin' | 'doctor' | 'receptionist';
     specialty?: string;
@@ -152,7 +152,7 @@ export const usersApi = {
     id: string,
     body: Partial<{
       name: string;
-      email: string;
+      phone: string;
       password: string;
       role: 'admin' | 'doctor' | 'receptionist';
       specialty?: string;

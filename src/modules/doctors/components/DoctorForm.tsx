@@ -34,6 +34,7 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
       name: '',
       specialty: '',
       phone: '',
+      password: '',
       workingHours: '',
       schedule: defaultDoctorSchedule(),
       daysOffText: '',
@@ -46,6 +47,7 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
         name: editing.name,
         specialty: editing.specialty,
         phone: editing.phone,
+        password: '',
         workingHours: editing.workingHours ?? '',
         schedule: normalizeDoctorSchedule(editing.schedule),
         daysOffText: editing.daysOff?.length ? editing.daysOff.join(', ') : '',
@@ -55,6 +57,7 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
         name: '',
         specialty: '',
         phone: '',
+        password: '',
         workingHours: '',
         schedule: defaultDoctorSchedule(),
         daysOffText: '',
@@ -105,14 +108,30 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Telefon</FormLabel>
+                  <FormLabel>Telefon (Login uchun)</FormLabel>
                   <FormControl>
-                    <Input placeholder="+998 90 123 4567" {...field} />
+                    <Input placeholder="+998901234567" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-1 gap-4">
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{editing ? 'Yangi parol (ixtiyoriy)' : 'Parol'}</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="workingHours"

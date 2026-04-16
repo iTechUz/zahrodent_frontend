@@ -13,9 +13,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
-import { patientsApi, notificationsApi } from '@/lib/api/endpoints';
+import { patientsApi, doctorsApi, notificationsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
-import type { Notification, Patient, NotificationRecipient } from '@/shared/types';
+import type { Notification, Patient, Doctor, NotificationRecipient } from '@/shared/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,9 +38,11 @@ type NotificationsTable = {
 function NotificationsHistoryTab({
   table,
   patients,
+  doctors,
 }: {
   table: NotificationsTable;
   patients: Patient[];
+  doctors: Doctor[];
 }) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -54,13 +56,26 @@ function NotificationsHistoryTab({
             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Holat</th>
           </tr></thead>
           <tbody className={cn(table.isLoading && 'opacity-50')}>
-            {table.data.map((n: Notification) => {
-              const patient = patients.find((p) => p.id === n.patientId);
+            {table.data.map((n: Notification & { doctorId?: string }) => {
+              const patient = n.patientId ? patients.find((p) => p.id === n.patientId) : null;
+              const doctor = n.doctorId ? doctors.find((d) => d.id === n.doctorId) : null;
+              const isDoctor = !!n.doctorId;
               return (
                 <tr key={n.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-foreground">{patient?.firstName} {patient?.lastName}</div>
-                    <div className="text-[10px] text-muted-foreground">{patient?.phone}</div>
+                    {isDoctor ? (
+                      <>
+                        <div className="font-medium text-foreground flex items-center gap-2">
+                          {doctor?.name} <Badge variant="secondary" className="text-[10px] py-0">Shifokor</Badge>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{doctor?.phone}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-medium text-foreground">{patient?.firstName} {patient?.lastName}</div>
+                        <div className="text-[10px] text-muted-foreground">{patient?.phone}</div>
+                      </>
+                    )}
                   </td>
                   <td className="px-4 py-3"><Badge variant="outline" className={cn('text-xs', n.type === 'telegram' ? 'bg-info/15 text-info border-info/30' : 'bg-secondary text-secondary-foreground border-none')}>SMS</Badge></td>
                   <td className="px-4 py-3 text-muted-foreground max-w-xs truncate" title={n.message}>{n.message}</td>
@@ -119,6 +134,8 @@ function BulkSmsTab() {
     toggleSelectAll,
     datePreset,
     setDatePreset,
+    targetType,
+    setTargetType,
     message,
     setMessage,
     handleSend,
@@ -162,19 +179,42 @@ function BulkSmsTab() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {presets.map(p => (
-            <Button 
-              key={p.id}
-              variant={datePreset === p.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setDatePreset(p.id)}
-              className="rounded-full px-5 transition-all active:scale-95"
-            >
-              {p.label}
-            </Button>
-          ))}
+        
+        {/* Shifokor yoki Bemor tanlash */}
+        <div className="flex bg-muted/50 p-1 rounded-xl w-fit">
+          <Button 
+            variant={targetType === 'patient' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => setTargetType('patient')}
+            className="rounded-lg shadow-none"
+          >
+            Bemorlarga
+          </Button>
+          <Button 
+            variant={targetType === 'doctor' ? "default" : "ghost"} 
+            size="sm" 
+            onClick={() => setTargetType('doctor')}
+            className="rounded-lg shadow-none"
+          >
+            Shifokorlarga
+          </Button>
         </div>
+
+        {targetType === 'patient' && (
+          <div className="flex flex-wrap gap-2">
+            {presets.map(p => (
+              <Button 
+                key={p.id}
+                variant={datePreset === p.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDatePreset(p.id)}
+                className="rounded-full px-5 transition-all active:scale-95"
+              >
+                {p.label}
+              </Button>
+            ))}
+          </div>
+        )}
 
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
@@ -204,7 +244,7 @@ function BulkSmsTab() {
             ) : recipients.length === 0 ? (
               <div className="p-16 text-center text-muted-foreground">
                 <Calendar className="w-12 h-12 mx-auto mb-3 opacity-10" />
-                Bu muddat uchun SMS kutayotgan mijozlar topilmadi
+                {targetType === 'patient' ? "Bu muddat uchun SMS kutayotgan mijozlar topilmadi" : "Hech qanday shifokor topilmadi"}
               </div>
             ) : (
               <table className="w-full text-sm">
@@ -235,7 +275,7 @@ function BulkSmsTab() {
                         <div className="text-[11px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full inline-block">
                           {new Date(r.bookingDate).toLocaleDateString('uz-UZ')}
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-1">{r.bookingTime}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{targetType === 'patient' ? r.bookingTime : ''}</div>
                       </td>
                     </tr>
                   ))}
@@ -348,7 +388,12 @@ function NotificationsPageContent() {
   });
 
   const patientIds = React.useMemo(() => {
-    const ids = table.data.map((n) => n.patientId).filter(Boolean);
+    const ids = table.data.map((n) => n.patientId).filter(Boolean) as string[];
+    return Array.from(new Set(ids)).sort();
+  }, [table.data]);
+
+  const doctorIds = React.useMemo(() => {
+    const ids = table.data.map((n: any) => n.doctorId).filter(Boolean) as string[];
     return Array.from(new Set(ids)).sort();
   }, [table.data]);
 
@@ -358,6 +403,13 @@ function NotificationsPageContent() {
     queryFn: async () => Promise.all(patientIds.map((id) => patientsApi.get(id))),
   });
   const patients = patientsData ?? [];
+
+  const { data: doctorsData } = useQuery({
+    queryKey: ['doctors-by-ids', doctorIds.join(',')],
+    enabled: authed && doctorIds.length > 0,
+    queryFn: async () => Promise.all(doctorIds.map((id) => doctorsApi.get(id))),
+  });
+  const doctors = doctorsData ?? [];
 
   return (
     <div className="space-y-6">
@@ -396,7 +448,7 @@ function NotificationsPageContent() {
           <BulkSmsTab />
         </TabsContent>
         <TabsContent value="history">
-          <NotificationsHistoryTab table={table} patients={patients} />
+          <NotificationsHistoryTab table={table} patients={patients} doctors={doctors} />
         </TabsContent>
       </Tabs>
     </div>

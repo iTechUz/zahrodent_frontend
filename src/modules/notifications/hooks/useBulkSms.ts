@@ -10,6 +10,7 @@ export const useBulkSms = () => {
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [datePreset, setDatePreset] = useState<DatePreset>('tomorrow');
+  const [targetType, setTargetType] = useState<'patient' | 'doctor'>('patient');
   const [customRange, setCustomRange] = useState<{ start: Date; end: Date }>({
     start: startOfDay(new Date()),
     end: endOfDay(addDays(new Date(), 1)),
@@ -33,15 +34,16 @@ export const useBulkSms = () => {
   }, [datePreset, customRange]);
 
   const { data: recipients = [], isLoading } = useQuery({
-    queryKey: ['sms-recipients', dateRange],
+    queryKey: ['sms-recipients', dateRange, targetType],
     queryFn: () => notificationsApi.getRecipients({
-      startDate: dateRange.start.toISOString(),
-      endDate: dateRange.end.toISOString(),
+      startDate: targetType === 'patient' ? dateRange.start.toISOString() : undefined,
+      endDate: targetType === 'patient' ? dateRange.end.toISOString() : undefined,
+      targetType,
     }),
   });
 
   const bulkSendMut = useMutation({
-    mutationFn: (body: { patientIds: string[]; message: string }) => 
+    mutationFn: (body: { targetIds: string[]; targetType: 'patient'|'doctor'; message: string }) => 
       notificationsApi.bulkSend(body),
     onSuccess: (res) => {
       toast.success(`${res.sent} ta SMS muvaffaqiyatli yuborildi. ${res.failed} ta xato.`);
@@ -70,14 +72,14 @@ export const useBulkSms = () => {
 
   const handleSend = () => {
     if (selectedIds.length === 0) {
-      toast.error('Kamida bitta mijozni tanlang');
+      toast.error('Kamida bitta qabul qiluvchini tanlang');
       return;
     }
     if (message.length < 5) {
       toast.error('SMS xabari juda qisqa');
       return;
     }
-    bulkSendMut.mutate({ patientIds: selectedIds, message });
+    bulkSendMut.mutate({ targetIds: selectedIds, targetType, message });
   };
 
   return {
@@ -88,6 +90,11 @@ export const useBulkSms = () => {
     toggleSelectAll,
     datePreset,
     setDatePreset,
+    targetType,
+    setTargetType: (t: 'patient' | 'doctor') => {
+      setTargetType(t);
+      setSelectedIds([]);
+    },
     message,
     setMessage,
     handleSend,

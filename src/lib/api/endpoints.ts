@@ -128,9 +128,9 @@ export const notificationsApi = {
   }) => apiRequest<Notification>('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   sendReminders: () =>
     apiRequest<{ created: number }>('/notifications/send-reminders', { method: 'POST', body: '{}' }),
-  getRecipients: (params: { startDate: string; endDate: string }) =>
+  getRecipients: (params: { startDate?: string; endDate?: string; targetType?: 'patient'|'doctor' }) =>
     apiRequest<NotificationRecipient[]>(`/notifications/recipients${qs(params)}`),
-  bulkSend: (body: { patientIds: string[]; message: string }) =>
+  bulkSend: (body: { targetIds: string[]; targetType: 'patient' | 'doctor'; message: string }) =>
     apiRequest<{ sent: number; failed: number; total: number }>('/notifications/bulk-send', {
       method: 'POST',
       body: JSON.stringify(body),

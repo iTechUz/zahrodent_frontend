@@ -107,7 +107,7 @@ function NotificationsHistoryTab({
   );
 }
 
-const PRESET_TEMPLATES = [
+const PATIENT_PRESETS = [
   { 
     id: 'reminder', 
     label: 'Eslatma', 
@@ -122,6 +122,29 @@ const PRESET_TEMPLATES = [
     id: 'followup', 
     label: 'Xizmatdan so\'ng', 
     text: 'Sizni ko\'rganimizdan xursandmiz! Savollaringiz bo\'lsa bizga murojaat qiling. Zahro Dental.' 
+  },
+];
+
+const DOCTOR_PRESETS = [
+  { 
+    id: 'reminder', 
+    label: 'Qabul eslatmasi', 
+    text: 'Hurmatli shifokor, ertaga [sana] kuni soat [vaqt] da [bemor] ismli bemor bilan qabulingiz bor.' 
+  },
+  { 
+    id: 'meeting', 
+    label: 'Majlis', 
+    text: 'Hurmatli shifokor, umumiy majlis rejalashtirildi. Iltimos, o\'z vaqtida qatnashing. Zahro Dental.' 
+  },
+  { 
+    id: 'schedule_update', 
+    label: 'Jadval o\'zgardi', 
+    text: 'Hurmatli shifokor, sizning ishlash jadvalingizga o\'zgarish kiritildi, iltimos tekshirib oling.' 
+  },
+  { 
+    id: 'alert', 
+    label: 'Diqqat', 
+    text: 'Diqqat! Klinika operatsion jarayonlarida favqulodda o\'zgarish bor. Boshqaruv bilan bog\'laning.' 
   },
 ];
 
@@ -167,7 +190,8 @@ function BulkSmsTab() {
   const previewMessage = React.useMemo(() => {
     return message
       .replace(/\[sana\]/g, '2024-04-16')
-      .replace(/\[vaqt\]/g, '14:30');
+      .replace(/\[vaqt\]/g, '14:30')
+      .replace(/\[bemor\]/g, 'Ali Valiyev');
   }, [message]);
 
   const presets: { id: DatePreset; label: string }[] = [
@@ -200,21 +224,19 @@ function BulkSmsTab() {
           </Button>
         </div>
 
-        {targetType === 'patient' && (
-          <div className="flex flex-wrap gap-2">
-            {presets.map(p => (
-              <Button 
-                key={p.id}
-                variant={datePreset === p.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDatePreset(p.id)}
-                className="rounded-full px-5 transition-all active:scale-95"
-              >
-                {p.label}
-              </Button>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {presets.map(p => (
+            <Button 
+              key={p.id}
+              variant={datePreset === p.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDatePreset(p.id)}
+              className="rounded-full px-5 transition-all active:scale-95"
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
 
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="p-4 border-b border-border bg-muted/20 flex items-center justify-between">
@@ -275,7 +297,10 @@ function BulkSmsTab() {
                         <div className="text-[11px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full inline-block">
                           {new Date(r.bookingDate).toLocaleDateString('uz-UZ')}
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-1">{targetType === 'patient' ? r.bookingTime : ''}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{r.bookingTime}</div>
+                        {targetType === 'doctor' && r.patientName && (
+                          <div className="text-[9px] text-primary/80 font-medium">Bemor: {r.patientName}</div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -295,7 +320,7 @@ function BulkSmsTab() {
                 <Info className="w-3 h-3" />
               </label>
               <div className="flex flex-wrap gap-2">
-                {PRESET_TEMPLATES.map(t => (
+                {(targetType === 'patient' ? PATIENT_PRESETS : DOCTOR_PRESETS).map(t => (
                   <Button 
                     key={t.id}
                     variant="outline"
@@ -318,6 +343,9 @@ function BulkSmsTab() {
                 <div className="flex gap-1">
                   <Button variant="ghost" size="xs" onClick={() => insertTag('[sana]')} className="h-6 text-[10px] text-primary hover:bg-primary/10 tracking-tight">+[sana]</Button>
                   <Button variant="ghost" size="xs" onClick={() => insertTag('[vaqt]')} className="h-6 text-[10px] text-primary hover:bg-primary/10 tracking-tight">+[vaqt]</Button>
+                  {targetType === 'doctor' && (
+                    <Button variant="ghost" size="xs" onClick={() => insertTag('[bemor]')} className="h-6 text-[10px] text-primary hover:bg-primary/10 tracking-tight">+[bemor]</Button>
+                  )}
                 </div>
               </div>
               <Textarea 
@@ -353,7 +381,7 @@ function BulkSmsTab() {
               <div className="flex gap-3">
                 <Info className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-orange-600/80 leading-relaxed font-medium">
-                  Xabarda <b>[sana]</b> va <b>[vaqt]</b> teglaridan foydalaning.
+                  Xabarda <b>[sana]</b>, <b>[vaqt]</b> {targetType === 'doctor' && "va <b>[bemor]</b> "}teglaridan foydalanishingiz mumkin.
                 </p>
               </div>
             </div>

@@ -13,6 +13,7 @@ export interface NotificationRecipient {
   bookingId: string;
   bookingDate: string; // YYYY-MM-DD
   bookingTime: string; // HH:mm
+  patientName?: string; // used when targetType is doctor
 }
 
 export interface Patient {

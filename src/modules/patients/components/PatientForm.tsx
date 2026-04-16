@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -128,7 +129,7 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
                   <FormItem>
                     <FormLabel>Telefon *</FormLabel>
                     <FormControl>
-                      <Input placeholder="+998 90 123 4567" {...field} />
+                      <PhoneInput {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

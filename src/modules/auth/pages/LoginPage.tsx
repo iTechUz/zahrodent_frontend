@@ -4,6 +4,7 @@ import { loginRequest } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, Eye, EyeOff, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -98,14 +99,13 @@ export default function LoginPage() {
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground flex items-center justify-center font-bold text-[10px]">
                   UZ
                 </div>
-                <Input
+                <PhoneInput
                   id="phone"
-                  type="text"
-                  placeholder="+998901234567"
+                  type="tel"
                   className="pl-10 h-11"
                   value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
+                  onChange={(val: string) => {
+                    setPhone(val);
                     setError('');
                   }}
                   autoComplete="username"

@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -85,7 +86,7 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Telefon raqami</FormLabel>
-                  <FormControl><Input {...field} placeholder="+998901234567" /></FormControl>
+                  <FormControl><PhoneInput {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -22,6 +22,7 @@ import { StatCard } from '@/shared/components/StatCard';
 import { Users, UserPlus, Target } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
+import { BOOKING_SOURCE_LABELS, BOOKING_SOURCES } from '@/shared/constants';
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -151,11 +152,11 @@ function PatientsPageContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Barcha manbalar</SelectItem>
-              <SelectItem value="reception">Reception</SelectItem>
-              <SelectItem value="telegram">Telegram</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="facebook">Facebook</SelectItem>
-              <SelectItem value="other">Boshqa</SelectItem>
+              {BOOKING_SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {BOOKING_SOURCE_LABELS[s]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

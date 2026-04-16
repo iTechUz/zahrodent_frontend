@@ -32,10 +32,22 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const res = await fetch(url, { ...init, headers });
   const text = await res.text();
-  const data = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      // Backend/proxy ba'zan HTML yoki plaintext qaytarishi mumkin.
+      // Shunda JSON.parse xato bo'lib, UI keskin yiqilib qolmasin.
+      if (res.ok) {
+        throw new ApiError(res.status, 'Invalid JSON response');
+      }
+      data = { message: text } as Record<string, unknown>;
+    }
+  }
 
   if (!res.ok) {
-    const raw = data?.message;
+    const raw = (data as Record<string, unknown> | null | undefined)?.message;
     const msg =
       typeof raw === 'string'
         ? raw

@@ -7,12 +7,15 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProp
     return (
       <IMaskInput
         mask="+{998} 00 000 00 00"
-        value={value}
+        lazy={false}
+        eager={true}
+        value={(value as string) ?? ''}
         unmask={false}
-        onAccept={(val, mask) => {
+        onAccept={(val: string, mask: { unmaskedValue: string }) => {
           if (onChange) {
             const unmasked = mask.unmaskedValue;
-            onChange(unmasked ? `+${unmasked}` : '');
+            // Only emit value if user typed beyond the prefix (998)
+            onChange(unmasked && unmasked.length > 3 ? `+${unmasked}` : '');
           }
         }}
         inputRef={ref}
@@ -20,8 +23,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, React.ComponentProp
           "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           className
         )}
-        placeholder="+998 __ ___ __ __"
-        {...props}
+        {...(props as Record<string, unknown>)}
       />
     );
   }

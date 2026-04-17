@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Eye, EyeOff } from 'lucide-react';
 
 const userSchema = z.object({
   name: z.string().min(2, "Kamida 2 ta belgi bo'lishi kerak"),
@@ -43,6 +45,8 @@ interface UserFormProps {
 }
 
 export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -119,7 +123,22 @@ export function UserForm({ open, onOpenChange, editing, onSave }: UserFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{editing ? 'Yangi parol (ixtiyoriy)' : 'Parol'}</FormLabel>
-                  <FormControl><Input {...field} type="password" /></FormControl>
+                  <FormControl>
+                    <div className="relative">
+                      <Input 
+                        {...field} 
+                        type={showPassword ? "text" : "password"} 
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

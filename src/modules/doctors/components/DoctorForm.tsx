@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
+import { Eye, EyeOff } from 'lucide-react';
 import { Doctor, Patient, Visit, VisitStatus } from '@/shared/types';
 import { VISIT_STATUSES, VISIT_STATUS_LABELS } from '@/shared/constants';
 import { DoctorSchema, VisitSchema } from '@/shared/lib/validation';
@@ -29,6 +30,7 @@ interface DoctorFormProps {
 }
 
 export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormProps) => {
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<DoctorFormValues>({
     resolver: zodResolver(DoctorSchema),
     defaultValues: {
@@ -125,7 +127,21 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
                   <FormItem>
                     <FormLabel>{editing ? 'Yangi parol (ixtiyoriy)' : 'Parol'}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••" {...field} />
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
+                          placeholder="••••••" 
+                          {...field} 
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

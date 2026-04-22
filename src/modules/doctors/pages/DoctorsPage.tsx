@@ -35,6 +35,7 @@ import { DoctorEfficiencyStats } from '../components/DoctorEfficiencyStats';
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/shared/lib/utils';
+import { StatCard } from '@/shared/components/StatCard';
 
 function DoctorsPageContent() {
   const {
@@ -66,6 +67,7 @@ function DoctorsPageContent() {
     handleSaveVisit,
     stats,
     efficiency,
+    isLoading,
   } = useDoctors();
 
   const [activeTab, setActiveTab] = useState<'list' | 'efficiency'>('list');

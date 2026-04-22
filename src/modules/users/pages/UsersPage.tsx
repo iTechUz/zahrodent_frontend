@@ -33,6 +33,7 @@ export function UsersPageContent() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
+      if (u.role !== 'receptionist') return false;
       const matchesSearch = u.name.toLowerCase().includes(search.toLowerCase()) || 
                            u.phone.toLowerCase().includes(search.toLowerCase());
       return matchesSearch;
@@ -42,8 +43,8 @@ export function UsersPageContent() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tizim xodimlari"
-        description="Foydalanuvchilarni (Admin, Shifokor, Reception) boshqarish"
+        title="Qabulxona xodimlari"
+        description="Qabulxona xodimlarini boshqarish"
         action={
           <Button onClick={openCreate} className="gradient-primary">
             <Plus className="w-4 h-4 mr-2" />

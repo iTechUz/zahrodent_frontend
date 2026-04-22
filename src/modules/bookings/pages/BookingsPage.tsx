@@ -42,6 +42,7 @@ function BookingsPageContent() {
     openEdit,
     handleDelete,
     handleStatusChange,
+    handleSave,
     isLoading,
     stats,
     services,

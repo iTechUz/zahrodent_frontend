@@ -13,6 +13,10 @@ export default function AnalyticsPage() {
     colors,
     canViewPayments,
     serviceStats,
+    monthlyPatients,
+    revenueGrowth,
+    conversionData,
+    sourceData,
   } = useAnalytics();
 
   return (

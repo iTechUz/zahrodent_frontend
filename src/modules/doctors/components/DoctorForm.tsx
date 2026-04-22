@@ -34,11 +34,11 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
   const form = useForm<DoctorFormValues>({
     resolver: zodResolver(DoctorSchema),
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       specialty: '',
       phone: '',
       password: '',
-      workingHours: '',
       schedule: defaultDoctorSchedule(),
       daysOffText: '',
     },
@@ -47,21 +47,21 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
   useEffect(() => {
     if (editing) {
       form.reset({
-        name: editing.name,
+        firstName: editing.firstName,
+        lastName: editing.lastName,
         specialty: editing.specialty,
         phone: editing.phone,
         password: '',
-        workingHours: editing.workingHours ?? '',
         schedule: normalizeDoctorSchedule(editing.schedule),
         daysOffText: editing.daysOff?.length ? editing.daysOff.join(', ') : '',
       });
     } else {
       form.reset({
-        name: '',
+        firstName: '',
+        lastName: '',
         specialty: '',
         phone: '',
         password: '',
-        workingHours: '',
         schedule: defaultDoctorSchedule(),
         daysOffText: '',
       });
@@ -80,19 +80,34 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ism familiya</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Dr. Ism Familiya" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ism</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ali" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Familiya</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Valiyev" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="specialty"
@@ -149,22 +164,6 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="workingHours"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Umumiy ish vaqti (matn)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Masalan: Du-Ju 9:00-17:00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-[11px] text-muted-foreground">
-                    Kartada ko‘rinadigan qisqa yozuv. Pastdagi jadval haftalik kunlarni batafsil boshqaradi.
-                  </p>
-                </FormItem>
-              )}
-            />
 
             <div className="space-y-2">
               <p className="text-sm font-medium">Haftalik jadval</p>
@@ -307,7 +306,7 @@ export const DoctorVisitForm = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editingVisit ? "Tashrifni tahrirlash" : "Yangi tashrif"} — {doctor?.name}</DialogTitle>
+          <DialogTitle>{editingVisit ? "Tashrifni tahrirlash" : "Yangi tashrif"} — {doctor ? `${doctor.firstName} ${doctor.lastName}` : ''}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">

@@ -33,12 +33,12 @@ export const DoctorCard = ({
     <div className="bg-card rounded-xl border border-border p-5">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-sm font-bold text-primary-foreground">
-            {doctor.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+          <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
+            {doctor.firstName[0]}{doctor.lastName[0]}
           </div>
           <div>
-            <p className="font-semibold">{doctor.name}</p>
-            <p className="text-xs text-muted-foreground">{doctor.specialty}</p>
+            <h3 className="font-bold text-lg leading-none">{doctor.firstName} {doctor.lastName}</h3>
+            <p className="text-xs text-muted-foreground mt-1">{doctor.specialty}</p>
           </div>
         </div>
         <DropdownMenu>
@@ -62,7 +62,6 @@ export const DoctorCard = ({
 
       <div className="text-xs text-muted-foreground space-y-1 mb-3">
         <p>📞 {doctor.phone}</p>
-        <p>🕐 {doctor.workingHours}</p>
         <p>{doctorPatientIds.length} ta bemor • {doctorVisits.length} ta tashrif</p>
       </div>
 

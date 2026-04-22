@@ -8,6 +8,7 @@ import type {
   Notification,
   NotificationRecipient,
   DoctorEfficiencyStats,
+  PatientComment,
 } from '@/shared/types';
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
@@ -50,6 +51,9 @@ export const patientsApi = {
   update: (id: string, body: Partial<Patient>) =>
     apiRequest<Patient>(`/patients/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   remove: (id: string) => apiRequest<{ id: string }>(`/patients/${id}`, { method: 'DELETE' }),
+  getComments: (id: string) => apiRequest<PatientComment[]>(`/patients/${id}/comments`),
+  addComment: (id: string, body: { content: string }) =>
+    apiRequest<PatientComment>(`/patients/${id}/comments`, { method: 'POST', body: JSON.stringify(body) }),
 };
 
 /** POST /doctors — to‘rt majburiy maydon + qolgan Doctor maydonlari ixtiyoriy */

@@ -14,6 +14,7 @@ import {
   PAYMENT_STATUS_LABELS 
 } from '@/shared/constants';
 import { PaymentSchema } from '@/shared/lib/validation';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import * as z from 'zod';
 
 type PaymentFormValues = z.infer<typeof PaymentSchema>;
@@ -37,9 +38,10 @@ export const TransactionForm = ({
     resolver: zodResolver(PaymentSchema),
     defaultValues: {
       patientId: '',
-      amount: 0,
+      amount: undefined as any,
       method: 'cash',
-      status: 'unpaid',
+      status: 'paid',
+      type: 'INCOME',
       description: '',
     },
   });
@@ -51,14 +53,16 @@ export const TransactionForm = ({
         amount: editing.amount,
         method: editing.method,
         status: editing.status,
+        type: editing.type || 'INCOME',
         description: editing.description,
       });
     } else {
       form.reset({
         patientId: '',
-        amount: 0,
+        amount: undefined as any,
         method: 'cash',
-        status: 'unpaid',
+        status: 'paid',
+        type: 'INCOME',
         description: '',
       });
     }
@@ -81,37 +85,56 @@ export const TransactionForm = ({
               name="patientId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bemor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Bemorni tanlang" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Summa (so'm)</FormLabel>
+                  <FormLabel>Bemor <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="150000" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    <SearchableSelect
+                      options={patients.map(p => ({ value: p.id, label: `${p.firstName} ${p.lastName} (${p.phone})` }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Bemorni tanlang"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Summa (so'm) <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="150000" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Turi</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="INCOME">Kirim</SelectItem>
+                        <SelectItem value="EXPENSE">Chiqim</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               <FormField

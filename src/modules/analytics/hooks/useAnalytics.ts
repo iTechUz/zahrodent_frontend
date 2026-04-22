@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
-import { bookingsApi, patientsApi, paymentsApi } from '@/lib/api/endpoints';
+import { bookingsApi, patientsApi, paymentsApi, servicesApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 import { canAccessPayments } from '@/shared/config/roles';
 import {
@@ -26,6 +26,13 @@ export const useAnalytics = () => {
   });
   const bookings = bookingsRes?.data ?? [];
 
+  const { data: servicesRes } = useQuery({
+    queryKey: queryKeys.services,
+    queryFn: () => servicesApi.list({ limit: 1000 }),
+    enabled: authed,
+  });
+  const services = servicesRes?.data ?? [];
+
   const { data: patientsRes } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list(),
@@ -39,6 +46,12 @@ export const useAnalytics = () => {
     enabled: authed && canViewPayments,
   });
   const payments = paymentsRes?.data ?? [];
+
+  const { data: serviceStats } = useQuery({
+    queryKey: ['services', 'stats'],
+    queryFn: () => servicesApi.stats(),
+    enabled: authed && canViewPayments,
+  });
 
   const monthlyPatients = useMemo(
     () => aggregateNewPatientsByMonthCounts(patients, buckets6),
@@ -57,6 +70,17 @@ export const useAnalytics = () => {
 
   const sourceData = useMemo(() => aggregateBookingsBySourceLabel(bookings), [bookings]);
 
+  const serviceIncomeData = useMemo(() => {
+    return serviceStats?.detailed?.map((s: any) => {
+      const service = services.find((sv) => sv.id === s.serviceId);
+      return {
+        name: service?.name || 'Noma\'lum',
+        revenue: s.revenue,
+        patients: s.patients,
+      };
+    }) || [];
+  }, [serviceStats, services]);
+
   const colors = [...REPORT_CHART_COLORS];
 
   return {
@@ -66,5 +90,6 @@ export const useAnalytics = () => {
     sourceData,
     colors,
     canViewPayments,
+    serviceStats: serviceIncomeData,
   };
 };

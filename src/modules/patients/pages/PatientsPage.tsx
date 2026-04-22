@@ -64,18 +64,16 @@ function PatientsPageContent() {
             <span className="font-medium text-primary hover:underline cursor-pointer" onClick={() => navigate(`/patients/${p.id}`)}>
               {p.firstName} {p.lastName}
             </span>
-            {(p.allergies || p.bloodType) && (
-              <div className="flex gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
-                {p.bloodType && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive">{p.bloodType}</span>}
-                {p.allergies && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/10 text-warning">⚠ {p.allergies}</span>}
-              </div>
-            )}
           </div>
         </div>
       )
     },
     { header: 'Yosh', accessor: (p) => `${p.age} yosh` },
     { header: 'Telefon', accessor: 'phone' },
+    { 
+      header: 'Shifokor', 
+      accessor: (p) => p.assignedDoctor ? `Dr. ${p.assignedDoctor.firstName} ${p.assignedDoctor.lastName}` : '—'
+    },
     { 
       header: 'Balans', 
       accessor: (p) => {

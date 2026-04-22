@@ -10,6 +10,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useServices, CATEGORIES } from '../hooks/useServices';
 import { ServiceCard, ServiceForm } from '../components/ServiceForm';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
 
 function ServicesPageContent() {
   const {
@@ -104,32 +119,71 @@ function ServicesPageContent() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[1,2,3,4,5,6].map(i => (
-            <div key={i} className="h-24 rounded-xl bg-card animate-pulse border border-border" />
-          ))}
+        <div className="p-8 text-center animate-pulse text-muted-foreground bg-card rounded-xl border">
+          Yuklanmoqda...
         </div>
-      ) : Object.keys(groupedServices).length === 0 ? (
+      ) : services.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-6">
-          {Object.entries(groupedServices).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-                <Tag className="w-3.5 h-3.5" />{category} ({items.length})
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {items.map(s => (
-                  <ServiceCard 
-                    key={s.id} 
-                    service={s} 
-                    onEdit={openEdit} 
-                    onDelete={setDeleteId} 
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Xizmat nomi</TableHead>
+                <TableHead>Kategoriya</TableHead>
+                <TableHead className="text-right">Narxi</TableHead>
+                <TableHead className="text-right">Bemorlar</TableHead>
+                <TableHead className="text-right">Daromad</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {services.map((s) => {
+                const detailed = stats?.detailed?.find((d: any) => d.serviceId === s.id);
+                return (
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted border border-border">
+                        {s.category}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatUzS(s.price)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {detailed?.patientCount || 0}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-success">
+                      {formatUzS(detailed?.revenue || 0)}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(s)}>
+                            <Edit2 className="w-4 h-4 mr-2" /> Tahrirlash
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => setDeleteId(s.id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> O'chirish
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-xl border">
@@ -157,8 +211,7 @@ function ServicesPageContent() {
               </div>
             </div>
           )}
-        </div>
-      )}
+
 
       <ServiceForm 
         open={modalOpen} 

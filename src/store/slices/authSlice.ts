@@ -14,7 +14,7 @@ function readPersisted(): {
 } {
   try {
     const token = getAuthToken();
-    const raw = localStorage.getItem(AUTH_USER_KEY);
+    const raw = localStorage.getItem(AUTH_USER_KEY) || sessionStorage.getItem(AUTH_USER_KEY);
     if (token && raw) {
       return { token, currentUser: JSON.parse(raw) as SessionUser, isAuthenticated: true };
     }
@@ -30,16 +30,20 @@ export interface AuthSlice {
   token: string | null;
   currentUser: SessionUser | null;
   isAuthenticated: boolean;
-  setSession: (token: string, user: SessionUser) => void;
+  setSession: (token: string, user: SessionUser, remember?: boolean) => void;
   logout: () => void;
 }
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set) => ({
   ...readPersisted(),
-  setSession: (token, user) => {
-    setAuthToken(token);
+  setSession: (token, user, remember = true) => {
+    setAuthToken(token, remember);
     try {
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+      const storage = remember ? localStorage : sessionStorage;
+      if (!remember) localStorage.removeItem(AUTH_USER_KEY);
+      else sessionStorage.removeItem(AUTH_USER_KEY);
+      
+      storage.setItem(AUTH_USER_KEY, JSON.stringify(user));
     } catch {
       /* ignore */
     }

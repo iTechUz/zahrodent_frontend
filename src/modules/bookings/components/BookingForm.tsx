@@ -16,6 +16,8 @@ import {
 import { Booking, Patient, Doctor, BookingSource, BookingStatus } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { BookingSchema } from '@/shared/lib/validation';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Service } from '@/shared/types';
 import * as z from 'zod';
 
 type BookingFormValues = z.infer<typeof BookingSchema>;
@@ -26,6 +28,7 @@ interface BookingFormProps {
   editing: Booking | null;
   patients: Patient[];
   doctors: Doctor[];
+  services: Service[];
   onSave: (data: BookingFormValues) => void;
 }
 
@@ -35,6 +38,7 @@ export const BookingForm = ({
   editing, 
   patients, 
   doctors, 
+  services,
   onSave 
 }: BookingFormProps) => {
   const form = useForm<BookingFormValues>({
@@ -42,6 +46,7 @@ export const BookingForm = ({
     defaultValues: {
       patientId: '',
       doctorId: '',
+      serviceId: '',
       date: '',
       time: '',
       source: 'walk-in',
@@ -55,6 +60,7 @@ export const BookingForm = ({
       form.reset({
         patientId: editing.patientId,
         doctorId: editing.doctorId,
+        serviceId: editing.serviceId || '',
         date: editing.date,
         time: editing.time,
         source: editing.source,
@@ -65,6 +71,7 @@ export const BookingForm = ({
       form.reset({
         patientId: '',
         doctorId: '',
+        serviceId: '',
         date: '',
         time: '',
         source: 'walk-in',
@@ -91,19 +98,15 @@ export const BookingForm = ({
               name="patientId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bemor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Bemorni tanlang" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {patients.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Bemor <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={patients.map(p => ({ value: p.id, label: `${p.firstName} ${p.lastName} (${p.phone})` }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Bemorni tanlang"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -114,19 +117,34 @@ export const BookingForm = ({
               name="doctorId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Shifokor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Shifokorni tanlang" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {doctors.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Shifokor <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={doctors.map(d => ({ value: d.id, label: `${d.firstName} ${d.lastName} (${d.specialty})` }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Shifokorni tanlang"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="serviceId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Xizmat (ixtiyoriy)</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={services.map(s => ({ value: s.id, label: `${s.name} (${s.price} so'm)` }))}
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                      placeholder="Xizmatni tanlang"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,7 +156,7 @@ export const BookingForm = ({
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sana</FormLabel>
+                    <FormLabel>Sana <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -152,7 +170,7 @@ export const BookingForm = ({
                 name="time"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Vaqt</FormLabel>
+                    <FormLabel>Vaqt <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input type="time" {...field} />
                     </FormControl>
@@ -260,7 +278,7 @@ export const BookingDetails = ({ booking, onClose, patients, doctors }: BookingD
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Shifokor</span>
-            <span className="font-medium">{doctor?.name}</span>
+            <span className="font-medium">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Sana</span>

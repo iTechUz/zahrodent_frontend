@@ -48,10 +48,24 @@ export const usePatientProfile = (patientId: string | undefined) => {
 
   const { data: doctorsRes } = useQuery({
     queryKey: queryKeys.doctors,
-    queryFn: () => doctorsApi.list(),
+    queryFn: () => doctorsApi.list({ limit: 100 }),
     enabled: authed && !!patientId,
   });
   const doctors = doctorsRes?.data ?? [];
+
+  const { data: comments, isLoading: commentsLoading } = useQuery({
+    queryKey: ['patients', patientId, 'comments'],
+    queryFn: () => patientsApi.getComments(patientId!),
+    enabled: !!patientId && authed,
+  });
+
+  const addCommentMut = useMutation({
+    mutationFn: (content: string) => patientsApi.addComment(patientId!, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['patients', patientId, 'comments'] });
+      toast.success("Izoh qo'shildi");
+    },
+  });
 
   const updatePatientMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Parameters<typeof patientsApi.update>[1] }) =>
@@ -84,10 +98,11 @@ export const usePatientProfile = (patientId: string | undefined) => {
     lastName: '',
     age: '',
     phone: '',
+    address: '',
+    workplace: '',
+    assignedDoctorId: '',
     source: 'walk-in' as BookingSource,
     notes: '',
-    allergies: '',
-    bloodType: '',
   });
 
   const [toothModal, setToothModal] = useState(false);
@@ -222,6 +237,11 @@ export const usePatientProfile = (patientId: string | undefined) => {
     );
   };
 
+  const handleAddComment = (content: string) => {
+    if (!content.trim()) return;
+    addCommentMut.mutate(content);
+  };
+
   const handlePaymentSave = () => {
     if (!patient) return;
     if (!payForm.amount || !payForm.description) {
@@ -255,10 +275,11 @@ export const usePatientProfile = (patientId: string | undefined) => {
       lastName: patient.lastName,
       age: String(patient.age),
       phone: patient.phone,
+      address: patient.address || '',
+      workplace: patient.workplace || '',
+      assignedDoctorId: patient.assignedDoctorId || '',
       source: patient.source,
       notes: patient.notes,
-      allergies: patient.allergies || '',
-      bloodType: patient.bloodType || '',
     });
     setEditOpen(true);
   };
@@ -319,6 +340,9 @@ export const usePatientProfile = (patientId: string | undefined) => {
     handlePaymentSave,
     getVisitBalance,
     openPaymentForVisit,
-    isLoading: patientLoading,
+    comments,
+    handleAddComment,
+    isAddingComment: addCommentMut.isPending,
+    isLoading: patientLoading || commentsLoading,
   };
 };

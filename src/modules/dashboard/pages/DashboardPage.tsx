@@ -228,7 +228,7 @@ function DashboardPageContent() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">{patient?.firstName} {patient?.lastName}</p>
-                      <p className="text-xs text-muted-foreground">{doctor?.name} • {formatDate(b.date)} — {b.time}</p>
+                      <p className="text-xs text-muted-foreground">{doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : '—'} • {formatDate(b.date)} — {b.time}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

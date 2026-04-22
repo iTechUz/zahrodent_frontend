@@ -22,14 +22,31 @@ export interface Patient {
   lastName: string;
   age: number;
   phone: string;
+  address: string;
+  workplace: string;
+  assignedDoctorId?: string;
+  assignedDoctor?: {
+    firstName: string;
+    lastName: string;
+  };
   source: BookingSource;
   notes: string;
   avatar?: string;
   createdAt: string;
-  allergies?: string;
-  bloodType?: string;
   toothChart?: Record<number, ToothRecord>;
   balance?: number;
+}
+
+export interface PatientComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  patientId: string;
+  authorId: string;
+  author: {
+    name: string;
+    avatar?: string;
+  };
 }
 
 export interface ToothRecord {
@@ -41,10 +58,10 @@ export interface ToothRecord {
 
 export interface Doctor {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   specialty: string;
   phone: string;
-  workingHours: string;
   avatar?: string;
   schedule?: DoctorSchedule[];
   daysOff?: string[];
@@ -98,6 +115,7 @@ export interface Payment {
   amount: number;
   method: PaymentMethod;
   status: PaymentStatus;
+  type: 'INCOME' | 'EXPENSE';
   date: string;
   description: string;
   discount?: number;
@@ -116,7 +134,8 @@ export interface Notification {
 
 export interface DoctorEfficiencyStats {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   specialty: string;
   totalBookings: number;
   totalVisits: number;

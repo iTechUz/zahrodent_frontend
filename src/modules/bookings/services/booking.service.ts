@@ -5,6 +5,7 @@ export const BookingService = {
   initialState: (): BookingFormValues => ({
     patientId: '',
     doctorId: '',
+    serviceId: '',
     date: '',
     time: '',
     source: 'walk-in',
@@ -15,6 +16,7 @@ export const BookingService = {
   mapToForm: (b: Booking): BookingFormValues => ({
     patientId: b.patientId,
     doctorId: b.doctorId,
+    serviceId: b.serviceId || '',
     date: b.date,
     time: b.time,
     source: b.source,

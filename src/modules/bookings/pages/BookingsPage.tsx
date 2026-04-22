@@ -40,11 +40,11 @@ function BookingsPageContent() {
     totalPages,
     openCreate,
     openEdit,
-    handleSave,
     handleDelete,
     handleStatusChange,
     isLoading,
     stats,
+    services,
   } = useBookings();
 
   const role = useStore(s => s.currentUser?.role);
@@ -62,7 +62,7 @@ function BookingsPageContent() {
       header: 'Shifokor', 
       accessor: (b) => {
         const d = doctors.find(doctor => doctor.id === b.doctorId);
-        return <span className="text-muted-foreground hidden sm:inline">{d?.name}</span>;
+        return <span className="text-muted-foreground hidden sm:inline">{d ? `Dr. ${d.firstName} ${d.lastName}` : '—'}</span>;
       },
       className: 'hidden sm:table-cell'
     },
@@ -239,6 +239,7 @@ function BookingsPageContent() {
         editing={editing}
         patients={patients}
         doctors={doctors}
+        services={services}
         onSave={handleSave}
       />
 

@@ -13,15 +13,17 @@ export const PatientSchema = z.object({
   lastName: requiredString('Familiya'),
   phone: phoneSchema,
   age: positiveNumber('Yosh'),
+  address: requiredString('Manzil'),
+  workplace: requiredString('Ish joyi'),
+  assignedDoctorId: z.string().optional(),
   source: z.enum(['walk-in', 'telegram', 'website', 'phone']).default('walk-in'),
   notes: z.string().optional(),
-  allergies: z.string().optional(),
-  bloodType: z.string().optional(),
 });
 
 export const BookingSchema = z.object({
   patientId: requiredString('Bemor'),
   doctorId: requiredString('Shifokor'),
+  serviceId: z.string().optional().or(z.literal('')),
   date: requiredString('Sana'),
   time: requiredString('Vaqt'),
   source: z.enum(['walk-in', 'telegram', 'website', 'phone']),
@@ -42,6 +44,7 @@ export const PaymentSchema = z.object({
   amount: positiveNumber('Summa'),
   method: z.enum(['cash', 'card', 'transfer', 'insurance']),
   status: z.enum(['paid', 'partial', 'unpaid']),
+  type: z.enum(['INCOME', 'EXPENSE']).default('INCOME'),
   description: z.string().min(3, "Tavsif kamida 3 ta belgidan iborat bo'lishi kerak"),
 });
 
@@ -54,11 +57,11 @@ export const doctorScheduleSlotSchema = z.object({
 
 export const DoctorSchema = z
   .object({
-    name: requiredString('Ism familiya'),
+    firstName: requiredString('Ism'),
+    lastName: requiredString('Familiya'),
     specialty: requiredString('Mutaxassislik'),
     phone: phoneSchema,
     password: z.string().min(6, "Kamida 6 ta belgi").optional().or(z.literal('')),
-    workingHours: requiredString('Ish vaqti'),
     /** Haftalik jadval (7 kun) — kartadagi katakchalar bilan mos */
     schedule: z.array(doctorScheduleSlotSchema).length(7),
     /** Vergul bilan ajratilgan sanalar, masalan: 2026-01-01, 2026-02-14 */
@@ -82,6 +85,11 @@ export const VisitSchema = z.object({
   diagnosis: z.string().optional(),
   treatment: z.string().optional(),
   notes: z.string().optional(),
+});
+
+export const PatientCommentSchema = z.object({
+  content: requiredString('Izoh'),
+  patientId: requiredString('Bemor'),
 });
 
 export type PatientFormValues = z.infer<typeof PatientSchema>;

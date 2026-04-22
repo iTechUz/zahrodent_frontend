@@ -9,7 +9,7 @@ import { useServerTable } from '@/shared/hooks/useServerTable';
 import { BookingService } from '../services/booking.service';
 import { BookingSchema } from '@/shared/lib/validation';
 import { z } from 'zod';
-import { bookingsApi, patientsApi, doctorsApi } from '@/lib/api/endpoints';
+import { bookingsApi, patientsApi, doctorsApi, servicesApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 
 type BookingFormValues = z.infer<typeof BookingSchema>;
@@ -46,6 +46,13 @@ export const useBookings = () => {
     enabled: authed,
   });
   const doctors = doctorsData?.data ?? [];
+
+  const { data: servicesData, isLoading: servicesLoading } = useQuery({
+    queryKey: queryKeys.services,
+    queryFn: () => servicesApi.list({ limit: 100 }),
+    enabled: authed,
+  });
+  const services = servicesData?.data ?? [];
 
   const createMut = useMutation({
     mutationFn: (body: BookingFormValues) => bookingsApi.create(body),
@@ -131,7 +138,8 @@ export const useBookings = () => {
         deleteMut.mutate(deleteId, { onSettled: () => setDeleteId(null) });
       }
     },
-    isLoading: table.isLoading || patientsLoading || doctorsLoading,
+    services,
+    isLoading: table.isLoading || patientsLoading || doctorsLoading || servicesLoading,
     stats,
   };
 };

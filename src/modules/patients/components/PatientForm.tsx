@@ -11,6 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { BOOKING_SOURCES, BOOKING_SOURCE_LABELS } from '@/shared/constants';
 import { Patient, BookingSource } from '@/shared/types';
 import { PatientSchema } from '@/shared/lib/validation';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { useQuery } from '@tanstack/react-query';
+import { doctorsApi } from '@/lib/api/endpoints';
 import * as z from 'zod';
 
 type PatientFormValues = z.infer<typeof PatientSchema>;
@@ -31,12 +34,24 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
       lastName: '',
       age: '',
       phone: '',
+      address: '',
+      workplace: '',
+      assignedDoctorId: '',
       source: 'walk-in',
       notes: '',
-      allergies: '',
-      bloodType: 'none',
     },
   });
+
+  const { data: doctorsData } = useQuery({
+    queryKey: ['doctors', 'list', 'all'],
+    queryFn: () => doctorsApi.list({ limit: 100 }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const doctorOptions = (doctorsData?.data || []).map((d) => ({
+    value: d.id,
+    label: `${d.firstName} ${d.lastName} (${d.specialty})`,
+  }));
 
   useEffect(() => {
     if (editing) {
@@ -45,10 +60,11 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
         lastName: editing.lastName,
         age: editing.age || '',
         phone: editing.phone,
+        address: editing.address || '',
+        workplace: editing.workplace || '',
+        assignedDoctorId: editing.assignedDoctorId || '',
         source: editing.source,
         notes: editing.notes || '',
-        allergies: editing.allergies || '',
-        bloodType: editing.bloodType || 'none',
       });
     } else {
       form.reset({
@@ -56,31 +72,28 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
         lastName: '',
         age: '',
         phone: '',
+        address: '',
+        workplace: '',
+        assignedDoctorId: '',
         source: 'walk-in',
         notes: '',
-        allergies: '',
-        bloodType: 'none',
       });
     }
   }, [editing, form, open]);
 
   const handleSubmit = (values: PatientFormValues) => {
-    const bloodType =
-      values.bloodType === 'none' || !values.bloodType?.trim()
-        ? undefined
-        : values.bloodType;
-    onSave({ ...values, bloodType });
+    onSave(values);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{editing ? "Bemorni tahrirlash" : "Yangi bemor qo'shish"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="firstName"
@@ -107,21 +120,7 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="age"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Yosh</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="25" {...field} value={field.value != null ? String(field.value) : ''} onChange={e => field.onChange(e.target.value)} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="phone"
@@ -135,27 +134,61 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="bloodType"
+                name="age"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Qon guruhi</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Tanlang" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Noma'lum</SelectItem>
-                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bt => (
-                          <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Yosh *</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="25" {...field} value={field.value != null ? String(field.value) : ''} onChange={e => field.onChange(e.target.value)} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Manzil *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masalan: Toshkent sh., Chilonzor" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="workplace"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ish joyi *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masalan: Zavod, Maktab" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="assignedDoctorId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Biriktirilgan shifokor</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={doctorOptions}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Shifokorni tanlang"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -183,19 +216,7 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
-              name="allergies"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Allergiyalar</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Masalan: Lidokain, Penisilin" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="notes"
@@ -203,13 +224,17 @@ export const PatientForm = ({ open, onOpenChange, editing, onSave }: PatientForm
                 <FormItem>
                   <FormLabel>Izoh</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Bemor haqida qo'shimcha ma'lumot..." {...field} />
+                    <Textarea 
+                      placeholder="Bemor haqida qo'shimcha ma'lumot..." 
+                      className="min-h-[100px]" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full h-11 text-base font-semibold">
               {editing ? "Yangilash" : "Qo'shish"}
             </Button>
           </form>

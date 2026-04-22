@@ -34,6 +34,12 @@ export const useDoctors = () => {
     enabled: authed,
   });
 
+  const { data: efficiencyData } = useQuery({
+    queryKey: ['doctors', 'efficiency'],
+    queryFn: () => doctorsApi.efficiency(),
+    enabled: authed && useStore.getState().currentUser?.role === 'admin',
+  });
+
   const { data: patientsData } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list({ limit: 1000 }),
@@ -172,6 +178,7 @@ export const useDoctors = () => {
     handleSaveVisit,
     isLoading: table.isLoading || visitsLoading,
     stats,
+    efficiency: efficiencyData ?? [],
   };
 };
 

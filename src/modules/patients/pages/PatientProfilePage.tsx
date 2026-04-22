@@ -11,10 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Wallet, Receipt, ArrowRight } from 'lucide-react';
-import { ToothRecord, VisitStatus, PaymentMethod, PaymentStatus, BookingSource } from '@/shared/types';
-import { BOOKING_SOURCE_LABELS, PAYMENT_STATUS_LABELS, VISIT_STATUS_LABELS } from '@/shared/constants';
 import { ToothChart, CONDITION_KEYS, CONDITION_LABELS } from '../components/ToothChart';
 import { usePatientProfile } from '../hooks/usePatientProfile';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Send, MessageSquare } from 'lucide-react';
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Naqd', card: 'Karta', transfer: "O'tkazma", insurance: 'Sug\'urta',
@@ -25,6 +26,7 @@ const fmt = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 export default function PatientProfilePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [newComment, setNewComment] = useState('');
   
   const {
     patient,
@@ -90,19 +92,25 @@ export default function PatientProfilePage() {
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{patient.createdAt}</span>
               <SourceBadge source={patient.source} />
             </div>
-            <div className="flex flex-wrap gap-3 mt-2">
-              {patient.bloodType && (
-                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-destructive/10 text-destructive">
-                  <Droplets className="w-3 h-3" />{patient.bloodType}
-                </span>
-              )}
-              {patient.allergies && (
-                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-warning/10 text-warning">
-                  <AlertTriangle className="w-3 h-3" />Allergiya: {patient.allergies}
-                </span>
-              )}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+              <div className="space-y-0.5">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Manzil</p>
+                <p className="text-xs font-medium">{patient.address || '—'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Ish joyi</p>
+                <p className="text-xs font-medium">{patient.workplace || '—'}</p>
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Biriktirilgan shifokor</p>
+                <p className="text-xs font-medium">
+                  {patient.assignedDoctor 
+                    ? `Dr. ${patient.assignedDoctor.firstName} ${patient.assignedDoctor.lastName}` 
+                    : 'Biriktirilmagan'}
+                </p>
+              </div>
             </div>
-            {patient.notes && <p className="text-xs text-muted-foreground mt-2">📝 {patient.notes}</p>}
+            {patient.notes && <p className="text-xs text-muted-foreground mt-3 italic">" {patient.notes} "</p>}
           </div>
           <div className="flex gap-3 text-center">
             <div className="px-4 py-2 rounded-lg bg-muted/30">
@@ -146,9 +154,16 @@ export default function PatientProfilePage() {
       <ToothChart toothChart={patient.toothChart || {}} onToothClick={openToothEdit} />
 
       <Tabs defaultValue="visits" className="w-full">
-        <TabsList>
-          <TabsTrigger value="visits">Tashriflar ({patientVisits.length})</TabsTrigger>
-          <TabsTrigger value="bookings">Qabullar ({patientBookings.length})</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="visits" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Tashriflar ({patientVisits.length})
+          </TabsTrigger>
+          <TabsTrigger value="bookings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Qabullar ({patientBookings.length})
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            Xronika
+          </TabsTrigger>
           {canManagePayments && (
             <TabsTrigger value="payments">To'lovlar ({patientPayments.length})</TabsTrigger>
           )}
@@ -174,7 +189,7 @@ export default function PatientProfilePage() {
                     </div>
                     <div>
                       <span className="text-sm font-semibold">{v.date}</span>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor?.name}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</p>
                     </div>
                   </div>
                   
@@ -258,7 +273,7 @@ export default function PatientProfilePage() {
               <div key={b.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
                 <div>
                   <p className="text-sm font-medium">{b.date} — {b.time}</p>
-                  <p className="text-xs text-muted-foreground">{doctor?.name}</p>
+                  <p className="text-xs text-muted-foreground">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <SourceBadge source={b.source} />
@@ -267,6 +282,81 @@ export default function PatientProfilePage() {
               </div>
             );
           })}
+        </TabsContent>
+
+        <TabsContent value="timeline" className="mt-4 space-y-6">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="p-4 border-b border-border bg-muted/30">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-primary" />
+                Bemor xronikasi (Izohlar)
+              </h3>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div className="flex gap-3">
+                <Avatar className="w-8 h-8 border">
+                   <AvatarFallback className="bg-primary/5 text-[10px] font-bold">ME</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <Textarea 
+                    placeholder="Izoh qoldiring..." 
+                    className="min-h-[80px] text-sm resize-none"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                        if (newComment.trim()) {
+                           handleAddComment(newComment);
+                           setNewComment('');
+                        }
+                      }
+                    }}
+                  />
+                  <div className="flex justify-end">
+                    <Button 
+                      size="sm" 
+                      className="gap-2"
+                      onClick={() => {
+                        if (newComment.trim()) {
+                          handleAddComment(newComment);
+                          setNewComment('');
+                        }
+                      }}
+                      disabled={isAddingComment || !newComment.trim()}
+                    >
+                      <Send className="w-3 h-3" /> {isAddingComment ? 'Yuborilmoqda...' : 'Yuborish'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 pt-2">
+                {!comments || comments.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4 italic">Hali hech qanday izoh yo'q</p>
+                ) : comments.map((c: any) => (
+                  <div key={c.id} className="flex gap-3 group animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Avatar className="w-8 h-8 border">
+                      <AvatarImage src={c.author.avatar} />
+                      <AvatarFallback className="bg-primary/5 text-[10px] font-bold">
+                        {c.author.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-foreground">{c.author.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{c.createdAt}</span>
+                      </div>
+                      <div className="p-3 rounded-2xl rounded-tl-none bg-muted/40 border border-border/50">
+                        <p className="text-xs leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         {canManagePayments && (
@@ -298,38 +388,59 @@ export default function PatientProfilePage() {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Bemor ma'lumotlarini tahrirlash</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Ism</Label><Input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} /></div>
-              <div><Label>Familiya</Label><Input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Ism *</Label>
+              <Input value={editForm.firstName} onChange={e => setEditForm({ ...editForm, firstName: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Yosh</Label><Input type="number" value={editForm.age} onChange={e => setEditForm({ ...editForm, age: e.target.value })} /></div>
-              <div><Label>Telefon</Label><Input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+            <div className="space-y-2">
+              <Label>Familiya *</Label>
+              <Input value={editForm.lastName} onChange={e => setEditForm({ ...editForm, lastName: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Qon guruhi</Label>
-                <Select value={editForm.bloodType || 'none'} onValueChange={v => setEditForm({ ...editForm, bloodType: v === 'none' ? '' : v })}>
-                  <SelectTrigger><SelectValue placeholder="Tanlang" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Noma'lum</SelectItem>
-                    {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(bt => <SelectItem key={bt} value={bt}>{bt}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Manba</Label>
-                <Select value={editForm.source} onValueChange={(v: BookingSource) => setEditForm({ ...editForm, source: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(['walk-in','telegram','website','phone'] as BookingSource[]).map(s => <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Yosh *</Label>
+              <Input type="number" value={editForm.age} onChange={e => setEditForm({ ...editForm, age: e.target.value })} />
             </div>
-            <div><Label>Allergiyalar</Label><Input placeholder="Masalan: Lidokain, Penisilin" value={editForm.allergies} onChange={e => setEditForm({ ...editForm, allergies: e.target.value })} /></div>
-            <div><Label>Izoh</Label><Textarea value={editForm.notes} onChange={e => setEditForm({ ...editForm, notes: e.target.value })} /></div>
-            <Button className="w-full" onClick={handleEditSave}>Yangilash</Button>
+            <div className="space-y-2">
+              <Label>Telefon *</Label>
+              <Input value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Manzil *</Label>
+              <Input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Ish joyi *</Label>
+              <Input value={editForm.workplace} onChange={e => setEditForm({ ...editForm, workplace: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Biriktirilgan shifokor</Label>
+              <SearchableSelect
+                options={doctors.map(d => ({ value: d.id, label: `${d.firstName} ${d.lastName} (${d.specialty})` }))}
+                value={editForm.assignedDoctorId}
+                onValueChange={v => setEditForm({ ...editForm, assignedDoctorId: v })}
+                placeholder="Shifokorni tanlang"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Manba</Label>
+              <Select value={editForm.source} onValueChange={(v: BookingSource) => setEditForm({ ...editForm, source: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(['walk-in','telegram','website','phone'] as BookingSource[]).map(s => <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+          <div className="space-y-2">
+            <Label>Izoh</Label>
+            <Textarea 
+              value={editForm.notes} 
+              onChange={e => setEditForm({ ...editForm, notes: e.target.value })} 
+              className="min-h-[100px]"
+            />
+          </div>
+          <Button className="w-full h-11 font-bold" onClick={handleEditSave}>Yangilash</Button>
         </DialogContent>
       </Dialog>
 
@@ -358,7 +469,7 @@ export default function PatientProfilePage() {
             <div><Label>Shifokor</Label>
               <Select value={visitForm.doctorId} onValueChange={v => setVisitForm({ ...visitForm, doctorId: v })}>
                 <SelectTrigger><SelectValue placeholder="Shifokorni tanlang" /></SelectTrigger>
-                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>{d.firstName} {d.lastName}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">

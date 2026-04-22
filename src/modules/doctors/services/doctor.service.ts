@@ -4,19 +4,19 @@ import { Doctor } from '@/shared/types';
 
 export const DoctorService = {
   initialState: (): DoctorFormValues => ({
-    name: '',
+    firstName: '',
+    lastName: '',
     specialty: '',
     phone: '',
-    workingHours: '',
     schedule: defaultDoctorSchedule(),
     daysOffText: '',
   }),
 
   mapToForm: (d: Doctor): DoctorFormValues => ({
-    name: d.name,
+    firstName: d.firstName,
+    lastName: d.lastName,
     specialty: d.specialty,
     phone: d.phone,
-    workingHours: d.workingHours ?? '',
     schedule: normalizeDoctorSchedule(d.schedule),
     daysOffText: d.daysOff?.length ? d.daysOff.join(', ') : '',
   }),

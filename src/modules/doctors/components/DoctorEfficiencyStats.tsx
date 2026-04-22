@@ -57,10 +57,10 @@ export function DoctorEfficiencyStats() {
               {/* Header */}
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
-                  {doctor.name[0]}
+                  {doctor.firstName[0]}{doctor.lastName[0]}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg leading-none">{doctor.name}</h3>
+                  <h3 className="font-bold text-lg leading-none">{doctor.firstName} {doctor.lastName}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{doctor.specialty}</p>
                 </div>
               </div>

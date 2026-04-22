@@ -14,8 +14,23 @@ import {
 import { useDoctors } from '../hooks/useDoctors';
 import { DoctorCard } from '../components/DoctorCard';
 import { DoctorForm, DoctorVisitForm } from '../components/DoctorForm';
-import { StatCard } from '@/shared/components/StatCard';
-import { Users, HeartPulse, ClipboardCheck, BarChart3, List } from 'lucide-react';
+import { Users, HeartPulse, ClipboardCheck, BarChart3, List, MoreVertical, Edit2, Trash2, Calendar } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { formatUzS } from '@/shared/lib/formatters';
+import { Badge } from '@/components/ui/badge';
 import { DoctorEfficiencyStats } from '../components/DoctorEfficiencyStats';
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
@@ -49,8 +64,8 @@ function DoctorsPageContent() {
     handleDeleteDoctor,
     openVisitForm,
     handleSaveVisit,
-    isLoading,
     stats,
+    efficiency,
   } = useDoctors();
 
   const [activeTab, setActiveTab] = useState<'list' | 'efficiency'>('list');
@@ -156,29 +171,83 @@ function DoctorsPageContent() {
       {activeTab === 'efficiency' ? (
         <DoctorEfficiencyStats />
       ) : (
-        <>
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-48 rounded-xl bg-card animate-pulse border border-border" />
-              ))}
-            </div>
+            <div className="p-8 text-center animate-pulse text-muted-foreground">Yuklanmoqda...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {doctors.map((d) => (
-                <DoctorCard 
-                  key={d.id} 
-                  doctor={d} 
-                  visits={visits} 
-                  patients={patients}
-                  onEdit={openEdit}
-                  onDelete={setDeleteId}
-                  onAddVisit={openVisitForm}
-                  onEditVisit={openVisitForm}
-                />
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ism</TableHead>
+                  <TableHead>Mutaxassislik</TableHead>
+                  <TableHead>Telefon</TableHead>
+                  <TableHead>Ish kunlari</TableHead>
+                  <TableHead className="text-right">Bemorlar</TableHead>
+                  <TableHead className="text-right">Daromad</TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {doctors.map((d) => {
+                  const eff = efficiency.find(e => e.id === d.id);
+                  const workingDays = d.schedule?.filter(s => s.isWorking).map(s => {
+                    const days = ['Yak', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sha'];
+                    return days[s.day];
+                  }) || [];
+
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell className="font-medium">
+                        {d.firstName} {d.lastName}
+                      </TableCell>
+                      <TableCell>{d.specialty}</TableCell>
+                      <TableCell>{d.phone}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {workingDays.map(day => (
+                            <Badge key={day} variant="outline" className="text-[10px] px-1 py-0 h-4">
+                              {day}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {eff?.uniquePatients || 0}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-success">
+                        {formatUzS(eff?.totalRevenue || 0)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEdit(d)}>
+                              <Edit2 className="w-4 h-4 mr-2" /> Tahrirlash
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openVisitForm(d)}>
+                              <Calendar className="w-4 h-4 mr-2" /> Tashrif qo'shish
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => setDeleteId(d.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" /> O'chirish
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
+        </div>
+      )}
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-xl border">
@@ -206,8 +275,6 @@ function DoctorsPageContent() {
               </div>
             </div>
           )}
-        </>
-      )}
 
       <DoctorForm 
         open={modalOpen} 

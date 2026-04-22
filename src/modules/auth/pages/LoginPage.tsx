@@ -8,12 +8,14 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { Sparkles, Eye, EyeOff, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function LoginPage() {
   const setSession = useStore((s) => s.setSession);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,7 +36,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await loginRequest({ phone: phone.trim(), password });
-      setSession(res.access_token, res.user);
+      setSession(res.access_token, res.user, rememberMe);
       toast.success(`Xush kelibsiz, ${res.user.name}!`);
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Telefon raqami yoki parol noto'g'ri";
@@ -101,6 +103,7 @@ export default function LoginPage() {
                 </div>
                 <PhoneInput
                   id="phone"
+                  name="username"
                   type="tel"
                   className="pl-10 h-11"
                   value={phone}
@@ -109,6 +112,7 @@ export default function LoginPage() {
                     setError('');
                   }}
                   autoComplete="username"
+                  required
                 />
               </div>
             </div>
@@ -121,6 +125,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   className="pl-10 pr-10 h-11"
@@ -130,6 +135,7 @@ export default function LoginPage() {
                     setError('');
                   }}
                   autoComplete="current-password"
+                  required
                 />
                 <button
                   type="button"
@@ -138,6 +144,22 @@ export default function LoginPage() {
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe} 
+                  onCheckedChange={(checked) => setRememberMe(!!checked)} 
+                />
+                <Label 
+                  htmlFor="remember" 
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Eslab qolish
+                </Label>
               </div>
             </div>
 

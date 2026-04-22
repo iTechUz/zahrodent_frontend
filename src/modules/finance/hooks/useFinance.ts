@@ -18,10 +18,10 @@ export const useFinance = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const table = useServerTable<Payment, { status?: string; method?: string; dateRange?: string }>({
+  const table = useServerTable<Payment, { status?: string; method?: string; dateRange?: string; type?: string }>({
     queryKey: queryKeys.payments,
     fetchFn: (params) => paymentsApi.list(params),
-    initialFilters: { status: 'all', method: 'all', dateRange: 'all' },
+    initialFilters: { status: 'all', method: 'all', dateRange: 'all', type: 'all' },
     perPage: 10,
   });
 
@@ -112,7 +112,7 @@ export const useFinance = () => {
       return {
         doctorId: ds.doctorId,
         total: ds.total,
-        name: doctor?.name ?? "Noma'lum",
+        name: doctor ? `${doctor.firstName} ${doctor.lastName}` : "Noma'lum",
         specialty: doctor?.specialty ?? '',
         percent: totalRevenue > 0 ? Math.round((ds.total / totalRevenue) * 100) : 0,
       };

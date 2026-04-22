@@ -1,5 +1,6 @@
 import { PageHeader } from '@/shared/components/PageHeader';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { formatUzS } from '@/shared/lib/formatters';
 import { 
   GrowthChart, 
   RevenueChart, 
@@ -9,12 +10,9 @@ import {
 
 export default function AnalyticsPage() {
   const {
-    monthlyPatients,
-    revenueGrowth,
-    conversionData,
-    sourceData,
     colors,
     canViewPayments,
+    serviceStats,
   } = useAnalytics();
 
   return (
@@ -70,6 +68,30 @@ export default function AnalyticsPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
+          <h3 className="text-sm font-semibold mb-4">Xizmatlar bo'yicha daromad</h3>
+          {canViewPayments ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {serviceStats.map((s, i) => (
+                <div key={i} className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border">
+                  <span className="text-xs text-muted-foreground truncate">{s.name}</span>
+                  <span className="text-lg font-bold text-primary">{formatUzS(s.revenue)}</span>
+                  <span className="text-[10px] text-muted-foreground mt-1">{s.patients} ta bemor</span>
+                </div>
+              ))}
+              {serviceStats.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center col-span-full">
+                  Ma'lumotlar mavjud emas.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              Faqat administrator uchun.
+            </p>
+          )}
         </div>
       </div>
     </div>

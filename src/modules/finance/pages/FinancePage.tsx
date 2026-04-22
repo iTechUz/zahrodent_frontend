@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PAYMENT_STATUSES, PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS } from '@/shared/constants';
 import { useFinance } from '../hooks/useFinance';
 import { TransactionForm } from '../components/TransactionForm';
@@ -66,8 +67,16 @@ export function FinancePageContent() {
       header: 'Summa',
       accessor: (p) => <span className="font-semibold">{formatUzS(p.amount)}</span>
     },
-    {
-      header: 'Usul',
+    { 
+      header: 'Turi', 
+      accessor: (p) => (
+        <span className={p.type === 'EXPENSE' ? 'text-destructive' : 'text-success'}>
+          {p.type === 'EXPENSE' ? 'Chiqim' : 'Kirim'}
+        </span>
+      )
+    },
+    { 
+      header: 'Usul', 
       accessor: (p) => PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS]
     },
     {
@@ -90,10 +99,17 @@ export function FinancePageContent() {
         action={
           <Button onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
-            To'lov qayd etish
+            To'lov qo'shish
           </Button>
         }
       />
+
+      <Tabs defaultValue="all" className="space-y-6" onValueChange={(val) => setFilters('type', val)}>
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="all">Barchasi</TabsTrigger>
+          <TabsTrigger value="INCOME">Kirimlar</TabsTrigger>
+          <TabsTrigger value="EXPENSE">Chiqimlar</TabsTrigger>
+        </TabsList>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -143,7 +159,7 @@ export function FinancePageContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {dr.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+                      {dr.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
                     </div>
                     <div>
                       <p className="text-sm font-medium leading-tight">{dr.name}</p>
@@ -278,6 +294,7 @@ export function FinancePageContent() {
         onOpenChange={() => setDeleteId(null)}
         onConfirm={handleDelete}
       />
+      </Tabs>
     </div>
   );
 }

@@ -66,7 +66,7 @@ function NotificationsHistoryTab({
                     {isDoctor ? (
                       <>
                         <div className="font-medium text-foreground flex items-center gap-2">
-                          {doctor?.name} <Badge variant="secondary" className="text-[10px] py-0">Shifokor</Badge>
+                          {doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : '—'} <Badge variant="secondary" className="text-[10px] py-0">Shifokor</Badge>
                         </div>
                         <div className="text-[10px] text-muted-foreground">{doctor?.phone}</div>
                       </>

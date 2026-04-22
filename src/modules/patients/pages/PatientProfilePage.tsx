@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,19 @@ import { usePatientProfile } from '../hooks/usePatientProfile';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, MessageSquare } from 'lucide-react';
+import { 
+  VISIT_STATUS_LABELS, 
+  BOOKING_SOURCE_LABELS, 
+  PAYMENT_STATUS_LABELS 
+} from '@/shared/constants';
+import { 
+  ToothRecord, 
+  VisitStatus, 
+  PaymentMethod, 
+  PaymentStatus, 
+  BookingSource,
+  Visit
+} from '@/shared/types';
 
 const METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Naqd', card: 'Karta', transfer: "O'tkazma", insurance: 'Sug\'urta',
@@ -63,6 +77,10 @@ export default function PatientProfilePage() {
     getVisitBalance,
     openPaymentForVisit,
     canManagePayments,
+    isAddingComment,
+    handleAddComment,
+    isLoading,
+    comments,
   } = usePatientProfile(id);
 
   if (!patient) return <div className="p-6 text-center text-muted-foreground">Bemor topilmadi</div>;

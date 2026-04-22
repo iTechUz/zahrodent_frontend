@@ -67,7 +67,7 @@ export function Topbar() {
           <DropdownMenuContent align="end" className="w-52">
             <div className="px-2 py-1.5">
               <p className="text-sm font-medium">{currentUser?.name}</p>
-              <p className="text-xs text-muted-foreground">{currentUser?.email}</p>
+              <p className="text-xs text-muted-foreground">{currentUser?.phone}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/settings')}>
@@ -126,7 +126,7 @@ export function Topbar() {
           <DropdownMenuContent align="end" className="w-52">
             <div className="px-2 py-1.5">
               <p className="text-sm font-medium">{currentUser?.name}</p>
-              <p className="text-xs text-muted-foreground">{currentUser?.email}</p>
+              <p className="text-xs text-muted-foreground">{currentUser?.phone}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/settings')}>

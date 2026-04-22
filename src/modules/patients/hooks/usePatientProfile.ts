@@ -133,7 +133,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     visitId: '' as string,
   });
 
-  const totalPaid = patientPayments.filter((p) => p.status === 'paid').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  const totalPaid = patientPayments.filter((p) => p.status === 'paid' || p.status === 'partial').reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const totalDue = patientVisits.reduce((s, v) => s + (Number(v.price) || 0), 0);
   const totalDebt = Math.max(0, totalDue - totalPaid);
 
@@ -287,7 +287,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
   const getVisitBalance = useCallback((visitId: string, visitPrice: number) => {
     const price = Number(visitPrice) || 0;
     const linkedPaid = patientPayments
-      .filter(p => p.visitId === visitId && p.status === 'paid')
+      .filter(p => p.visitId === visitId && (p.status === 'paid' || p.status === 'partial'))
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     return Math.max(0, price - linkedPaid);
   }, [patientPayments]);

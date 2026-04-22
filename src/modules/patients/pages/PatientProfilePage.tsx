@@ -553,58 +553,83 @@ export default function PatientProfilePage() {
           <DialogContent>
             <DialogHeader><DialogTitle>To'lov qayd etish</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              {payForm.visitId && (
-                <div className="bg-muted/50 rounded-lg p-3 border border-border/50 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Tashrif:</span>
-                    <span className="font-medium">{patientVisits.find(v => v.id === payForm.visitId)?.date}</span>
+              {(() => {
+                const payingAmount = Number(payForm.amount) || 0;
+                let currentDebt = totalDebt;
+                let contextStr = "Umumiy qarz";
+                
+                if (payForm.visitId && payForm.visitId !== 'none') {
+                  const visit = patientVisits.find(v => v.id === payForm.visitId);
+                  if (visit) {
+                    currentDebt = getVisitBalance(visit.id, Number(visit.price) || 0);
+                    contextStr = "Tashrif qarzi";
+                  }
+                }
+
+                const newBalance = Math.max(0, currentDebt - payingAmount);
+                const progressPercent = currentDebt > 0 
+                  ? Math.min(100, Math.max(0, (payingAmount / currentDebt) * 100))
+                  : (payingAmount > 0 ? 100 : 0);
+
+                return (
+                  <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                    <div className="flex items-center gap-2 mb-3">
+                       <Wallet className="w-4 h-4 text-primary" />
+                       <span className="text-sm font-semibold">{contextStr} tahlili</span>
+                    </div>
+                    
+                    {payForm.visitId && payForm.visitId !== 'none' && (
+                      <div className="flex justify-between text-xs pb-3 mb-3 border-b border-border/50">
+                        <span className="text-muted-foreground">Xizmat narxi (Jami):</span>
+                        <span className="font-medium">{fmt(Number(patientVisits.find(v => v.id === payForm.visitId)?.price) || 0)} so'm</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Hozirgi qarz:</span>
+                        <span className="font-medium text-destructive">{fmt(currentDebt)} so'm</span>
+                      </div>
+                      
+                      <div className="space-y-1.5 mt-2">
+                        <div className="flex justify-between text-[10px] uppercase font-bold tracking-wider">
+                          <span className="text-success">To'lanmoqda: {fmt(payingAmount)} so'm</span>
+                          <span className="text-muted-foreground">Qoladi: {fmt(newBalance)} so'm</span>
+                        </div>
+                        <div className="h-2.5 w-full bg-muted overflow-hidden rounded-full border border-border/50 relative">
+                          <div 
+                            className="absolute top-0 left-0 h-full bg-success transition-all duration-300 ease-out"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Xizmat narxi:</span>
-                    <span className="font-medium">{fmt(patientVisits.find(v => v.id === payForm.visitId)?.price || 0)} so'm</span>
-                  </div>
-                  <div className="flex justify-between text-sm pt-1 border-t border-border/50">
-                    <span className="font-semibold">Qolgan qarz:</span>
-                    <span className="font-bold text-destructive">
-                      {fmt(getVisitBalance(payForm.visitId, patientVisits.find(v => v.id === payForm.visitId)?.price || 0))} so'm
-                    </span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">To'lov summasi (so'm)</Label>
                 <div className="relative">
                   <Input 
                     type="number" 
-                    placeholder="Masalan: 500 000" 
+                    placeholder="Masalan: 50000" 
                     className="pl-9 h-11 text-lg font-semibold"
                     value={payForm.amount} 
-                    onChange={e => setPayForm({ ...payForm, amount: e.target.value })} 
+                    onChange={e => setPayForm({ ...payForm, amount: e.target.value, status: 'paid' })} 
                   />
                   <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">To'lov usuli</Label>
-                  <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Holat</Label>
-                  <Select value={payForm.status} onValueChange={(v: PaymentStatus) => setPayForm({ ...payForm, status: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(['paid','partial','unpaid'] as PaymentStatus[]).map(s => <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label className="text-xs block mb-1">To'lov usuli</Label>
+                <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5">

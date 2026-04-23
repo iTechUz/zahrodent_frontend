@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { CATEGORIES } from '../hooks/useServices';
@@ -153,9 +154,9 @@ export const ServiceForm = ({
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Narxi (so'm)</FormLabel>
+                    <FormLabel>Narxi</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="150000" {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value)} />
+                      <MoneyInput placeholder="150 000" value={field.value ?? ''} onChange={v => field.onChange(v)} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

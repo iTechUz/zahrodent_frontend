@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -491,7 +492,7 @@ export default function PatientProfilePage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Narxi (so'm)</Label><Input type="number" placeholder="Narxni kiriting" value={visitForm.price} onChange={e => setVisitForm({ ...visitForm, price: e.target.value })} /></div>
+              <div><Label>Narxi</Label><MoneyInput placeholder="300 000" value={visitForm.price} onChange={v => setVisitForm({ ...visitForm, price: v })} /></div>
               <div><Label>Holat</Label>
                 <Select value={visitForm.status} onValueChange={(v: VisitStatus) => setVisitForm({ ...visitForm, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -521,11 +522,10 @@ export default function PatientProfilePage() {
                 <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground">To'langan summa</Label>
-                    <Input 
-                      type="number" 
-                      placeholder="Masalan: 500 000" 
+                    <MoneyInput 
+                      placeholder="500 000" 
                       value={visitForm.payAmount} 
-                      onChange={e => setVisitForm({ ...visitForm, payAmount: e.target.value })} 
+                      onChange={v => setVisitForm({ ...visitForm, payAmount: v })} 
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -609,17 +609,13 @@ export default function PatientProfilePage() {
               })()}
 
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">To'lov summasi (so'm)</Label>
-                <div className="relative">
-                  <Input 
-                    type="number" 
-                    placeholder="Masalan: 50000" 
-                    className="pl-9 h-11 text-lg font-semibold"
-                    value={payForm.amount} 
-                    onChange={e => setPayForm({ ...payForm, amount: e.target.value, status: 'paid' })} 
-                  />
-                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                </div>
+                <Label className="text-xs text-muted-foreground mb-1 block">To'lov summasi</Label>
+                <MoneyInput 
+                  placeholder="50 000" 
+                  className="h-11 text-lg font-semibold"
+                  value={payForm.amount} 
+                  onChange={v => setPayForm({ ...payForm, amount: v, status: 'paid' })} 
+                />
               </div>
 
               <div>

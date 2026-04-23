@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { MoneyInput } from '@/components/ui/money-input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -105,9 +106,9 @@ export const TransactionForm = ({
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Summa (so'm) <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel>Summa <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="150000" {...field} onChange={e => field.onChange(Number(e.target.value))} />
+                      <MoneyInput placeholder="150 000" value={field.value ?? ''} onChange={v => field.onChange(Number(v))} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

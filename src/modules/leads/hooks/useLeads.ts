@@ -1,15 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { leadsApi } from '@/lib/api/endpoints';
 import { toast } from 'sonner';
 import { Lead } from '@/shared/types';
+import { useServerTable } from '@/shared/hooks/useServerTable';
 
 export const useLeads = () => {
   const queryClient = useQueryClient();
 
-  const { data: leads = [], isLoading } = useQuery({
+  const table = useServerTable<Lead, { startDate?: string; endDate?: string; status?: string }>({
     queryKey: ['leads'],
-    queryFn: () => leadsApi.list(),
+    fetchFn: (params) => leadsApi.list(params),
+    perPage: 20,
   });
+
+  // For the Kanban board, we still might need all leads or just the ones from the table depending on mode.
+  // Actually, table.data will hold the paginated leads.
 
   const updateStatusMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Lead['status'] }) => leadsApi.updateStatus(id, status),
@@ -28,8 +33,16 @@ export const useLeads = () => {
   });
 
   return {
-    leads,
-    isLoading,
+    leads: table.data,
+    totalCount: table.totalCount,
+    totalPages: table.totalPages,
+    page: table.page,
+    setPage: table.setPage,
+    search: table.search,
+    setSearch: table.setSearch,
+    filters: table.filters,
+    setFilters: table.setFilters,
+    isLoading: table.isLoading,
     updateStatus: updateStatusMut.mutate,
     isUpdating: updateStatusMut.isPending,
     deleteLead: deleteMut.mutate,

@@ -58,8 +58,8 @@ export const patientsApi = {
 };
 
 /** POST /doctors — to‘rt majburiy maydon + qolgan Doctor maydonlari ixtiyoriy */
-export type DoctorCreatePayload = Pick<Doctor, 'name' | 'specialty' | 'phone' | 'workingHours'> &
-  Partial<Doctor>;
+export type DoctorCreatePayload = Pick<Doctor, 'firstName' | 'lastName' | 'specialty' | 'phone'> &
+  Partial<Doctor> & { password?: string };
 
 export const doctorsApi = {
   list: (params?: ListParams & { specialty?: string }) =>
@@ -169,7 +169,8 @@ export const usersApi = {
 };
 
 export const leadsApi = {
-  list: () => apiRequest<Lead[]>('/leads'),
+  list: (params?: ListParams & { startDate?: string; endDate?: string; status?: string }) => 
+    apiRequest<PaginatedResponse<Lead>>(`/leads${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Lead>(`/leads/${id}`),
   updateStatus: (id: string, status: Lead['status']) => 
     apiRequest<Lead>(`/leads/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),

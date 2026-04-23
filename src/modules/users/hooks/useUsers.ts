@@ -34,7 +34,7 @@ export const useUsers = () => {
     },
   });
 
-  const dialog = useDialogState<SessionUser>({ name: '', email: '', role: 'receptionist' } as SessionUser);
+  const dialog = useDialogState<SessionUser, Record<string, any>>({ name: '', phone: '', role: 'receptionist', password: '' });
 
   const handleSave = useCallback(
     (data: any) => {
@@ -62,7 +62,7 @@ export const useUsers = () => {
     openCreate: dialog.openCreate,
     openEdit: (u: SessionUser) => dialog.openEdit(u, (item) => ({ 
       name: item.name, 
-      email: item.email, 
+      phone: item.phone, 
       role: item.role,
       specialty: item.specialty,
       password: '' 

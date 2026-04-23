@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
-import { ToothRecord, VisitStatus, PaymentMethod, PaymentStatus, BookingSource } from '@/shared/types';
+import { ToothRecord, VisitStatus, PaymentMethod, PaymentStatus, BookingSource, Visit } from '@/shared/types';
 import { toast } from 'sonner';
 import {
   patientsApi,
@@ -116,6 +116,8 @@ export const usePatientProfile = (patientId: string | undefined) => {
   const [visitForm, setVisitForm] = useState({
     doctorId: '',
     diagnosis: '',
+    treatment: '',
+    notes: '',
     price: '',
     status: 'completed' as VisitStatus,
     shouldPayNow: false,
@@ -212,6 +214,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
               amount: Number(visitForm.payAmount),
               method: visitForm.payMethod,
               status: 'paid',
+              type: 'INCOME',
               date: today,
               description: `${today} - Tashrif uchun to'lov`,
               visitId: newVisit.id,
@@ -255,6 +258,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
         amount: Number(payForm.amount),
         method: payForm.method,
         status: payForm.status,
+        type: 'INCOME',
         date: today,
         description: payForm.description,
         visitId: payForm.visitId || undefined,
@@ -299,7 +303,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
       amount: String(balance),
       method: 'cash',
       status: 'paid',
-      description: `${visit.date} - ${doctor?.name || 'Tashrif'} uchun to'lov`,
+      description: `${visit.date} - ${doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Tashrif'} uchun to'lov`,
       visitId: visit.id
     });
     setPaymentModal(true);

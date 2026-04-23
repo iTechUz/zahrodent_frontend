@@ -1,7 +1,7 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import { PageHeader } from '@/shared/components/PageHeader';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { BookingCalendar } from '@/components/BookingCalendar';
+import { DraggableBookingCalendar } from '@/components';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +17,7 @@ import { Booking } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { formatDate } from '@/shared/lib/formatters';
 import { StatCard } from '@/shared/components/StatCard';
+import { StatsSkeleton } from '@/components/Skeletons';
 
 function BookingsPageContent() {
   const {
@@ -112,27 +113,31 @@ function BookingsPageContent() {
         )} 
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
-        <StatCard 
-          title="Bugungi qabullar" 
-          value={stats?.today ?? 0} 
-          icon={<Clock className="w-5 h-5 text-primary" />} 
-          trend="Bugun uchun jami"
-        />
-        <StatCard 
-          title="Kutilmoqda" 
-          value={stats?.pending ?? 0} 
-          icon={<AlertCircle className="w-5 h-5 text-warning" />} 
-          trend="Tasdiqlanishi kerak"
-        />
-        <StatCard 
-          title="Bugun yakunlandi" 
-          value={stats?.completedToday ?? 0} 
-          icon={<CheckCircle2 className="w-5 h-5 text-success" />} 
-          trend="Muvaffaqiyatli qabullar"
-          trendUp={true}
-        />
-      </div>
+      {isLoading ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+          <StatCard 
+            title="Bugungi qabullar" 
+            value={stats?.today ?? 0} 
+            icon={<Clock className="w-5 h-5 text-primary" />} 
+            trend="Bugun uchun jami"
+          />
+          <StatCard 
+            title="Kutilmoqda" 
+            value={stats?.pending ?? 0} 
+            icon={<AlertCircle className="w-5 h-5 text-warning" />} 
+            trend="Tasdiqlanishi kerak"
+          />
+          <StatCard 
+            title="Bugun yakunlandi" 
+            value={stats?.completedToday ?? 0} 
+            icon={<CheckCircle2 className="w-5 h-5 text-success" />} 
+            trend="Muvaffaqiyatli qabullar"
+            trendUp={true}
+          />
+        </div>
+      )}
 
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="mb-4">
@@ -230,7 +235,7 @@ function BookingsPageContent() {
         </TabsContent>
 
         <TabsContent value="calendar">
-          <BookingCalendar />
+          <DraggableBookingCalendar />
         </TabsContent>
       </Tabs>
 

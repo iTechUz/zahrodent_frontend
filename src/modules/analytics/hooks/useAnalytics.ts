@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
-import { bookingsApi, patientsApi, paymentsApi, servicesApi } from '@/lib/api/endpoints';
+import { bookingsApi, patientsApi, paymentsApi, servicesApi, doctorsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 import { canAccessPayments } from '@/shared/config/roles';
 import {
@@ -81,6 +81,24 @@ export const useAnalytics = () => {
     }) || [];
   }, [serviceStats, services]);
 
+  const { data: efficiencyData } = useQuery({
+    queryKey: ['doctors', 'efficiency'],
+    queryFn: () => doctorsApi.efficiency(),
+    enabled: authed && canViewPayments,
+  });
+
+  const doctorEfficiency = useMemo(() => {
+    if (!efficiencyData) return [];
+    return efficiencyData.map(d => ({
+      name: `${d.firstName} ${d.lastName}`,
+      totalBookings: d.totalBookings,
+      totalVisits: d.totalVisits,
+      conversionRate: d.conversionRate,
+      avgCheck: d.avgCheck,
+      totalRevenue: d.totalRevenue,
+    }));
+  }, [efficiencyData]);
+
   const colors = [...REPORT_CHART_COLORS];
 
   return {
@@ -91,5 +109,6 @@ export const useAnalytics = () => {
     colors,
     canViewPayments,
     serviceStats: serviceIncomeData,
+    doctorEfficiency,
   };
 };

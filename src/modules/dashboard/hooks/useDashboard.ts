@@ -38,35 +38,35 @@ export const useDashboard = () => {
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = startOfCurrentMonth();
 
-  const { data: patientsRes } = useQuery({
+  const { data: patientsRes, isLoading: patientsLoading } = useQuery({
     queryKey: queryKeys.patients,
     queryFn: () => patientsApi.list({ limit: 300 }),
     enabled: authed,
   });
   const patients = patientsRes?.data ?? [];
 
-  const { data: bookingsRes } = useQuery({
+  const { data: bookingsRes, isLoading: bookingsLoading } = useQuery({
     queryKey: queryKeys.bookings,
     queryFn: () => bookingsApi.list({ limit: 300 }),
     enabled: authed,
   });
   const bookings = bookingsRes?.data ?? [];
 
-  const { data: paymentsRes } = useQuery({
+  const { data: paymentsRes, isLoading: paymentsLoading } = useQuery({
     queryKey: queryKeys.payments,
     queryFn: () => paymentsApi.list({ limit: 300 }),
     enabled: authed && canViewPayments,
   });
   const payments = paymentsRes?.data ?? [];
 
-  const { data: doctorsRes } = useQuery({
+  const { data: doctorsRes, isLoading: doctorsLoading } = useQuery({
     queryKey: queryKeys.doctors,
     queryFn: () => doctorsApi.list({ limit: 100 }),
     enabled: authed,
   });
   const doctors = doctorsRes?.data ?? [];
 
-  const { data: visitsRes } = useQuery({
+  const { data: visitsRes, isLoading: visitsLoading } = useQuery({
     queryKey: queryKeys.visits,
     queryFn: () => visitsApi.list({ limit: 300 }),
     enabled: authed,
@@ -124,6 +124,8 @@ export const useDashboard = () => {
     return all;
   }, [canViewPayments]);
 
+  const isLoading = patientsLoading || bookingsLoading || paymentsLoading || doctorsLoading || visitsLoading;
+
   return {
     patients,
     bookings,
@@ -145,5 +147,6 @@ export const useDashboard = () => {
     newPatientsTrend,
     revenueTrend,
     canViewPayments,
+    isLoading,
   };
 };

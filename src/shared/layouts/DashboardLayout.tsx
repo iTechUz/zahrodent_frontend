@@ -7,6 +7,7 @@ import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MobileNav } from '@/shared/layouts/components/MobileNav';
 
 const PageFallback = () => (
   <div className="flex-1 flex items-center justify-center min-h-[400px]">
@@ -33,11 +34,12 @@ export function DashboardLayout() {
           </Button>
           <Topbar />
         </header>
-        <main className="flex-1 p-4 overflow-auto animate-fade-in">
+        <main className="flex-1 p-4 pb-20 overflow-auto animate-fade-in">
           <Suspense fallback={<PageFallback />}>
             <Outlet />
           </Suspense>
         </main>
+        <MobileNav />
       </div>
     );
   }

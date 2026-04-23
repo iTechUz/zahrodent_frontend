@@ -12,7 +12,7 @@ interface StatCardProps {
 
 export function StatCard({ title, value, icon, trend, trendUp, className }: StatCardProps) {
   return (
-    <div className={cn('bg-card rounded-xl border border-border p-5 flex items-start justify-between', className)}>
+    <div className={cn('bg-card rounded-xl border border-border p-5 flex items-start justify-between premium-shadow hover:glow transition-all duration-300', className)}>
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground font-medium">{title}</p>
         <p className="text-2xl font-display font-bold text-card-foreground">{value}</p>

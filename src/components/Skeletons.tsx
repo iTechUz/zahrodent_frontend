@@ -28,3 +28,34 @@ export function CardSkeleton() {
     </div>
   );
 }
+export function StatsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <CardSkeleton />
+      <CardSkeleton />
+      <CardSkeleton />
+    </div>
+  );
+}
+
+export function DashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <StatsSkeleton />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card rounded-xl border border-border p-5 h-[300px]">
+          <Skeleton className="h-4 w-32 mb-4" />
+          <Skeleton className="h-full w-full opacity-50" />
+        </div>
+        <div className="bg-card rounded-xl border border-border p-5 h-[300px]">
+          <Skeleton className="h-4 w-32 mb-4" />
+          <Skeleton className="h-full w-full opacity-50" />
+        </div>
+      </div>
+    </div>
+  );
+}

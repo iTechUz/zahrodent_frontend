@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from './EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Column<T> {
   header: string;
@@ -137,12 +138,12 @@ export const DataTable = memo(<T extends { id?: string | number }>({
                 <tr key={i} className="border-b border-border last:border-0 h-12">
                   {columns.map((_, j) => (
                     <td key={j} className="px-4 py-3">
-                      <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                      <Skeleton className="h-4 w-3/4" />
                     </td>
                   ))}
                   {(onEdit || onDelete || onView) && (
                     <td className="px-4 py-3">
-                      <div className="h-8 w-8 bg-muted animate-pulse rounded ml-auto" />
+                      <Skeleton className="h-8 w-8 rounded-md ml-auto" />
                     </td>
                   )}
                 </tr>

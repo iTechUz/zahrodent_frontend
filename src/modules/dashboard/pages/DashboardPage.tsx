@@ -18,6 +18,7 @@ import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { useDashboard } from '../hooks/useDashboard';
 import { formatUzS, formatDate } from '@/shared/lib/formatters';
+import { DashboardSkeleton } from '@/components/Skeletons';
 
 function DashboardPageContent() {
   const {
@@ -40,7 +41,10 @@ function DashboardPageContent() {
     newPatientsTrend,
     revenueTrend,
     canViewPayments,
+    isLoading,
   } = useDashboard();
+
+  if (isLoading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6">

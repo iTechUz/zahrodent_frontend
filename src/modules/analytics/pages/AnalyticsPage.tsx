@@ -5,8 +5,11 @@ import {
   GrowthChart, 
   RevenueChart, 
   ConversionChart, 
-  SourcePieChart 
+  SourcePieChart,
+  DoctorEfficiencyChart,
+  ServiceRevenueHBarChart,
 } from '../components/Charts';
+import { TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const {
@@ -17,6 +20,7 @@ export default function AnalyticsPage() {
     revenueGrowth,
     conversionData,
     sourceData,
+    doctorEfficiency,
   } = useAnalytics();
 
   return (
@@ -27,13 +31,21 @@ export default function AnalyticsPage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bemorlar o'sishi */}
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold mb-4">Bemorlar o'sishi</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold">Bemorlar o'sishi</h3>
+          </div>
           <GrowthChart data={monthlyPatients} />
         </div>
 
+        {/* Daromad o'sishi */}
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold mb-4">Daromad o'sishi (mln so'm)</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-success" />
+            <h3 className="text-sm font-semibold">Daromad o'sishi (mln so'm)</h3>
+          </div>
           {canViewPayments ? (
             <RevenueChart data={revenueGrowth} />
           ) : (
@@ -43,8 +55,12 @@ export default function AnalyticsPage() {
           )}
         </div>
 
+        {/* Konversiya */}
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="text-sm font-semibold mb-4">Qabul konversiyasi</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-warning" />
+            <h3 className="text-sm font-semibold">Qabul konversiyasi</h3>
+          </div>
           <ConversionChart data={conversionData} />
           <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -58,6 +74,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Manba pie */}
         <div className="bg-card rounded-xl border border-border p-5">
           <h3 className="text-sm font-semibold mb-4">Qabul manbalari</h3>
           <SourcePieChart data={sourceData} colors={colors} />
@@ -74,29 +91,46 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold mb-4">Xizmatlar bo'yicha daromad</h3>
-          {canViewPayments ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {serviceStats.map((s, i) => (
-                <div key={i} className="flex flex-col p-3 rounded-lg bg-muted/30 border border-border">
-                  <span className="text-xs text-muted-foreground truncate">{s.name}</span>
-                  <span className="text-lg font-bold text-primary">{formatUzS(s.revenue)}</span>
-                  <span className="text-[10px] text-muted-foreground mt-1">{s.patients} ta bemor</span>
-                </div>
-              ))}
-              {serviceStats.length === 0 && (
-                <p className="text-sm text-muted-foreground py-8 text-center col-span-full">
-                  Ma'lumotlar mavjud emas.
-                </p>
-              )}
+        {/* Shifokorlar samaradorligi — NEW */}
+        {canViewPayments && doctorEfficiency.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold">Shifokorlar samaradorligi</h3>
             </div>
-          ) : (
+            <DoctorEfficiencyChart data={doctorEfficiency} />
+          </div>
+        )}
+
+        {/* Xizmatlar daromadi — NEW: horizontal bar chart */}
+        {canViewPayments && serviceStats.length > 0 && (
+          <div className="bg-card rounded-xl border border-border p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <DollarSign className="w-4 h-4 text-success" />
+              <h3 className="text-sm font-semibold">Xizmatlar bo'yicha daromad (TOP-8)</h3>
+            </div>
+            <ServiceRevenueHBarChart data={serviceStats} />
+          </div>
+        )}
+
+        {/* Xizmatlar detail cards (fallback if no chart data) */}
+        {canViewPayments && serviceStats.length === 0 && (
+          <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
+            <h3 className="text-sm font-semibold mb-4">Xizmatlar bo'yicha daromad</h3>
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              Ma'lumotlar mavjud emas.
+            </p>
+          </div>
+        )}
+
+        {!canViewPayments && (
+          <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
+            <h3 className="text-sm font-semibold mb-4">Xizmatlar bo'yicha daromad</h3>
             <p className="text-sm text-muted-foreground py-8 text-center">
               Faqat administrator uchun.
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

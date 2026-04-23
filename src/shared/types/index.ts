@@ -143,3 +143,17 @@ export interface DoctorEfficiencyStats {
   conversionRate: number;
   avgCheck: number;
 }
+
+export type LeadStatus = 'new' | 'contacted' | 'converted' | 'cancelled';
+
+export interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  service?: string;
+  message?: string;
+  status: LeadStatus;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+}

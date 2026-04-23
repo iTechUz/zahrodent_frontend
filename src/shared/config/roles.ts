@@ -16,11 +16,12 @@ export const roleAccess: Record<UserRole, string[]> = {
     '/finance',
     '/analytics',
     '/notifications',
+    '/leads',
     '/settings',
     '/users',
   ],
   doctor: ['/', '/bookings', '/patients', '/settings'],
-  receptionist: ['/', '/bookings', '/patients', '/services', '/notifications', '/settings'],
+  receptionist: ['/', '/bookings', '/patients', '/services', '/notifications', '/leads', '/settings'],
 };
 
 export const roleConfig: Record<UserRole, { label: string; color: string }> = {

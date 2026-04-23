@@ -9,6 +9,7 @@ import type {
   NotificationRecipient,
   DoctorEfficiencyStats,
   PatientComment,
+  Lead,
 } from '@/shared/types';
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
@@ -167,3 +168,10 @@ export const usersApi = {
   remove: (id: string) => apiRequest<{ id: string }>(`/users/${id}`, { method: 'DELETE' }),
 };
 
+export const leadsApi = {
+  list: () => apiRequest<Lead[]>('/leads'),
+  get: (id: string) => apiRequest<Lead>(`/leads/${id}`),
+  updateStatus: (id: string, status: Lead['status']) => 
+    apiRequest<Lead>(`/leads/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  remove: (id: string) => apiRequest<{ id: string }>(`/leads/${id}`, { method: 'DELETE' }),
+};

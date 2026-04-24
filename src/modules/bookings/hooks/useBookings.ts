@@ -20,7 +20,10 @@ export const useBookings = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewBooking, setViewBooking] = useState<Booking | null>(null);
 
-  const table = useServerTable<Booking, { status?: string; source?: string; dateRange?: string }>({
+  const table = useServerTable<
+    Booking,
+    { status?: string; source?: string; dateRange?: string; startDate?: string; endDate?: string }
+  >({
     queryKey: queryKeys.bookings,
     fetchFn: (params) => bookingsApi.list(params),
     initialFilters: { status: 'all', source: 'all', dateRange: 'all' },

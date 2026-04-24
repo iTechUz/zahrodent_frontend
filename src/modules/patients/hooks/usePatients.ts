@@ -18,7 +18,10 @@ export const usePatients = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const table = useServerTable<Patient, { source?: string }>({
+  const table = useServerTable<
+    Patient,
+    { source?: string; startDate?: string; endDate?: string; debtOnly?: string }
+  >({
     queryKey: queryKeys.patients,
     fetchFn: (params) => patientsApi.list(params),
     perPage: 10,

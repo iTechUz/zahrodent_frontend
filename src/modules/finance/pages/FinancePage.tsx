@@ -197,9 +197,33 @@ export function FinancePageContent() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border h-10">
+          <Input 
+            type="date" 
+            className="w-[140px] h-8 text-xs border-none bg-transparent" 
+            value={filters.startDate || ''} 
+            onChange={(e) => setFilters('startDate', e.target.value || undefined)}
+          />
+          <span className="text-muted-foreground text-xs">—</span>
+          <Input 
+            type="date" 
+            className="w-[140px] h-8 text-xs border-none bg-transparent" 
+            value={filters.endDate || ''} 
+            onChange={(e) => setFilters('endDate', e.target.value || undefined)}
+          />
+        </div>
+
         <Select
           value={filters.dateRange || 'all'}
-          onValueChange={(val) => setFilters('dateRange', val)}
+          onValueChange={(val) => {
+            setFilters('dateRange', val);
+            // Clear custom dates if quick range is selected
+            if (val !== 'all') {
+              setFilters('startDate', undefined);
+              setFilters('endDate', undefined);
+            }
+          }}
         >
           <SelectTrigger className="w-[150px]">
             <CalendarDays className="w-4 h-4 mr-2" />

@@ -128,25 +128,41 @@ function PatientsPageContent() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input 
-            placeholder="Ism, familiya yoki telefon bo'yicha qidirish..." 
-            className="pl-9" 
-            value={search} 
-            onChange={(e) => setSearch(e.target.value)} 
-          />
-        </div>
+      <div className="flex flex-col xl:flex-row gap-3 items-start xl:items-center justify-between">
+        <div className="flex flex-wrap gap-2 w-full xl:w-auto items-center">
+          <div className="relative w-full md:w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Ism, familiya yoki telefon..." 
+              className="pl-9 h-10" 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
+          </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
+            <Input 
+              type="date" 
+              className="w-[140px] h-8 text-xs border-none bg-transparent" 
+              value={filters.startDate || ''} 
+              onChange={(e) => setFilters('startDate', e.target.value || undefined)}
+            />
+            <span className="text-muted-foreground text-xs">—</span>
+            <Input 
+              type="date" 
+              className="w-[140px] h-8 text-xs border-none bg-transparent" 
+              value={filters.endDate || ''} 
+              onChange={(e) => setFilters('endDate', e.target.value || undefined)}
+            />
+          </div>
+
           <Select 
             value={filters.source || 'all'} 
             onValueChange={(val) => setFilters('source', val)}
           >
-            <SelectTrigger className="w-full md:w-[180px]">
+            <SelectTrigger className="w-[160px] h-10">
               <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Barcha manbalar" />
+              <SelectValue placeholder="Manbalar" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Barcha manbalar</SelectItem>
@@ -157,6 +173,15 @@ function PatientsPageContent() {
               ))}
             </SelectContent>
           </Select>
+
+          <Button 
+            variant={filters.debtOnly === 'true' ? 'destructive' : 'outline'}
+            className="h-10"
+            onClick={() => setFilters('debtOnly', filters.debtOnly === 'true' ? undefined : 'true')}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Qarzdorlar
+          </Button>
         </div>
       </div>
 

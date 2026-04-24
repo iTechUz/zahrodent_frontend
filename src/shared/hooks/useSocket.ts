@@ -21,7 +21,9 @@ export const useSocket = () => {
 
     if (!socket) {
       const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      socket = io(socketUrl);
+      socket = io(socketUrl, {
+        transports: ['websocket'],
+      });
 
       socket.on('connect', () => {
         console.log('Connected to WebSocket server');

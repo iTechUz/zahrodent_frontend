@@ -1,6 +1,9 @@
 import { clearAuthStorage, getAuthToken } from './auth-token';
 
-const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+let baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+if (baseUrl && !baseUrl.startsWith('http')) {
+  baseUrl = `https://${baseUrl}`;
+}
 
 export class ApiError extends Error {
   constructor(

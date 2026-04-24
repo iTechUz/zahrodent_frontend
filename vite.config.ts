@@ -9,10 +9,6 @@ export default defineConfig({
     port: 8070,
     allowedHosts: true,
     strictPort: true,
-    hmr: {
-      clientPort: 443,
-      overlay: false,
-    },
   },
   plugins: [react()],
   resolve: {

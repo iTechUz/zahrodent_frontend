@@ -10,6 +10,7 @@ import { DashboardLayout } from "@/shared/layouts/DashboardLayout";
 import { ProtectedRoute, GlobalSearch } from "@/components";
 import { useStore } from "@/store/useStore";
 import { LoadingScreen } from "@/shared/components";
+import { useSocket } from "@/shared/hooks/useSocket";
 
 // Module Routes
 import {
@@ -42,6 +43,7 @@ const queryClient = new QueryClient({
 
 const AppRoutes = () => {
   const { isAuthenticated } = useStore();
+  useSocket();
 
   const routes = useRoutes([
     // Auth routes (not protected, but redirect if authenticated)

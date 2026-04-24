@@ -66,11 +66,11 @@ export const usePatients = () => {
     (data: PatientFormValues) => {
       if (dialog.editingItem) {
         updateMut.mutate(
-          { id: dialog.editingItem.id, body: data },
+          { id: dialog.editingItem.id, body: data as any },
           { onSettled: () => dialog.closeDialog() },
         );
       } else {
-        createMut.mutate(data, { onSettled: () => dialog.closeDialog() });
+        createMut.mutate(data as any, { onSettled: () => dialog.closeDialog() });
       }
     },
     [dialog, createMut, updateMut],

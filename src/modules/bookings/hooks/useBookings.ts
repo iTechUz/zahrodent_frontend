@@ -58,7 +58,7 @@ export const useBookings = () => {
   const services = servicesData?.data ?? [];
 
   const createMut = useMutation({
-    mutationFn: (body: BookingFormValues) => bookingsApi.create(body),
+    mutationFn: (body: BookingFormValues) => bookingsApi.create(body as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings });
       toast.success('Yangi qabul yaratildi');
@@ -87,14 +87,14 @@ export const useBookings = () => {
     (data: BookingFormValues) => {
       if (dialog.editingItem) {
         updateMut.mutate(
-          { id: dialog.editingItem.id, body: data },
+          { id: dialog.editingItem.id, body: data as any },
           {
             onSuccess: () => toast.success('Qabul muvaffaqiyatli yangilandi'),
             onSettled: () => dialog.closeDialog(),
           },
         );
       } else {
-        createMut.mutate(data, { onSettled: () => dialog.closeDialog() });
+        createMut.mutate(data as any, { onSettled: () => dialog.closeDialog() });
       }
     },
     [dialog, createMut, updateMut],

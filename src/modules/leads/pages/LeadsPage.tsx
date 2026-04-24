@@ -134,11 +134,47 @@ export default function LeadsPage() {
     }
   ];
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const res = await leadsApi.list({ 
+        ...filters, 
+        search, 
+        limit: 10000 
+      });
+      
+      const exportData = res.data.map(l => ({
+        'Ism': l.name,
+        'Telefon': l.phone,
+        'Xizmat': l.service || '—',
+        'Holat': STATUS_COLUMNS.find(s => s.id === l.status)?.label || l.status,
+        'Manba': l.source === 'telegram_bot' ? 'Bot' : 'Web',
+        'Sana': l.createdAt,
+        'Xabar': l.message || ''
+      }));
+
+      exportToExcel(exportData, `Murojaatlar_Ro'yxati_${new Date().toISOString().split('T')[0]}`);
+      toast.success("Excel fayl tayyorlandi");
+    } catch (error) {
+      toast.error("Eksport qilishda xatolik yuz berdi");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 max-w-[1600px] mx-auto space-y-6">
       <PageHeader
         title="Murojaatlar (Lidlar)"
         description="Telegram bot orqali tushgan barcha murojaatlar"
+        action={
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+            <Download className="w-4 h-4 mr-2" />
+            Excel Export
+          </Button>
+        }
       />
 
       <div className="space-y-4">

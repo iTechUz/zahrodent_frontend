@@ -1,7 +1,6 @@
-import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 import {
   Plus, Search, DollarSign, TrendingUp, AlertTriangle,
-  Filter, CalendarDays, CreditCard, Stethoscope, BarChart3,
+  Filter, CalendarDays, CreditCard, Stethoscope, BarChart3, Download
 } from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { StatCard } from '@/shared/components/StatCard';
@@ -23,6 +22,12 @@ import { DataTable, Column } from '@/shared/components/DataTable';
 import { Payment } from '@/shared/types';
 import { formatUzS, formatDate } from '@/shared/lib/formatters';
 import { PaymentStatusBadge } from '@/shared/components/StatusBadge';
+import { exportToExcel } from '@/shared/lib/excel';
+import { paymentsApi } from '@/lib/api/endpoints';
+import { toast } from 'sonner';
+import { useState } from 'react';
+
+import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
 
 export function FinancePageContent() {
   const {
@@ -53,6 +58,39 @@ export function FinancePageContent() {
     handleDelete,
     isLoading,
   } = useFinance();
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const res = await paymentsApi.list({ 
+        ...filters, 
+        search, 
+        limit: 10000 
+      });
+      
+      const exportData = res.data.map(p => {
+        const pt = patients.find(patient => patient.id === p.patientId);
+        return {
+          'Bemor': `${pt?.firstName ?? ''} ${pt?.lastName ?? ''}`.trim() || '—',
+          'Summa': p.amount,
+          'Turi': p.type === 'EXPENSE' ? 'Chiqim' : 'Kirim',
+          'Usul': PAYMENT_METHOD_LABELS[p.method as keyof typeof PAYMENT_METHOD_LABELS] || p.method,
+          'Holat': PAYMENT_STATUS_LABELS[p.status as keyof typeof PAYMENT_STATUS_LABELS] || p.status,
+          'Sana': p.date,
+          'Tavsif': p.description || ''
+        };
+      });
+
+      exportToExcel(exportData, `Moliya_Hisoboti_${new Date().toISOString().split('T')[0]}`);
+      toast.success("Excel fayl tayyorlandi");
+    } catch (error) {
+      toast.error("Eksport qilishda xatolik yuz berdi");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const columns: Column<Payment>[] = [
     {
@@ -97,10 +135,16 @@ export function FinancePageContent() {
         title="Moliya"
         description="Daromad va to'lovlarni boshqarish"
         action={
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            To'lov qo'shish
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+              <Download className="w-4 h-4 mr-2" />
+              Excel Export
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />
+              To'lov qo'shish
+            </Button>
+          </div>
         }
       />
 

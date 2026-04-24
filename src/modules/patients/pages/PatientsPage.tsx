@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Download } from 'lucide-react';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,10 @@ import { Users, UserPlus, Target } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
 import { BOOKING_SOURCE_LABELS, BOOKING_SOURCES } from '@/shared/constants';
+import { exportToExcel } from '@/shared/lib/excel';
+import { patientsApi } from '@/lib/api/endpoints';
+import { toast } from 'sonner';
+import { useState } from "react";
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -94,17 +98,56 @@ function PatientsPageContent() {
     },
   ];
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const res = await patientsApi.list({ 
+        ...filters, 
+        search, 
+        limit: 10000 
+      });
+      
+      const exportData = res.data.map(p => ({
+        'Ism': p.firstName,
+        'Familiya': p.lastName,
+        'Yosh': p.age,
+        'Telefon': p.phone,
+        'Manba': BOOKING_SOURCE_LABELS[p.source as keyof typeof BOOKING_SOURCE_LABELS] || p.source,
+        'Balans': p.balance || 0,
+        'Shifokor': p.assignedDoctor ? `Dr. ${p.assignedDoctor.firstName} ${p.assignedDoctor.lastName}` : '—',
+        "Ro'yxatdan o'tgan sana": p.createdAt
+      }));
+
+      exportToExcel(exportData, `Bemorlar_Ro'yxati_${new Date().toISOString().split('T')[0]}`);
+      toast.success("Excel fayl tayyorlandi");
+    } catch (error) {
+      toast.error("Eksport qilishda xatolik yuz berdi");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader 
         title="Bemorlar" 
         description="Bemorlar ro'yxati va ularning ma'lumotlarini boshqarish" 
-        action={!isDoctor && (
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Bemor qo'shish
-          </Button>
-        )} 
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+              <Download className="w-4 h-4 mr-2" />
+              Excel Export
+            </Button>
+            {!isDoctor && (
+              <Button onClick={openCreate}>
+                <Plus className="w-4 h-4 mr-2" />
+                Bemor qo'shish
+              </Button>
+            )}
+          </div>
+        } 
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">

@@ -55,7 +55,7 @@ export const useFinance = () => {
   });
 
   const createMut = useMutation({
-    mutationFn: paymentsApi.create,
+    mutationFn: (body: PaymentFormValues) => paymentsApi.create(body as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments });
       queryClient.invalidateQueries({ queryKey: ['payments', 'stats'] });
@@ -91,11 +91,11 @@ export const useFinance = () => {
     (data: PaymentFormValues) => {
       if (dialog.editingItem) {
         updateMut.mutate(
-          { id: dialog.editingItem.id, body: data },
+          { id: dialog.editingItem.id, body: data as any },
           { onSettled: () => dialog.closeDialog() },
         );
       } else {
-        createMut.mutate(data, { onSettled: () => dialog.closeDialog() });
+        createMut.mutate(data as any, { onSettled: () => dialog.closeDialog() });
       }
     },
     [dialog, createMut, updateMut],

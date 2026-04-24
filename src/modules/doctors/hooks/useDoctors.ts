@@ -91,14 +91,14 @@ export const useDoctors = () => {
         ?.split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-      const body: DoctorCreatePayload = {
+      const body: any = {
         ...rest,
-        schedule,
+        schedule: schedule as any,
         ...(daysOff != null && daysOff.length > 0 ? { daysOff } : {}),
       };
       const id = dialog.editingItem?.id;
       saveDoctorMut.mutate(
-        id ? { id, body } : { body },
+        (id ? { id, body } : { body }) as any,
         { onSettled: () => dialog.closeDialog() },
       );
     },
@@ -126,7 +126,7 @@ export const useDoctors = () => {
       const today = new Date().toISOString().split('T')[0];
       if (editingVisit) {
         saveVisitMut.mutate(
-          { id: editingVisit.id, body: data },
+          { id: editingVisit.id, body: data as any },
           { onSettled: () => setVisitModal(false) },
         );
       } else {

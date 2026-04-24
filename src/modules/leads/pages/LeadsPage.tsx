@@ -141,42 +141,104 @@ export default function LeadsPage() {
         description="Telegram bot orqali tushgan barcha murojaatlar"
       />
 
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative w-full md:w-[300px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Ism yoki telefon qidirish..." 
-              className="pl-9" 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
-            />
-          </div>
-          
-          <Select 
-            value={filters.status || 'all'} 
-            onValueChange={(val) => setFilters('status', val === 'all' ? undefined : val)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Barcha holatlar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Barcha holatlar</SelectItem>
-              {STATUS_COLUMNS.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+          <div className="flex flex-wrap gap-2 w-full lg:w-auto items-center">
+            <div className="relative w-full md:w-[250px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Ism yoki telefon..." 
+                className="pl-9 h-10" 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+              />
+            </div>
+            
+            <Select 
+              value={filters.status || 'all'} 
+              onValueChange={(val) => setFilters('status', val === 'all' ? undefined : val)}
+            >
+              <SelectTrigger className="w-[150px] h-10">
+                <SelectValue placeholder="Barcha holatlar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Barcha holatlar</SelectItem>
+                {STATUS_COLUMNS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-[200px]">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="board"><LayoutGrid className="w-4 h-4 mr-2"/> Doska</TabsTrigger>
-            <TabsTrigger value="table"><List className="w-4 h-4 mr-2"/> Jadval</TabsTrigger>
-          </TabsList>
-        </Tabs>
+            <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border">
+              <Input 
+                type="date" 
+                className="w-[140px] h-8 text-xs border-none bg-transparent" 
+                value={filters.startDate || ''} 
+                onChange={(e) => setFilters('startDate', e.target.value || undefined)}
+              />
+              <span className="text-muted-foreground text-xs">—</span>
+              <Input 
+                type="date" 
+                className="w-[140px] h-8 text-xs border-none bg-transparent" 
+                value={filters.endDate || ''} 
+                onChange={(e) => setFilters('endDate', e.target.value || undefined)}
+              />
+              {(filters.startDate || filters.endDate) && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 text-muted-foreground" 
+                  onClick={() => {
+                    setFilters('startDate', undefined);
+                    setFilters('endDate', undefined);
+                  }}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
+
+            <Select 
+              onValueChange={(val) => {
+                const now = new Date();
+                let start: Date | undefined;
+                if (val === 'today') start = new Date(now.setHours(0,0,0,0));
+                if (val === 'week') start = new Date(now.setDate(now.getDate() - 7));
+                if (val === 'month') start = new Date(now.setMonth(now.getMonth() - 1));
+                if (val === 'year') start = new Date(now.setFullYear(now.getFullYear() - 1));
+                
+                if (start) {
+                  setFilters('startDate', start.toISOString().split('T')[0]);
+                  setFilters('endDate', new Date().toISOString().split('T')[0]);
+                } else {
+                  setFilters('startDate', undefined);
+                  setFilters('endDate', undefined);
+                }
+              }}
+            >
+              <SelectTrigger className="w-[130px] h-10">
+                <Clock className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Tezkor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Hammasi</SelectItem>
+                <SelectItem value="today">Bugun</SelectItem>
+                <SelectItem value="week">7 kun</SelectItem>
+                <SelectItem value="month">30 kun</SelectItem>
+                <SelectItem value="year">1 yil</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Tabs value={view} onValueChange={(v: any) => setView(v)} className="w-full sm:w-[200px]">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="board"><LayoutGrid className="w-4 h-4 mr-2"/> Doska</TabsTrigger>
+              <TabsTrigger value="table"><List className="w-4 h-4 mr-2"/> Jadval</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {view === 'board' ? (

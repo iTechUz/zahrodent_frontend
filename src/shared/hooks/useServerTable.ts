@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 interface UseServerTableOptions<T, F> {
-  queryKey: any[];
+  queryKey: readonly any[];
   fetchFn: (params: { page: number; limit: number; search: string } & F) => Promise<{ data: T[]; total: number }>;
   initialFilters?: F;
   perPage?: number;

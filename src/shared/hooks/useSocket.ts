@@ -1,14 +1,24 @@
 import { useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useStore } from '@/store/useStore';
 import { toast } from 'sonner';
 
 let socket: Socket | null = null;
 
 export const useSocket = () => {
   const queryClient = useQueryClient();
+  const isAuthenticated = useStore((s) => s.isAuthenticated);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+      }
+      return;
+    }
+
     if (!socket) {
       const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       socket = io(socketUrl);

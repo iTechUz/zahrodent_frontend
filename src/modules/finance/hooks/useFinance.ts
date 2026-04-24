@@ -18,7 +18,10 @@ export const useFinance = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const table = useServerTable<Payment, { status?: string; method?: string; dateRange?: string; type?: string }>({
+  const table = useServerTable<
+    Payment,
+    { status?: string; method?: string; dateRange?: string; type?: string; startDate?: string; endDate?: string }
+  >({
     queryKey: queryKeys.payments,
     fetchFn: (params) => paymentsApi.list(params),
     initialFilters: { status: 'all', method: 'all', dateRange: 'all', type: 'all' },

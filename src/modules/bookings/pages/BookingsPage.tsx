@@ -151,18 +151,41 @@ function BookingsPageContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Bemor qidirish..." 
-                className="pl-9" 
+                className="pl-9 h-10" 
                 value={search} 
                 onChange={(e) => setSearch(e.target.value)} 
               />
             </div>
+
+            <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border h-10">
+              <Input 
+                type="date" 
+                className="w-[140px] h-8 text-xs border-none bg-transparent" 
+                value={filters.startDate || ''} 
+                onChange={(e) => setFilters('startDate', e.target.value || undefined)}
+              />
+              <span className="text-muted-foreground text-xs">—</span>
+              <Input 
+                type="date" 
+                className="w-[140px] h-8 text-xs border-none bg-transparent" 
+                value={filters.endDate || ''} 
+                onChange={(e) => setFilters('endDate', e.target.value || undefined)}
+              />
+            </div>
+
             <Select 
               value={filters.dateRange || 'all'} 
-              onValueChange={(val) => setFilters('dateRange', val)}
+              onValueChange={(val) => {
+                setFilters('dateRange', val);
+                if (val !== 'all') {
+                  setFilters('startDate', undefined);
+                  setFilters('endDate', undefined);
+                }
+              }}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] h-10">
                 <CalendarDays className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Vaqt oralig'i" />
+                <SelectValue placeholder="Vaqt" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Barcha vaqtlar</SelectItem>

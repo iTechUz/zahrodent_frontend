@@ -283,7 +283,7 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {view === 'board' ? (
+      <div className={cn(view === 'board' ? "block" : "hidden")}>
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="grid grid-cols-1 w-full min-w-0 overflow-hidden">
             <div className="overflow-x-auto pb-8 custom-scrollbar">
@@ -349,7 +349,6 @@ export default function LeadsPage() {
                                         snapshot.isDragging ? "shadow-2xl rotate-[2deg] ring-4 ring-primary/10 border-primary z-50 bg-card" : ""
                                       )}
                                     >
-                                      {/* Source Badge Overlay */}
                                       <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Badge variant="outline" className="text-[9px] h-4 bg-background/80 backdrop-blur-xs font-bold uppercase tracking-tighter">
                                           {lead.source === 'telegram_bot' ? 'Bot' : 'Qo\'lda'}
@@ -436,42 +435,42 @@ export default function LeadsPage() {
             </div>
           </div>
         </DragDropContext>
-      ) : (
-        <div className="space-y-4">
-          <DataTable 
-            data={leads} 
-            columns={columns} 
-            isLoading={isLoading}
-          />
-          
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
-              <p className="text-xs text-muted-foreground">Jami: {totalCount} ta murojaat</p>
-              <div className="flex gap-1">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setPage(Math.max(0, page - 1))}
-                  disabled={page === 0}
-                >
-                  Oldingi
-                </Button>
-                <div className="flex items-center px-4 text-sm font-medium">
-                  {page + 1} / {totalPages}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                  disabled={page === totalPages - 1}
-                >
-                  Keyingi
-                </Button>
+      </div>
+
+      <div className={cn("space-y-4", view === 'table' ? "block" : "hidden")}>
+        <DataTable 
+          data={leads} 
+          columns={columns} 
+          isLoading={isLoading}
+        />
+        
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
+            <p className="text-xs text-muted-foreground">Jami: {totalCount} ta murojaat</p>
+            <div className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+              >
+                Oldingi
+              </Button>
+              <div className="flex items-center px-4 text-sm font-medium">
+                {page + 1} / {totalPages}
               </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                disabled={page === totalPages - 1}
+              >
+                Keyingi
+              </Button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Manual Entry Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

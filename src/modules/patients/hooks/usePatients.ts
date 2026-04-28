@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { patientsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 
+import { getMonthToDateRange } from '@/shared/lib/date-utils';
+
 type PatientFormValues = z.infer<typeof PatientSchema>;
 
 export const usePatients = () => {
@@ -18,12 +20,19 @@ export const usePatients = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const mtd = getMonthToDateRange();
+
   const table = useServerTable<
     Patient,
     { source?: string; startDate?: string; endDate?: string; debtOnly?: string }
   >({
     queryKey: queryKeys.patients,
     fetchFn: (params) => patientsApi.list(params),
+    initialFilters: { 
+      startDate: mtd.startDate, 
+      endDate: mtd.endDate,
+      source: 'all'
+    },
     perPage: 10,
   });
 

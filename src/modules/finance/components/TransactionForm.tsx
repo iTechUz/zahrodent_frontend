@@ -75,7 +75,7 @@ export const TransactionForm = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "To'lovni tahrirlash" : "Yangi to'lov qayd etish"}</DialogTitle>
         </DialogHeader>

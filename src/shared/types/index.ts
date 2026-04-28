@@ -144,7 +144,7 @@ export interface DoctorEfficiencyStats {
   avgCheck: number;
 }
 
-export type LeadStatus = 'new' | 'contacted' | 'converted' | 'cancelled';
+export type LeadStatus = 'new' | 'contacted' | 'consultation' | 'proposal' | 'converted' | 'cancelled';
 
 export interface Lead {
   id: string;
@@ -152,6 +152,7 @@ export interface Lead {
   phone: string;
   service?: string;
   message?: string;
+  notes?: string;
   status: LeadStatus;
   source: string;
   createdAt: string;

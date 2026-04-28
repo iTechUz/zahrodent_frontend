@@ -45,6 +45,20 @@ export const useLeads = () => {
     isLoading: table.isLoading,
     updateStatus: updateStatusMut.mutate,
     isUpdating: updateStatusMut.isPending,
+    createLead: useMutation({
+      mutationFn: leadsApi.create,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['leads'] });
+        toast.success("Yangi murojaat qo'shildi");
+      },
+    }).mutate,
+    updateLead: useMutation({
+      mutationFn: ({ id, ...data }: Partial<Lead> & { id: string }) => leadsApi.update(id, data),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['leads'] });
+        toast.success("Murojaat yangilandi");
+      },
+    }).mutate,
     deleteLead: deleteMut.mutate,
     isDeleting: deleteMut.isPending,
   };

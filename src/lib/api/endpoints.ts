@@ -172,6 +172,10 @@ export const leadsApi = {
   list: (params?: ListParams & { startDate?: string; endDate?: string; status?: string }) => 
     apiRequest<PaginatedResponse<Lead>>(`/leads${qs(params ?? {})}`),
   get: (id: string) => apiRequest<Lead>(`/leads/${id}`),
+  create: (body: Partial<Lead>) =>
+    apiRequest<Lead>('/leads', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: Partial<Lead>) =>
+    apiRequest<Lead>(`/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   updateStatus: (id: string, status: Lead['status']) => 
     apiRequest<Lead>(`/leads/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   remove: (id: string) => apiRequest<{ id: string }>(`/leads/${id}`, { method: 'DELETE' }),

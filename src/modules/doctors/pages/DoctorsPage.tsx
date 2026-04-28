@@ -1,5 +1,6 @@
 import { ErrorBoundary } from "@/shared/components/ErrorBoundary";
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { formatUzS } from '@/shared/lib/formatters';
+import { DOCTOR_WEEKDAY_LABELS } from '@/shared/lib/doctor-schedule';
 import { Badge } from '@/components/ui/badge';
 import { DoctorEfficiencyStats } from '../components/DoctorEfficiencyStats';
 import { useState } from 'react';
@@ -193,14 +195,18 @@ function DoctorsPageContent() {
                 {doctors.map((d) => {
                   const eff = efficiency.find(e => e.id === d.id);
                   const workingDays = d.schedule?.filter(s => s.isWorking).map(s => {
-                    const days = ['Yak', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sha'];
-                    return days[s.day];
+                    return DOCTOR_WEEKDAY_LABELS[s.day];
                   }) || [];
 
                   return (
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">
-                        {d.firstName} {d.lastName}
+                        <Link 
+                          to={`/doctors/${d.id}`}
+                          className="hover:text-primary transition-colors hover:underline"
+                        >
+                          {d.firstName} {d.lastName}
+                        </Link>
                       </TableCell>
                       <TableCell>{d.specialty}</TableCell>
                       <TableCell>{d.phone}</TableCell>
@@ -227,6 +233,11 @@ function DoctorsPageContent() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link to={`/doctors/${d.id}`} className="flex items-center">
+                                <Eye className="w-4 h-4 mr-2" /> Ko'rish
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEdit(d)}>
                               <Edit2 className="w-4 h-4 mr-2" /> Tahrirlash
                             </DropdownMenuItem>

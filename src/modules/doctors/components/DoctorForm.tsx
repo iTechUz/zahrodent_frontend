@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -44,27 +44,34 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
     },
   });
 
+  const { fields } = useFieldArray({
+    control: form.control,
+    name: "schedule",
+  });
+
   useEffect(() => {
-    if (editing) {
-      form.reset({
-        firstName: editing.firstName,
-        lastName: editing.lastName,
-        specialty: editing.specialty,
-        phone: editing.phone,
-        password: '',
-        schedule: normalizeDoctorSchedule(editing.schedule),
-        daysOffText: editing.daysOff?.length ? editing.daysOff.join(', ') : '',
-      });
-    } else {
-      form.reset({
-        firstName: '',
-        lastName: '',
-        specialty: '',
-        phone: '',
-        password: '',
-        schedule: defaultDoctorSchedule(),
-        daysOffText: '',
-      });
+    if (open) {
+      if (editing) {
+        form.reset({
+          firstName: editing.firstName,
+          lastName: editing.lastName,
+          specialty: editing.specialty,
+          phone: editing.phone,
+          password: '',
+          schedule: normalizeDoctorSchedule(editing.schedule),
+          daysOffText: editing.daysOff?.length ? editing.daysOff.join(', ') : '',
+        });
+      } else {
+        form.reset({
+          firstName: '',
+          lastName: '',
+          specialty: '',
+          phone: '',
+          password: '',
+          schedule: defaultDoctorSchedule(),
+          daysOffText: '',
+        });
+      }
     }
   }, [editing, form, open]);
 
@@ -168,21 +175,23 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
             <div className="space-y-2">
               <p className="text-sm font-medium">Haftalik jadval</p>
               <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/20">
-                {DOCTOR_WEEKDAY_LABELS.map((label, i) => {
-                  const working = form.watch(`schedule.${i}.isWorking`);
+                {fields.map((field, index) => {
+                  const working = form.watch(`schedule.${index}.isWorking`);
                   return (
                     <div
-                      key={label}
+                      key={field.id}
                       className="flex flex-wrap items-center gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="w-9 shrink-0 text-xs font-semibold text-muted-foreground">{label}</span>
+                      <span className="w-9 shrink-0 text-xs font-semibold text-muted-foreground">
+                        {DOCTOR_WEEKDAY_LABELS[index]}
+                      </span>
                       <FormField
                         control={form.control}
-                        name={`schedule.${i}.isWorking`}
-                        render={({ field }) => (
+                        name={`schedule.${index}.isWorking`}
+                        render={({ field: switchField }) => (
                           <FormItem className="flex flex-row items-center gap-2 space-y-0">
                             <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                              <Switch checked={switchField.value} onCheckedChange={switchField.onChange} />
                             </FormControl>
                             <FormLabel className="text-xs font-normal">Ish kuni</FormLabel>
                           </FormItem>
@@ -191,12 +200,11 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
                       <div className="flex flex-1 flex-wrap items-center gap-2 min-w-[200px]">
                         <FormField
                           control={form.control}
-                          name={`schedule.${i}.startTime`}
-                          render={({ field }) => (
+                          name={`schedule.${index}.startTime`}
+                          render={({ field: startField }) => (
                             <FormItem className="space-y-0">
-                              <FormLabel className="sr-only">Boshlanish</FormLabel>
                               <FormControl>
-                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...field} />
+                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...startField} />
                               </FormControl>
                             </FormItem>
                           )}
@@ -204,12 +212,11 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
                         <span className="text-xs text-muted-foreground">—</span>
                         <FormField
                           control={form.control}
-                          name={`schedule.${i}.endTime`}
-                          render={({ field }) => (
+                          name={`schedule.${index}.endTime`}
+                          render={({ field: endField }) => (
                             <FormItem className="space-y-0">
-                              <FormLabel className="sr-only">Tugash</FormLabel>
                               <FormControl>
-                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...field} />
+                                <Input type="time" className="h-8 w-[7.5rem] text-xs" disabled={!working} {...endField} />
                               </FormControl>
                             </FormItem>
                           )}
@@ -304,7 +311,7 @@ export const DoctorVisitForm = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingVisit ? "Tashrifni tahrirlash" : "Yangi tashrif"} — {doctor ? `${doctor.firstName} ${doctor.lastName}` : ''}</DialogTitle>
         </DialogHeader>

@@ -182,3 +182,13 @@ export const useDoctors = () => {
   };
 };
 
+export const useDoctor = (id: string) => {
+  const authed = useStore((s) => s.isAuthenticated);
+  
+  return useQuery({
+    queryKey: queryKeys.doctor(id),
+    queryFn: () => doctorsApi.get(id),
+    enabled: authed && !!id,
+  });
+};
+

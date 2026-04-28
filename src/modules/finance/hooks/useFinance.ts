@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { paymentsApi, patientsApi, doctorsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 
+import { getMonthToDateRange } from '@/shared/lib/date-utils';
+
 type PaymentFormValues = z.infer<typeof PaymentSchema>;
 
 export const useFinance = () => {
@@ -18,13 +20,22 @@ export const useFinance = () => {
   const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const mtd = getMonthToDateRange();
+
   const table = useServerTable<
     Payment,
     { status?: string; method?: string; dateRange?: string; type?: string; startDate?: string; endDate?: string }
   >({
     queryKey: queryKeys.payments,
     fetchFn: (params) => paymentsApi.list(params),
-    initialFilters: { status: 'all', method: 'all', dateRange: 'all', type: 'all' },
+    initialFilters: { 
+      status: 'all', 
+      method: 'all', 
+      dateRange: 'month', 
+      type: 'all',
+      startDate: mtd.startDate,
+      endDate: mtd.endDate
+    },
     perPage: 10,
   });
 

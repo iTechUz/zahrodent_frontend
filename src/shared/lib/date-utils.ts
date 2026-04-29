@@ -14,6 +14,6 @@ export const getMonthToDateRange = () => {
 
   return {
     startDate: formatDate(firstDay),
-    endDate: formatDate(now),
+    endDate: '',
   };
 };

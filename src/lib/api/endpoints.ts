@@ -178,5 +178,7 @@ export const leadsApi = {
     apiRequest<Lead>(`/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   updateStatus: (id: string, status: Lead['status']) => 
     apiRequest<Lead>(`/leads/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  convertToPatient: (id: string) => 
+    apiRequest<Patient>(`/leads/${id}/convert`, { method: 'POST', body: '{}' }),
   remove: (id: string) => apiRequest<{ id: string }>(`/leads/${id}`, { method: 'DELETE' }),
 };

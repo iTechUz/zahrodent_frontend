@@ -16,7 +16,6 @@ import {
   LayoutGrid, 
   List, 
   Copy, 
-  ExternalLink,
   MessageCircle,
   Clock,
   User,
@@ -28,10 +27,9 @@ import {
   CheckCircle2,
   XCircle,
   Stethoscope,
-  Send
+  Send,
+  UserPlus
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { leadsApi } from '@/lib/api/endpoints';
 import { exportToExcel } from '@/shared/lib/excel';
 import { DataTable, Column } from '@/shared/components/DataTable';
 import { formatDate } from '@/shared/lib/formatters';
@@ -59,6 +57,8 @@ export default function LeadsPage() {
     createLead,
     updateLead,
     deleteLead,
+    convertToPatient,
+    isConverting,
     search,
     setSearch,
     filters,
@@ -69,7 +69,6 @@ export default function LeadsPage() {
     totalCount
   } = useLeads();
   
-  const navigate = useNavigate();
   const [view, setView] = useState<'board' | 'table'>('board');
   
   // Lead Form State
@@ -139,10 +138,6 @@ export default function LeadsPage() {
     }
   };
 
-  const handleConvertToPatient = (lead: Lead) => {
-    navigate('/patients', { state: { createFromLead: lead } });
-  };
-
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
@@ -197,24 +192,18 @@ export default function LeadsPage() {
       }
     },
     {
-      header: 'Manba',
-      accessor: (l) => (
-        <Badge variant="outline" className="text-[10px] font-normal opacity-70">
-          {l.source === 'telegram_bot' ? 'Bot' : l.source === 'crm' ? 'Qo\'lda' : l.source}
-        </Badge>
-      )
-    },
-    {
       header: 'Amallar',
       accessor: (l) => (
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleOpenForm(l)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => handleOpenForm(l)} title="Tahrirlash">
             <Plus className="w-4 h-4 rotate-45" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => handleConvertToPatient(l)}>
-            <CalendarPlus className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteLead(l.id)}>
+          {l.status !== 'converted' && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={() => convertToPatient(l.id)} title="Bemorga aylantirish" disabled={isConverting}>
+              <UserPlus className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteLead(l.id)} title="O'chirish">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -300,7 +289,7 @@ export default function LeadsPage() {
                         "flex items-center justify-between p-4 mb-4 rounded-2xl border backdrop-blur-md shadow-sm transition-all",
                         column.bgColor,
                         "bg-opacity-40"
-                      )}>
+                       )}>
                         <div className="flex items-center gap-2.5">
                           <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-sm", column.color)}>
                             <column.icon className="w-5 h-5" />
@@ -310,9 +299,6 @@ export default function LeadsPage() {
                             <p className="text-[10px] opacity-70 font-medium">{columnLeads.length} ta</p>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="bg-white/80 font-bold border-none shadow-sm">
-                          {columnLeads.length}
-                        </Badge>
                       </div>
                       
                       <Droppable droppableId={column.id}>
@@ -376,13 +362,6 @@ export default function LeadsPage() {
                                           </div>
                                         )}
 
-                                        {lead.notes && (
-                                          <div className="relative p-3 rounded-xl bg-primary/5 border border-primary/10 text-[11px] text-primary line-clamp-2">
-                                            <FileText className="w-3 h-3 absolute -top-1.5 -right-1 text-primary/40" />
-                                            {lead.notes}
-                                          </div>
-                                        )}
-
                                         <div className="flex items-center justify-between pt-3 border-t border-dashed">
                                           <div className="flex items-center gap-1">
                                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-green-500/10 hover:text-green-600 transition-colors" asChild onClick={(e) => e.stopPropagation()}>
@@ -390,14 +369,21 @@ export default function LeadsPage() {
                                                 <MessageCircle className="w-4 h-4" />
                                               </a>
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-sky-500/10 hover:text-sky-600 transition-colors" asChild title="Telegramda yozish" onClick={(e) => e.stopPropagation()}>
-                                              <a href={`https://t.me/${lead.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer">
-                                                <Send className="w-4 h-4" />
-                                              </a>
-                                            </Button>
                                           </div>
                                           
                                           <div className="flex items-center gap-1">
+                                            {lead.status !== 'converted' && (
+                                              <Button 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-8 w-8 rounded-lg text-green-600 hover:bg-green-600/10 transition-colors" 
+                                                onClick={(e) => { e.stopPropagation(); convertToPatient(lead.id); }} 
+                                                title="Bemorga aylantirish"
+                                                disabled={isConverting}
+                                              >
+                                                <UserPlus className="w-4 h-4" />
+                                              </Button>
+                                            )}
                                             <Button 
                                               variant="ghost" 
                                               size="icon" 
@@ -406,15 +392,6 @@ export default function LeadsPage() {
                                               title="Tahrirlash"
                                             >
                                               <Plus className="w-4 h-4 rotate-45" />
-                                            </Button>
-                                            <Button 
-                                              variant="ghost" 
-                                              size="icon" 
-                                              className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10 transition-colors" 
-                                              onClick={(e) => { e.stopPropagation(); deleteLead(lead.id); }} 
-                                              title="O'chirish"
-                                            >
-                                              <Trash2 className="w-4 h-4" />
                                             </Button>
                                           </div>
                                         </div>
@@ -443,33 +420,6 @@ export default function LeadsPage() {
           columns={columns} 
           isLoading={isLoading}
         />
-        
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-card rounded-b-xl border-x">
-            <p className="text-xs text-muted-foreground">Jami: {totalCount} ta murojaat</p>
-            <div className="flex gap-1">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(Math.max(0, page - 1))}
-                disabled={page === 0}
-              >
-                Oldingi
-              </Button>
-              <div className="flex items-center px-4 text-sm font-medium">
-                {page + 1} / {totalPages}
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                disabled={page === totalPages - 1}
-              >
-                Keyingi
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Manual Entry Form Dialog */}
@@ -511,29 +461,6 @@ export default function LeadsPage() {
                 onChange={(e) => setFormValues({ ...formValues, service: e.target.value })}
                 className="rounded-xl"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Xabar (ixtiyoriy)</Label>
-              <Textarea 
-                id="message" 
-                placeholder="Mijoz qoldirgan xabar..." 
-                value={formValues.message}
-                onChange={(e) => setFormValues({ ...formValues, message: e.target.value })}
-                className="rounded-xl min-h-[80px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Varonka bosqichi</Label>
-              <Select value={formValues.status} onValueChange={(v) => setFormValues({ ...formValues, status: v as LeadStatus })}>
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Bosqichni tanlang" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_COLUMNS.map(col => (
-                    <SelectItem key={col.id} value={col.id}>{col.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -578,21 +505,14 @@ export default function LeadsPage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
-                <p className="text-[10px] text-muted-foreground italic">
-                  * Ushbu izohlar faqat klinika xodimlari uchun ko'rinadi
-                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-muted/20 rounded-xl border border-dashed text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Manba</p>
-                  <p className="text-xs font-medium">{selectedLead.source === 'telegram_bot' ? 'Telegram Bot' : 'CRM (Qo\'lda)'}</p>
-                </div>
-                <div className="p-3 bg-muted/20 rounded-xl border border-dashed text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold mb-1">Xizmat</p>
-                  <p className="text-xs font-medium">{selectedLead.service || 'Belgilanmagan'}</p>
-                </div>
-              </div>
+              {selectedLead.status !== 'converted' && (
+                <Button className="w-full rounded-xl gap-2 bg-green-600 hover:bg-green-700 h-11" onClick={() => convertToPatient(selectedLead.id)} disabled={isConverting}>
+                  <UserPlus className="w-4 h-4" />
+                  Bemorlar ro'yxatiga qo'shish
+                </Button>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">

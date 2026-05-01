@@ -70,7 +70,10 @@ function BookingsPageContent() {
     },
     { 
       header: 'Sana/Vaqt', 
-      accessor: (b) => <span className="text-muted-foreground">{formatDate(b.date)} {b.time}</span> 
+      accessor: (b) => {
+        const start = new Date(b.startTime);
+        return <span className="text-muted-foreground">{formatDate(start.toISOString().split('T')[0])} {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      }
     },
     { 
       header: 'Manba', 

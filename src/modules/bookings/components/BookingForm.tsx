@@ -311,3 +311,49 @@ export const BookingForm = ({
     </Dialog>
   );
 };
+
+interface BookingDetailsProps {
+  booking: Booking | null;
+  onClose: () => void;
+  patients: Patient[];
+  doctors: Doctor[];
+}
+
+export const BookingDetails = ({ booking, onClose, patients, doctors }: BookingDetailsProps) => {
+  if (!booking) return null;
+
+  const patient = patients.find((p) => p.id === booking.patientId);
+  const doctor = doctors.find((d) => d.id === booking.doctorId);
+
+  return (
+    <Dialog open={!!booking} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Qabul tafsilotlari</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Bemor</span>
+            <span className="font-medium">{patient?.firstName} {patient?.lastName}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Shifokor</span>
+            <span className="font-medium">{doctor?.user?.name || '—'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Vaqt</span>
+            <span>{new Date(booking.startTime).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Manba</span>
+            <SourceBadge source={booking.source} />
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Holat</span>
+            <StatusBadge status={booking.status} />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

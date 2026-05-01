@@ -7,7 +7,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Payment, Patient, PaymentMethod, PaymentStatus } from '@/shared/types';
+import { Payment, Patient, PaymentMethod } from '@/shared/types';
 import { 
   PAYMENT_METHODS, 
   PAYMENT_STATUSES, 
@@ -39,9 +39,9 @@ export const TransactionForm = ({
     resolver: zodResolver(PaymentSchema),
     defaultValues: {
       patientId: '',
-      amount: undefined as any,
-      method: 'cash',
-      status: 'paid',
+      amount: 0,
+      method: 'CASH',
+      status: 'COMPLETED',
       type: 'INCOME',
       description: '',
     },
@@ -52,17 +52,17 @@ export const TransactionForm = ({
       form.reset({
         patientId: editing.patientId,
         amount: editing.amount,
-        method: editing.method,
+        method: editing.method as PaymentMethod,
         status: editing.status,
         type: editing.type || 'INCOME',
-        description: editing.description,
+        description: editing.description || '',
       });
     } else {
       form.reset({
         patientId: '',
-        amount: undefined as any,
-        method: 'cash',
-        status: 'paid',
+        amount: 0,
+        method: 'CASH',
+        status: 'COMPLETED',
         type: 'INCOME',
         description: '',
       });
@@ -129,6 +129,8 @@ export const TransactionForm = ({
                       <SelectContent>
                         <SelectItem value="INCOME">Kirim</SelectItem>
                         <SelectItem value="EXPENSE">Chiqim</SelectItem>
+                        <SelectItem value="REFUND">Qaytarish</SelectItem>
+                        <SelectItem value="PREPAYMENT">Avans</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -175,7 +177,7 @@ export const TransactionForm = ({
                       </FormControl>
                       <SelectContent>
                         {PAYMENT_STATUSES.map((s) => (
-                          <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s as PaymentStatus]}</SelectItem>
+                          <SelectItem key={s} value={s}>{PAYMENT_STATUS_LABELS[s] || s}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Stethoscope,
-  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList, ShieldCheck, MessageSquare
+  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList, ShieldCheck, MessageSquare, Building2
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -12,6 +12,7 @@ import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 const allNavItems = [
   { title: 'Bosh sahifa', path: '/', icon: LayoutDashboard },
+  { title: 'Filiallar', path: '/branches', icon: Building2 },
   { title: 'Qabullar', path: '/bookings', icon: CalendarDays },
   { title: 'Bemorlar', path: '/patients', icon: Users },
   { title: 'Shifokorlar', path: '/doctors', icon: Stethoscope },
@@ -32,8 +33,8 @@ interface AppSidebarProps {
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
   const { currentUser } = useStore();
-  const role = currentUser?.role || 'receptionist';
-  const allowedPaths = roleAccess[role];
+  const role = currentUser?.role || 'RECEPTIONIST';
+  const allowedPaths = roleAccess[role as keyof typeof roleAccess] || [];
   const navItems = allNavItems.filter((item) => allowedPaths.includes(item.path));
   const isMobile = useIsMobile();
 
@@ -67,8 +68,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{currentUser.name}</p>
-              <Badge variant="outline" className={cn('text-[9px] px-1 py-0 h-3.5 border', roleConfig[currentUser.role].color)}>
-                {roleConfig[currentUser.role].label}
+              <Badge variant="outline" className={cn('text-[9px] px-1 py-0 h-3.5 border', roleConfig[currentUser.role]?.color)}>
+                {roleConfig[currentUser.role]?.label || currentUser.role}
               </Badge>
             </div>
           </div>

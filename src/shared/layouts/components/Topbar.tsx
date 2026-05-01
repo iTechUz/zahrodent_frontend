@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { notificationsApi } from '@/lib/api/endpoints';
 import { queryKeys } from '@/lib/api/query-keys';
 import { useLogout } from '@/hooks/useLogout';
+import { BranchSwitcher } from '@/shared/components/BranchSwitcher';
 
 export function Topbar() {
   const { darkMode, toggleDarkMode, currentUser } = useStore();
@@ -85,10 +86,11 @@ export function Topbar() {
 
   return (
     <header className="h-14 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 sticky top-0 z-30">
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground">
+      <div className="flex items-center gap-4">
+        <h2 className="text-sm font-medium text-muted-foreground hidden sm:block">
           Xush kelibsiz, <span className="text-foreground font-semibold">{currentUser?.name || 'Foydalanuvchi'}</span>
         </h2>
+        <BranchSwitcher />
       </div>
       <div className="flex items-center gap-2">
         <button

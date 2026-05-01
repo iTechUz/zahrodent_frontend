@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'doctor' | 'receptionist';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'DOCTOR' | 'RECEPTIONIST';
 
 /** API login javabi — parolsiz sessiya foydalanuvchisi */
 export interface SessionUser {
@@ -9,4 +9,5 @@ export interface SessionUser {
   specialty?: string;
   avatar?: string;
   doctorId?: string; // Doctor record id (doctor role only)
+  branchId?: string;
 }

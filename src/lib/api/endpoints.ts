@@ -14,6 +14,20 @@ import type {
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
 
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  isActive: boolean;
+  createdAt: string;
+  _count?: {
+    patients: number;
+    users: number;
+    bookings?: number;
+  };
+}
+
 export async function loginRequest(body: { phone: string; password: string }) {
   return apiRequest<{ access_token: string; user: SessionUser }>('/auth/login', {
     method: 'POST',
@@ -181,4 +195,14 @@ export const leadsApi = {
   convertToPatient: (id: string) => 
     apiRequest<Patient>(`/leads/${id}/convert`, { method: 'POST', body: '{}' }),
   remove: (id: string) => apiRequest<{ id: string }>(`/leads/${id}`, { method: 'DELETE' }),
+};
+
+export const branchesApi = {
+  list: () => apiRequest<Branch[]>('/branches'),
+  get: (id: string) => apiRequest<Branch>(`/branches/${id}`),
+  create: (body: Partial<Branch>) =>
+    apiRequest<Branch>('/branches', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id: string, body: Partial<Branch>) =>
+    apiRequest<Branch>(`/branches/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  remove: (id: string) => apiRequest<{ id: string }>(`/branches/${id}`, { method: 'DELETE' }),
 };

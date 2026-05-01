@@ -1,4 +1,5 @@
 import { clearAuthStorage, getAuthToken } from './auth-token';
+import { useStore } from '@/store/useStore';
 
 let baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 if (baseUrl && !baseUrl.startsWith('http')) {
@@ -25,12 +26,25 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const { skipAuth, ...init } = options;
   const url = path.startsWith('http') ? path : `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
   const headers = new Headers(init.headers);
+  
   if (!headers.has('Content-Type') && init.body && !(init.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
+  
   if (!skipAuth) {
     const token = getAuthToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);
+    
+    // SaaS Multi-tenancy: Inject selected branch ID for SuperAdmin
+    // We use the store to get the currently selected branch
+    try {
+      const activeBranchId = useStore.getState().activeBranchId;
+      if (activeBranchId) {
+        headers.set('x-branch-id', activeBranchId);
+      }
+    } catch (e) {
+      // In some environments useStore might not be initialized yet
+    }
   }
 
   const res = await fetch(url, { ...init, headers });
@@ -40,8 +54,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     try {
       data = JSON.parse(text) as Record<string, unknown>;
     } catch {
-      // Backend/proxy ba'zan HTML yoki plaintext qaytarishi mumkin.
-      // Shunda JSON.parse xato bo'lib, UI keskin yiqilib qolmasin.
       if (res.ok) {
         throw new ApiError(res.status, 'Invalid JSON response');
       }

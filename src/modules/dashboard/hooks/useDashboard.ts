@@ -74,14 +74,16 @@ export const useDashboard = () => {
   const visits = visitsRes?.data ?? [];
 
   const todayBookings = bookings.filter((b) => b.date === today);
-  const totalRevenue = payments.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
+  const totalRevenue = payments
+    .filter((p) => p.status === 'paid' || p.status === 'COMPLETED')
+    .reduce((s, p) => s + Number(p.amount), 0);
   const newPatients = patients.filter((p) => p.createdAt >= monthStart).length;
   const completedToday = todayBookings.filter((b) => b.status === 'completed').length;
   const pendingBookings = bookings.filter((b) => b.status === 'pending').length;
-  const unpaidPayments = payments.filter((p) => p.status !== 'paid');
-  const totalDebt = unpaidPayments.reduce((s, p) => s + p.amount, 0);
+  const unpaidPayments = payments.filter((p) => p.status !== 'paid' && p.status !== 'COMPLETED');
+  const totalDebt = unpaidPayments.reduce((s, p) => s + Number(p.amount), 0);
   const activeDoctors = doctors.filter((d) =>
-    visits.some((v) => v.doctorId === d.id && v.status === 'in-progress'),
+    visits.some((v) => v.doctorId === d.id && (v as any).status === 'in-progress'),
   ).length;
 
   const buckets6 = useMemo(() => getLastNCalendarMonths(6), []);

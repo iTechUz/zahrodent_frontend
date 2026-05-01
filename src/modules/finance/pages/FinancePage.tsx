@@ -24,6 +24,7 @@ import { formatUzS, formatDate } from '@/shared/lib/formatters';
 import { PaymentStatusBadge } from '@/shared/components/StatusBadge';
 import { exportToExcel } from '@/shared/lib/excel';
 import { paymentsApi } from '@/lib/api/endpoints';
+import { useStore } from '@/store/useStore';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -129,21 +130,29 @@ export function FinancePageContent() {
 
   const maxDoctorTotal = doctorRevenue[0]?.total ?? 1;
 
+  const { currentUser, activeBranchId } = useStore();
+  const isGlobal = currentUser?.role === 'SUPER_ADMIN' && !activeBranchId;
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Moliya"
-        description="Daromad va to'lovlarni boshqarish"
+        title={isGlobal ? "Global Moliya" : "Moliya"}
+        description={isGlobal 
+          ? "Barcha filiallar bo'yicha agregatsiyalangan daromad va xarajatlar" 
+          : "Daromad va to'lovlarni boshqarish"
+        }
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport} disabled={isExporting}>
               <Download className="w-4 h-4 mr-2" />
               Excel Export
             </Button>
-            <Button onClick={openCreate}>
-              <Plus className="w-4 h-4 mr-2" />
-              To'lov qo'shish
-            </Button>
+            {!isGlobal && (
+              <Button onClick={openCreate}>
+                <Plus className="w-4 h-4 mr-2" />
+                To'lov qo'shish
+              </Button>
+            )}
           </div>
         }
       />

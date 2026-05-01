@@ -6,11 +6,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Moon, Bell, Shield, MapPin, Phone, Mail, Clock, ShieldCheck, Database, Save } from 'lucide-react';
+import { Building2, Moon, Bell, Shield, MapPin, Phone, Mail, Clock, ShieldCheck, Database, Save, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useState, useEffect } from 'react';
+import { useBranchDetails, useBranches } from '@/modules/branches/hooks/useBranches';
 
 export default function SettingsPage() {
-  const { darkMode, toggleDarkMode } = useStore();
+  const { darkMode, toggleDarkMode, user } = useStore();
+  const { data: branch, isLoading } = useBranchDetails(user?.branchId);
+  const { updateBranch } = useBranches();
+
+  const [formValues, setFormValues] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    latitude: '',
+    longitude: '',
+    telegramBotToken: '',
+  });
+
+  useEffect(() => {
+    if (branch) {
+      setFormValues({
+        name: branch.name || '',
+        phone: branch.phone || '',
+        address: branch.address || '',
+        latitude: branch.latitude?.toString() || '',
+        longitude: branch.longitude?.toString() || '',
+        telegramBotToken: branch.telegramBotToken || '',
+      });
+    }
+  }, [branch]);
+
+  const handleSave = () => {
+    if (user?.branchId) {
+      updateBranch({ id: user.branchId, ...formValues });
+    }
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -42,29 +74,58 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Klinika nomi</Label>
-                  <Input defaultValue="Zahro Dental Klinika" />
+                  <Input 
+                    value={formValues.name} 
+                    onChange={(e) => setFormValues({...formValues, name: e.target.value})} 
+                  />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Phone className="w-4 h-4 text-muted-foreground" /> Telefon</Label>
-                    <Input defaultValue="+998 71 123 4567" />
+                    <Input 
+                      value={formValues.phone} 
+                      onChange={(e) => setFormValues({...formValues, phone: e.target.value})} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2"><Mail className="w-4 h-4 text-muted-foreground" /> Email</Label>
-                    <Input defaultValue="info@zahro.dental" />
+                    <Input defaultValue="info@zahro.dental" disabled />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> Manzil</Label>
-                  <Input defaultValue="Toshkent shahri, Yakkasaroy tumani, 12-uy" />
+                  <Label className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /> Manzil (Ixtiyoriy)</Label>
+                  <Input 
+                    value={formValues.address} 
+                    onChange={(e) => setFormValues({...formValues, address: e.target.value})} 
+                  />
                 </div>
-                <div className="space-y-2">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border pt-4 mt-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">Kenglik (Latitude) - GPS</Label>
+                    <Input 
+                      value={formValues.latitude} 
+                      onChange={(e) => setFormValues({...formValues, latitude: e.target.value})} 
+                      className="font-mono" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">Uzunlik (Longitude) - GPS</Label>
+                    <Input 
+                      value={formValues.longitude} 
+                      onChange={(e) => setFormValues({...formValues, longitude: e.target.value})} 
+                      className="font-mono" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
                   <Label className="flex items-center gap-2"><Clock className="w-4 h-4 text-muted-foreground" /> Ish vaqti</Label>
-                  <Input defaultValue="Dushanba - Shanba, 09:00 — 18:00" />
+                  <Input defaultValue="Dushanba - Shanba, 09:00 — 18:00" disabled />
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/20 border-t border-border mt-4 justify-end pt-5 rounded-b-2xl">
-                <Button className="gradient-primary">
+                <Button className="gradient-primary" onClick={handleSave} disabled={isLoading}>
                   <Save className="w-4 h-4 mr-2" /> Saqlash
                 </Button>
               </CardFooter>
@@ -154,9 +215,26 @@ export default function SettingsPage() {
                     <ShieldCheck className="w-4 h-4 text-success" />
                     Telegram Bot integratsiyasi
                   </div>
-                  <p className="text-xs text-muted-foreground">Tashriflar haqida shifokorlarga Telegram xabar yuborish</p>
+                  <p className="text-xs text-muted-foreground">O'z botingizni ulash uchun BotFather orqali olingan tokenni kiriting</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch checked={!!formValues.telegramBotToken} />
+              </div>
+              
+              <div className="p-4 rounded-xl border border-border">
+                <h4 className="text-sm font-medium mb-3">Klinika Boti (Token)</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-muted-foreground"/> Bot Tokeni</Label>
+                    <Input 
+                      type="password" 
+                      placeholder="1234567890:AAH_XXX_YYY_ZZZ" 
+                      value={formValues.telegramBotToken}
+                      onChange={(e) => setFormValues({...formValues, telegramBotToken: e.target.value})}
+                      className="font-mono"
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleSave} variant="outline" size="sm" className="mt-4" disabled={isLoading}>Ularni saqlash</Button>
               </div>
             </CardContent>
           </Card>

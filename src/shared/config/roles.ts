@@ -1,5 +1,10 @@
 import type { UserRole } from '@/shared/types/auth';
 
+/** To'lovlar API ruxsati (Admin va Super Admin uchun) */
+export function canAccessPayments(role: UserRole | undefined | null): boolean {
+  return role === 'ADMIN' || role === 'SUPER_ADMIN';
+}
+
 /** Rol bo'yicha marshrutga ruxsat (UI + ProtectedRoute) */
 export const roleAccess: Record<UserRole, string[]> = {
   SUPER_ADMIN: [

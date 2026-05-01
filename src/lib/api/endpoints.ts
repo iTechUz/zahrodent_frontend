@@ -199,6 +199,7 @@ export const leadsApi = {
 
 export const branchesApi = {
   list: () => apiRequest<Branch[]>('/branches'),
+  stats: () => apiRequest<any[]>('/branches/stats'),
   get: (id: string) => apiRequest<Branch>(`/branches/${id}`),
   create: (body: Partial<Branch>) =>
     apiRequest<Branch>('/branches', { method: 'POST', body: JSON.stringify(body) }),

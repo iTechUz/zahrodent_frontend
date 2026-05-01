@@ -1,5 +1,6 @@
 import { PageHeader } from '@/shared/components/PageHeader';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { useStore } from '@/store/useStore';
 import { formatUzS } from '@/shared/lib/formatters';
 import { 
   GrowthChart, 
@@ -12,6 +13,7 @@ import {
 import { TrendingUp, Users, Activity, DollarSign } from 'lucide-react';
 
 export default function AnalyticsPage() {
+  const { currentUser, activeBranchId } = useStore();
   const {
     colors,
     canViewPayments,
@@ -23,11 +25,16 @@ export default function AnalyticsPage() {
     doctorEfficiency,
   } = useAnalytics();
 
+  const isGlobal = currentUser?.role === 'SUPER_ADMIN' && !activeBranchId;
+
   return (
     <div className="space-y-6">
       <PageHeader 
-        title="Tahlillar" 
-        description="Klinika samaradorligi va ko'rsatkichlari" 
+        title={isGlobal ? "Global Tahlillar" : "Tahlillar"} 
+        description={isGlobal 
+          ? "Barcha filiallararo umumiy ko'rsatkichlar va o'sish dinamikasi" 
+          : "Klinika samaradorligi va ko'rsatkichlari"
+        } 
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBranches } from '../hooks/useBranches';
 import { PageHeader } from '@/shared/components/PageHeader';
 import { Branch } from '@/lib/api/endpoints';
@@ -15,7 +16,8 @@ import {
   Trash2, 
   Calendar,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Eye
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -23,14 +25,19 @@ import { Input } from '@/components/ui/input';
 import { formatDate } from '@/shared/lib/formatters';
 
 export default function BranchesPage() {
+  const navigate = useNavigate();
   const { branches, isLoading, createBranch, updateBranch, deleteBranch } = useBranches();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [formValues, setFormValues] = useState({
     name: '',
     address: '',
-    phone: '',
-    isActive: true
+    latitude: '',
+    longitude: '',
+    isActive: true,
+    adminName: '',
+    adminPhone: '',
+    adminPassword: ''
   });
 
   const handleOpenForm = (branch?: Branch) => {
@@ -38,13 +45,26 @@ export default function BranchesPage() {
       setEditingBranch(branch);
       setFormValues({
         name: branch.name,
-        address: branch.address,
-        phone: branch.phone,
-        isActive: branch.isActive
+        address: branch.address || '',
+        latitude: branch.latitude?.toString() || '',
+        longitude: branch.longitude?.toString() || '',
+        isActive: branch.isActive,
+        adminName: '',
+        adminPhone: '',
+        adminPassword: ''
       });
     } else {
       setEditingBranch(null);
-      setFormValues({ name: '', address: '', phone: '', isActive: true });
+      setFormValues({ 
+        name: '', 
+        address: '', 
+        latitude: '',
+        longitude: '',
+        isActive: true,
+        adminName: '',
+        adminPhone: '',
+        adminPassword: ''
+      });
     }
     setIsFormOpen(true);
   };
@@ -76,20 +96,27 @@ export default function BranchesPage() {
       )
     },
     {
-      header: 'Manzil',
+      header: 'Manzil (GPS)',
       accessor: (b) => (
-        <div className="flex items-center gap-2 text-xs opacity-80">
-          <MapPin className="w-3 h-3 text-muted-foreground" />
-          {b.address}
+        <div className="flex flex-col text-xs opacity-80">
+          <div className="flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-muted-foreground" />
+            {b.address || 'Kiritilmagan'}
+          </div>
+          {(b.latitude && b.longitude) && (
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-primary/70">
+              <span className="font-mono">{b.latitude}, {b.longitude}</span>
+            </div>
+          )}
         </div>
       )
     },
     {
-      header: 'Telefon',
+      header: 'Admin',
       accessor: (b) => (
         <div className="flex items-center gap-2 text-xs opacity-80">
-          <Phone className="w-3 h-3 text-muted-foreground" />
-          {b.phone}
+          <Users className="w-3 h-3 text-muted-foreground" />
+          {b._count?.users || 0} ta xodim
         </div>
       )
     },
@@ -124,6 +151,9 @@ export default function BranchesPage() {
       header: 'Amallar',
       accessor: (b) => (
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => navigate(`/branches/${b.id}`)}>
+            <Eye className="w-4 h-4" />
+          </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleOpenForm(b)}>
             <Settings2 className="w-4 h-4" />
           </Button>
@@ -175,7 +205,7 @@ export default function BranchesPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Manzil</Label>
+              <Label>Manzil <span className="text-muted-foreground font-normal">(Ixtiyoriy)</span></Label>
               <Input 
                 placeholder="Shahar, ko'cha, uy..." 
                 value={formValues.address}
@@ -183,15 +213,67 @@ export default function BranchesPage() {
                 className="rounded-xl"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Telefon raqami</Label>
-              <Input 
-                placeholder="+998" 
-                value={formValues.phone}
-                onChange={(e) => setFormValues({ ...formValues, phone: e.target.value })}
-                className="rounded-xl"
-              />
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Kenglik (Latitude) <span className="text-muted-foreground font-normal text-[10px]">(Ixtiyoriy)</span></Label>
+                <Input 
+                  placeholder="Masalan: 41.2995" 
+                  value={formValues.latitude}
+                  onChange={(e) => setFormValues({ ...formValues, latitude: e.target.value })}
+                  className="rounded-xl font-mono text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Uzunlik (Longitude) <span className="text-muted-foreground font-normal text-[10px]">(Ixtiyoriy)</span></Label>
+                <Input 
+                  placeholder="Masalan: 69.2401" 
+                  value={formValues.longitude}
+                  onChange={(e) => setFormValues({ ...formValues, longitude: e.target.value })}
+                  className="rounded-xl font-mono text-sm"
+                />
+              </div>
             </div>
+
+            {!editingBranch && (
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <Users className="w-4 h-4" />
+                  Klinika Admini (Yangi)
+                </div>
+                <div className="space-y-2">
+                  <Label>Admin ismi</Label>
+                  <Input 
+                    placeholder="Ism sharif" 
+                    value={formValues.adminName}
+                    onChange={(e) => setFormValues({ ...formValues, adminName: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Admin telefoni</Label>
+                    <Input 
+                      placeholder="+998" 
+                      value={formValues.adminPhone}
+                      onChange={(e) => setFormValues({ ...formValues, adminPhone: e.target.value })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Parol</Label>
+                    <Input 
+                      type="password"
+                      placeholder="******" 
+                      value={formValues.adminPassword}
+                      onChange={(e) => setFormValues({ ...formValues, adminPassword: e.target.value })}
+                      className="rounded-xl"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 pt-2">
               <input 
                 type="checkbox" 

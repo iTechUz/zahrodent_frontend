@@ -39,7 +39,8 @@ export function getLastNCalendarMonths(n: number, ref = new Date()): MonthBucket
   return buckets;
 }
 
-function monthKeyFromDateString(dateStr: string): string {
+function monthKeyFromDateString(dateStr: string | null | undefined): string {
+  if (!dateStr || typeof dateStr !== 'string') return '';
   return dateStr.slice(0, 7);
 }
 
@@ -65,9 +66,9 @@ export function aggregatePaidRevenueByMonthSom(
   const sums = new Map<string, number>();
   for (const b of buckets) sums.set(b.key, 0);
   for (const p of payments) {
-    if (p.status !== 'paid') continue;
+    if (p.status !== 'paid' && p.status !== 'COMPLETED') continue;
     const k = monthKeyFromDateString(p.date);
-    if (sums.has(k)) sums.set(k, (sums.get(k) ?? 0) + p.amount);
+    if (sums.has(k)) sums.set(k, (sums.get(k) ?? 0) + Number(p.amount));
   }
   return buckets.map((b) => ({ month: b.label, revenue: sums.get(b.key) ?? 0 }));
 }
@@ -163,10 +164,10 @@ export function paidRevenueInMonthKeys(payments: Payment[], keyCurrent: string, 
   let cur = 0;
   let prev = 0;
   for (const p of payments) {
-    if (p.status !== 'paid') continue;
+    if (p.status !== 'paid' && p.status !== 'COMPLETED') continue;
     const k = monthKeyFromDateString(p.date);
-    if (k === keyCurrent) cur += p.amount;
-    else if (k === keyPrev) prev += p.amount;
+    if (k === keyCurrent) cur += Number(p.amount);
+    else if (k === keyPrev) prev += Number(p.amount);
   }
   return { current: cur, previous: prev };
 }

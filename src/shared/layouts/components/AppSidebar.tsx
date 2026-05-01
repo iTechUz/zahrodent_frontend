@@ -32,11 +32,26 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const location = useLocation();
-  const { currentUser } = useStore();
+  const { currentUser, activeBranchId } = useStore();
   const role = currentUser?.role || 'RECEPTIONIST';
-  const allowedPaths = roleAccess[role as keyof typeof roleAccess] || [];
-  const navItems = allNavItems.filter((item) => allowedPaths.includes(item.path));
   const isMobile = useIsMobile();
+
+  // Strategik (Global) menyular — Super Admin filial tanlamaganida ko'rinadi
+  const strategicPaths = ['/', '/branches', '/finance', '/analytics', '/settings'];
+
+  const allowedPaths = roleAccess[role as keyof typeof roleAccess] || [];
+  
+  const navItems = allNavItems.filter((item) => {
+    // 1. Rol ruxsat bergan bo'lishi kerak
+    if (!allowedPaths.includes(item.path)) return false;
+
+    // 2. Super Admin uchun Global rejimda operatsion menyularni yashirish
+    if (role === 'SUPER_ADMIN' && !activeBranchId) {
+      return strategicPaths.includes(item.path);
+    }
+
+    return true;
+  });
 
   return (
     <aside

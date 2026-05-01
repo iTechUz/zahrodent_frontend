@@ -20,7 +20,34 @@ import { useDashboard } from '../hooks/useDashboard';
 import { formatUzS, formatDate } from '@/shared/lib/formatters';
 import { DashboardSkeleton } from '@/components/Skeletons';
 
+import { GlobalDashboard } from '../components/GlobalDashboard';
+import { useStore } from '@/store/useStore';
+
 function DashboardPageContent() {
+  const { currentUser, activeBranchId } = useStore();
+  const dashboard = useDashboard();
+
+  if (dashboard.isLoading) return <DashboardSkeleton />;
+
+  // SuperAdmin Global View
+  if (currentUser?.role === 'SUPER_ADMIN' && !activeBranchId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-primary">SaaS Global Nazorat</h1>
+            <p className="text-sm text-muted-foreground mt-1">Barcha filiallar bo'yicha agregatsiyalangan tahlillar</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card px-3 py-1.5 rounded-full border border-border">
+            <Clock className="w-3.5 h-3.5 text-primary" />
+            {new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' })}
+          </div>
+        </div>
+        <GlobalDashboard />
+      </div>
+    );
+  }
+
   const {
     patients,
     bookings,
@@ -41,10 +68,7 @@ function DashboardPageContent() {
     newPatientsTrend,
     revenueTrend,
     canViewPayments,
-    isLoading,
-  } = useDashboard();
-
-  if (isLoading) return <DashboardSkeleton />;
+  } = dashboard;
 
   return (
     <div className="space-y-6">

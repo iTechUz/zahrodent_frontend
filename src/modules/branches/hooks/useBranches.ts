@@ -42,3 +42,11 @@ export const useBranches = () => {
     deleteBranch: deleteMutation.mutate,
   };
 };
+
+export const useBranchDetails = (id?: string) => {
+  return useQuery({
+    queryKey: ['branch', id],
+    queryFn: () => branchesApi.get(id!),
+    enabled: !!id,
+  });
+};

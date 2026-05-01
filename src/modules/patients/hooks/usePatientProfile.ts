@@ -30,7 +30,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     queryFn: () => visitsApi.list({ patientId: patientId! }),
     enabled: !!patientId && authed,
   });
-  const patientVisits = visitsRes?.data ?? [];
+  const patientVisits = (visitsRes?.data ?? []) as Visit[];
 
   const { data: bookingsRes } = useQuery({
     queryKey: [...queryKeys.bookings, 'byPatient', patientId],
@@ -80,6 +80,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     mutationFn: visitsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.visits });
+      queryClient.invalidateQueries({ queryKey: queryKeys.patient(patientId!) });
       toast.success("Yangi tashrif qo'shildi");
     },
   });
@@ -88,6 +89,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     mutationFn: paymentsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.payments });
+      queryClient.invalidateQueries({ queryKey: queryKeys.patient(patientId!) });
       toast.success("To'lov qayd etildi");
     },
   });
@@ -101,7 +103,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     address: '',
     workplace: '',
     assignedDoctorId: '',
-    source: 'walk-in' as BookingSource,
+    source: 'DIRECT' as BookingSource,
     notes: '',
   });
 
@@ -122,22 +124,30 @@ export const usePatientProfile = (patientId: string | undefined) => {
     status: 'completed' as VisitStatus,
     shouldPayNow: false,
     payAmount: '',
-    payMethod: 'cash' as PaymentMethod,
+    payMethod: 'CASH' as PaymentMethod,
   });
 
   const [paymentModal, setPaymentModal] = useState(false);
 
   const [payForm, setPayForm] = useState({
     amount: '',
-    method: 'cash' as PaymentMethod,
-    status: 'paid' as PaymentStatus,
+    method: 'CASH' as PaymentMethod,
+    status: 'COMPLETED' as PaymentStatus,
     description: '',
     visitId: '' as string,
   });
 
-  const totalPaid = patientPayments.filter((p) => p.status === 'paid' || p.status === 'partial').reduce((s, p) => s + (Number(p.amount) || 0), 0);
+  // Calculate based on data or use patient.balance
+  const totalPaid = patientPayments
+    .filter((p) => p.status === 'COMPLETED')
+    .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    
   const totalDue = patientVisits.reduce((s, v) => s + (Number(v.price) || 0), 0);
-  const totalDebt = Math.max(0, totalDue - totalPaid);
+  
+  // Use backend balance if available, otherwise fallback to calculation
+  const currentBalance = patient?.balance ?? (totalPaid - totalDue);
+  const totalDebt = currentBalance < 0 ? Math.abs(currentBalance) : 0;
+  const totalCredit = currentBalance > 0 ? currentBalance : 0;
 
   const handleEditSave = () => {
     if (!patient) return;
@@ -213,7 +223,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
               patientId: patient.id,
               amount: Number(visitForm.payAmount),
               method: visitForm.payMethod,
-              status: 'paid',
+              status: 'COMPLETED',
               type: 'INCOME',
               date: today,
               description: `${today} - Tashrif uchun to'lov`,
@@ -233,7 +243,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
             status: 'completed',
             shouldPayNow: false,
             payAmount: '',
-            payMethod: 'cash',
+            payMethod: 'CASH',
           });
         },
       },
@@ -266,7 +276,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
       {
         onSettled: () => {
           setPaymentModal(false);
-          setPayForm({ amount: '', method: 'cash', status: 'paid', description: '', visitId: '' });
+          setPayForm({ amount: '', method: 'CASH', status: 'COMPLETED', description: '', visitId: '' });
         },
       },
     );
@@ -277,7 +287,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     setEditForm({
       firstName: patient.firstName,
       lastName: patient.lastName,
-      age: String(patient.age),
+      age: String(patient.age || ''),
       phone: patient.phone,
       address: patient.address || '',
       workplace: patient.workplace || '',
@@ -291,7 +301,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
   const getVisitBalance = useCallback((visitId: string, visitPrice: number) => {
     const price = Number(visitPrice) || 0;
     const linkedPaid = patientPayments
-      .filter(p => p.visitId === visitId && (p.status === 'paid' || p.status === 'partial'))
+      .filter(p => p.visitId === visitId && p.status === 'COMPLETED')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     return Math.max(0, price - linkedPaid);
   }, [patientPayments]);
@@ -301,8 +311,8 @@ export const usePatientProfile = (patientId: string | undefined) => {
     const doctor = doctors.find(d => d.id === visit.doctorId);
     setPayForm({
       amount: String(balance),
-      method: 'cash',
-      status: 'paid',
+      method: 'CASH',
+      status: 'COMPLETED',
       description: `${visit.date} - ${doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Tashrif'} uchun to'lov`,
       visitId: visit.id
     });
@@ -318,6 +328,8 @@ export const usePatientProfile = (patientId: string | undefined) => {
     totalPaid,
     totalDue,
     totalDebt,
+    totalCredit,
+    currentBalance,
     doctors,
     editOpen,
     setEditOpen,

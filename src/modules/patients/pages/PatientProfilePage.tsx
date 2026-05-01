@@ -8,10 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { StatusBadge, SourceBadge, PaymentStatusBadge } from '@/shared/components/StatusBadge';
-import { ArrowLeft, Phone, Calendar, Droplets, AlertTriangle, FileText, Pencil, Plus, CreditCard } from 'lucide-react';
+import { ArrowLeft, Phone, Calendar, Pencil, Plus, CreditCard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Wallet, Receipt, ArrowRight } from 'lucide-react';
 import { ToothChart, CONDITION_KEYS, CONDITION_LABELS } from '../components/ToothChart';
 import { usePatientProfile } from '../hooks/usePatientProfile';
@@ -21,7 +20,8 @@ import { Send, MessageSquare } from 'lucide-react';
 import { 
   VISIT_STATUS_LABELS, 
   BOOKING_SOURCE_LABELS, 
-  PAYMENT_STATUS_LABELS 
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_METHOD_LABELS
 } from '@/shared/constants';
 import { 
   ToothRecord, 
@@ -31,10 +31,6 @@ import {
   BookingSource,
   Visit
 } from '@/shared/types';
-
-const METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: 'Naqd', card: 'Karta', transfer: "O'tkazma", insurance: 'Sug\'urta',
-};
 
 const fmt = (n: number) => new Intl.NumberFormat('uz-UZ').format(n);
 
@@ -51,6 +47,7 @@ export default function PatientProfilePage() {
     totalPaid,
     totalDue,
     totalDebt,
+    totalCredit,
     doctors,
     editOpen,
     setEditOpen,
@@ -84,6 +81,7 @@ export default function PatientProfilePage() {
     comments,
   } = usePatientProfile(id);
 
+  if (isLoading) return <div className="p-6 text-center">Yuklanmoqda...</div>;
   if (!patient) return <div className="p-6 text-center text-muted-foreground">Bemor topilmadi</div>;
 
   return (
@@ -106,9 +104,9 @@ export default function PatientProfilePage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-display font-bold">{patient.firstName} {patient.lastName}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-              <span>{patient.age} yosh</span>
+              <span>{patient.age || '?'} yosh</span>
               <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{patient.phone}</span>
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{patient.createdAt}</span>
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(patient.createdAt).toLocaleDateString()}</span>
               <SourceBadge source={patient.source} />
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 p-3 rounded-lg bg-muted/40 border border-border/50">
@@ -124,7 +122,7 @@ export default function PatientProfilePage() {
                 <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Biriktirilgan shifokor</p>
                 <p className="text-xs font-medium">
                   {patient.assignedDoctor 
-                    ? `Dr. ${patient.assignedDoctor.firstName} ${patient.assignedDoctor.lastName}` 
+                    ? `Dr. ${patient.assignedDoctor.user?.name || ''}` 
                     : 'Biriktirilmagan'}
                 </p>
               </div>
@@ -146,9 +144,9 @@ export default function PatientProfilePage() {
                   <p className="text-lg font-bold text-success">{fmt(totalPaid)}</p>
                   <p className="text-[10px] text-muted-foreground">To'langan</p>
                 </div>
-                {totalPaid > totalDue ? (
+                {totalCredit > 0 ? (
                   <div className="px-4 py-2 rounded-lg bg-info/10">
-                    <p className="text-lg font-bold text-info">{fmt(totalPaid - totalDue)}</p>
+                    <p className="text-lg font-bold text-info">{fmt(totalCredit)}</p>
                     <p className="text-[10px] text-muted-foreground">Haqdorlik</p>
                   </div>
                 ) : (
@@ -200,15 +198,14 @@ export default function PatientProfilePage() {
             const doctor = doctors.find(d => d.id === v.doctorId);
             return (
               <div key={v.id} className="relative bg-card rounded-xl border border-border p-5 hover:shadow-sm transition-all group overflow-hidden">
-                {/* Billing Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 last:mb-0">
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-lg bg-primary/10 text-primary">
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-sm font-semibold">{v.date}</span>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</p>
+                      <span className="text-sm font-semibold">{new Date(v.date).toLocaleDateString()}</span>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor ? `Dr. ${doctor.user?.name || ''}` : '—'}</p>
                     </div>
                   </div>
                   
@@ -235,7 +232,6 @@ export default function PatientProfilePage() {
                   </div>
                 </div>
 
-                {/* Patient Info Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mt-2">
                   <div className="space-y-2">
                     {v.diagnosis && (
@@ -268,7 +264,7 @@ export default function PatientProfilePage() {
                       v.status === 'in-progress' ? 'bg-warning/15 text-warning' : 
                       'bg-muted text-muted-foreground'
                     }`}>
-                      {VISIT_STATUS_LABELS[v.status]}
+                      {VISIT_STATUS_LABELS[v.status as VisitStatus]}
                     </span>
                   </div>
                 </div>
@@ -291,8 +287,8 @@ export default function PatientProfilePage() {
             return (
               <div key={b.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
                 <div>
-                  <p className="text-sm font-medium">{b.date} — {b.time}</p>
-                  <p className="text-xs text-muted-foreground">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</p>
+                  <p className="text-sm font-medium">{new Date(b.startTime).toLocaleDateString()} — {new Date(b.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs text-muted-foreground">{doctor ? `Dr. ${doctor.user?.name || ''}` : '—'}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <SourceBadge source={b.source} />
@@ -323,15 +319,6 @@ export default function PatientProfilePage() {
                     className="min-h-[80px] text-sm resize-none"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.ctrlKey) {
-                        e.preventDefault();
-                        if (newComment.trim()) {
-                           handleAddComment(newComment);
-                           setNewComment('');
-                        }
-                      }
-                    }}
                   />
                   <div className="flex justify-end">
                     <Button 
@@ -357,15 +344,15 @@ export default function PatientProfilePage() {
                 ) : comments.map((c: any) => (
                   <div key={c.id} className="flex gap-3 group animate-in fade-in slide-in-from-top-2 duration-300">
                     <Avatar className="w-8 h-8 border">
-                      <AvatarImage src={c.author.avatar} />
+                      <AvatarImage src={c.author?.avatar} />
                       <AvatarFallback className="bg-primary/5 text-[10px] font-bold">
-                        {c.author.name[0]}
+                        {c.author?.name?.[0] || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-foreground">{c.author.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{c.createdAt}</span>
+                        <span className="text-xs font-bold text-foreground">{c.author?.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</span>
                       </div>
                       <div className="p-3 rounded-2xl rounded-tl-none bg-muted/40 border border-border/50">
                         <p className="text-xs leading-relaxed whitespace-pre-wrap">{c.content}</p>
@@ -391,11 +378,11 @@ export default function PatientProfilePage() {
               <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
                 <div>
                   <p className="text-sm font-medium">{p.description}</p>
-                  <p className="text-xs text-muted-foreground">{p.date} • {METHOD_LABELS[p.method]}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(p.date).toLocaleDateString()} • {PAYMENT_METHOD_LABELS[p.method as PaymentMethod]}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold">{fmt(p.amount)} so'm</span>
-                  <PaymentStatusBadge status={p.status} />
+                  <PaymentStatusBadge status={p.status as PaymentStatus} />
                 </div>
               </div>
             ))}
@@ -435,7 +422,7 @@ export default function PatientProfilePage() {
             <div className="space-y-2">
               <Label>Biriktirilgan shifokor</Label>
               <SearchableSelect
-                options={doctors.map(d => ({ value: d.id, label: `${d.firstName} ${d.lastName} (${d.specialty})` }))}
+                options={doctors.map(d => ({ value: d.id, label: `Dr. ${d.user?.name || ''} (${d.specialty})` }))}
                 value={editForm.assignedDoctorId}
                 onValueChange={v => setEditForm({ ...editForm, assignedDoctorId: v })}
                 placeholder="Shifokorni tanlang"
@@ -446,7 +433,7 @@ export default function PatientProfilePage() {
               <Select value={editForm.source} onValueChange={(v: BookingSource) => setEditForm({ ...editForm, source: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(['walk-in','telegram','website','phone'] as BookingSource[]).map(s => <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s]}</SelectItem>)}
+                  {(['DIRECT', 'WEBSITE', 'TELEGRAM', 'PHONE'] as BookingSource[]).map(s => <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -488,7 +475,7 @@ export default function PatientProfilePage() {
             <div><Label>Shifokor</Label>
               <Select value={visitForm.doctorId} onValueChange={v => setVisitForm({ ...visitForm, doctorId: v })}>
                 <SelectTrigger><SelectValue placeholder="Shifokorni tanlang" /></SelectTrigger>
-                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>{d.firstName} {d.lastName}</SelectItem>)}</SelectContent>
+                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>Dr. {d.user?.name || ''}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -533,7 +520,7 @@ export default function PatientProfilePage() {
                     <Select value={visitForm.payMethod} onValueChange={(v: PaymentMethod) => setVisitForm({ ...visitForm, payMethod: v })}>
                       <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
+                        {(['CASH','CARD','TRANSFER','INSURANCE'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -614,7 +601,7 @@ export default function PatientProfilePage() {
                   placeholder="50 000" 
                   className="h-11 text-lg font-semibold"
                   value={payForm.amount} 
-                  onChange={v => setPayForm({ ...payForm, amount: v, status: 'paid' })} 
+                  onChange={v => setPayForm({ ...payForm, amount: v, status: 'COMPLETED' })} 
                 />
               </div>
 
@@ -623,7 +610,7 @@ export default function PatientProfilePage() {
                 <Select value={payForm.method} onValueChange={(v: PaymentMethod) => setPayForm({ ...payForm, method: v })}>
                   <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(['cash','card','transfer','insurance'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{METHOD_LABELS[m]}</SelectItem>)}
+                    {(['CASH','CARD','TRANSFER','INSURANCE'] as PaymentMethod[]).map(m => <SelectItem key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -639,7 +626,7 @@ export default function PatientProfilePage() {
                       ...payForm, 
                       visitId: val, 
                       amount: String(balance), 
-                      description: `${visit.date} - Tashrif uchun to'lov` 
+                      description: `${new Date(visit.date).toLocaleDateString()} - Tashrif uchun to'lov` 
                     });
                   } else {
                     setPayForm({ ...payForm, visitId: val });
@@ -649,7 +636,7 @@ export default function PatientProfilePage() {
                   <SelectContent>
                     <SelectItem value="none">Hech qaysi (Umumiy to'lov)</SelectItem>
                     {patientVisits.map(v => (
-                        <SelectItem key={v.id} value={v.id}>{v.date} — {v.treatment?.slice(0, 30) || 'Tashrif'} ({fmt(getVisitBalance(v.id, v.price))} so'm qolgan)</SelectItem>
+                        <SelectItem key={v.id} value={v.id}>{new Date(v.date).toLocaleDateString()} — {v.treatment?.slice(0, 30) || 'Tashrif'} ({fmt(getVisitBalance(v.id, v.price))} so'm qolgan)</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

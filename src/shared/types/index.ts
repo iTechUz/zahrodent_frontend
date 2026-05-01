@@ -1,52 +1,109 @@
-export type BookingSource = 'walk-in' | 'telegram' | 'website' | 'phone';
-export type BookingStatus = 'pending' | 'confirmed' | 'arrived' | 'no-show' | 'completed' | 'cancelled';
-export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'insurance';
-export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
+export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'DOCTOR' | 'RECEPTIONIST' | 'PATIENT';
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'NOSHOW';
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'INSURANCE';
+export type PaymentType = 'INCOME' | 'EXPENSE' | 'REFUND' | 'PREPAYMENT';
 export type VisitStatus = 'not-started' | 'in-progress' | 'completed';
 export type NotificationType = 'sms' | 'telegram';
 
-export interface NotificationRecipient {
-  id: string; // patient id
-  firstName: string;
-  lastName: string;
-  phone: string;
-  bookingId: string;
-  bookingDate: string; // YYYY-MM-DD
-  bookingTime: string; // HH:mm
-  patientName?: string; // used when targetType is doctor
-}
-
 export interface Patient {
   id: string;
+  userId?: string;
+  branchId: string;
   firstName: string;
   lastName: string;
   age: number;
   phone: string;
-  address: string;
-  workplace: string;
+  address?: string;
+  workplace?: string;
   assignedDoctorId?: string;
   assignedDoctor?: {
-    firstName: string;
-    lastName: string;
+    user: {
+      name: string;
+    };
   };
-  source: BookingSource;
-  notes: string;
+  source: string;
+  notes?: string;
   avatar?: string;
+  birthDate?: string;
+  gender?: string;
   createdAt: string;
   toothChart?: Record<number, ToothRecord>;
+  medicalHistory?: any;
   balance?: number;
 }
 
-export interface PatientComment {
+export interface Doctor {
   id: string;
-  content: string;
-  createdAt: string;
-  patientId: string;
-  authorId: string;
-  author: {
+  userId: string;
+  user: {
     name: string;
     avatar?: string;
   };
+  specialty: string;
+  experienceYears: number;
+  phone: string;
+  bio?: string;
+  availabilities?: DoctorAvailability[];
+}
+
+export interface DoctorAvailability {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  slotDuration: number;
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  duration: number;
+  description?: string;
+}
+
+export interface Booking {
+  id: string;
+  branchId: string;
+  patientId: string;
+  doctorId: string;
+  serviceId?: string;
+  startTime: string;
+  endTime: string;
+  status: BookingStatus;
+  source: string;
+  notes?: string;
+  createdAt: string;
+  patient?: Patient;
+  doctor?: Doctor;
+  service?: Service;
+}
+
+export interface Visit {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  bookingId?: string;
+  serviceId?: string;
+  diagnosis?: string;
+  treatment?: string;
+  notes?: string;
+  price: number;
+  date: string;
+}
+
+export interface Payment {
+  id: string;
+  patientId: string;
+  amount: number;
+  type: PaymentType;
+  method: PaymentMethod;
+  status: string;
+  currency: string;
+  date: string;
+  description?: string;
+  referenceId?: string;
 }
 
 export interface ToothRecord {
@@ -56,105 +113,13 @@ export interface ToothRecord {
   date?: string;
 }
 
-export interface Doctor {
-  id: string;
-  firstName: string;
-  lastName: string;
-  specialty: string;
-  phone: string;
-  avatar?: string;
-  schedule?: DoctorSchedule[];
-  daysOff?: string[];
-}
-
-export interface DoctorSchedule {
-  day: number; // 0=Du, 1=Se, ...6=Ya
-  startTime: string;
-  endTime: string;
-  isWorking: boolean;
-}
-
-export interface Service {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  duration: number; // minutes
-  description?: string;
-}
-
-export interface Booking {
-  id: string;
-  patientId: string;
-  doctorId: string;
-  date: string;
-  time: string;
-  source: BookingSource;
-  status: BookingStatus;
-  notes?: string;
-  createdAt: string;
-  serviceId?: string;
-}
-
-export interface Visit {
-  id: string;
-  patientId: string;
-  doctorId: string;
-  bookingId?: string;
-  date: string;
-  status: VisitStatus;
-  price: number;
-  diagnosis: string;
-  treatment: string;
-  notes: string;
-}
-
-export interface Payment {
-  id: string;
-  patientId: string;
-  amount: number;
-  method: PaymentMethod;
-  status: PaymentStatus;
-  type: 'INCOME' | 'EXPENSE';
-  date: string;
-  description: string;
-  discount?: number;
-  serviceId?: string;
-  visitId?: string;
-}
-
-export interface Notification {
-  id: string;
-  patientId: string;
-  type: NotificationType;
-  message: string;
-  sentAt: string;
-  status: 'sent' | 'delivered' | 'failed';
-}
-
-export interface DoctorEfficiencyStats {
-  id: string;
-  firstName: string;
-  lastName: string;
-  specialty: string;
-  totalBookings: number;
-  totalVisits: number;
-  totalRevenue: number;
-  conversionRate: number;
-  avgCheck: number;
-}
-
-export type LeadStatus = 'new' | 'contacted' | 'consultation' | 'proposal' | 'converted' | 'cancelled';
-
 export interface Lead {
   id: string;
   name: string;
   phone: string;
   service?: string;
   message?: string;
-  notes?: string;
-  status: LeadStatus;
+  status: string;
   source: string;
   createdAt: string;
-  updatedAt: string;
 }

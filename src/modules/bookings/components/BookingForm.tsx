@@ -13,14 +13,10 @@ import {
   BOOKING_STATUSES,
   BOOKING_STATUS_LABELS,
 } from '@/shared/constants';
-import { Booking, Patient, Doctor, BookingSource, BookingStatus } from '@/shared/types';
+import { Booking, Patient, Doctor, BookingStatus, Service } from '@/shared/types';
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
-import { BookingSchema } from '@/shared/lib/validation';
+import { BookingSchema, BookingFormValues } from '@/shared/lib/validation';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { Service } from '@/shared/types';
-import * as z from 'zod';
-
-type BookingFormValues = z.infer<typeof BookingSchema>;
 
 interface BookingFormProps {
   open: boolean;
@@ -29,7 +25,7 @@ interface BookingFormProps {
   patients: Patient[];
   doctors: Doctor[];
   services: Service[];
-  onSave: (data: BookingFormValues) => void;
+  onSave: (data: any) => void;
 }
 
 export const BookingForm = ({ 
@@ -44,45 +40,70 @@ export const BookingForm = ({
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(BookingSchema),
     defaultValues: {
+      branchId: '',
       patientId: '',
       doctorId: '',
       serviceId: '',
       date: '',
       time: '',
-      source: 'walk-in',
-      status: 'pending',
+      duration: 30,
+      source: 'DIRECT',
+      status: 'PENDING',
       notes: '',
     },
   });
 
   useEffect(() => {
     if (editing) {
+      const startDate = new Date(editing.startTime);
+      const endDate = new Date(editing.endTime);
+      const duration = (endDate.getTime() - startDate.getTime()) / (1000 * 60);
+
       form.reset({
+        branchId: editing.branchId,
         patientId: editing.patientId,
         doctorId: editing.doctorId,
         serviceId: editing.serviceId || '',
-        date: editing.date,
-        time: editing.time,
+        date: startDate.toISOString().split('T')[0],
+        time: startDate.toTimeString().split(' ')[0].substring(0, 5),
+        duration: duration,
         source: editing.source,
         status: editing.status,
         notes: editing.notes || '',
       });
     } else {
       form.reset({
+        branchId: '',
         patientId: '',
         doctorId: '',
         serviceId: '',
-        date: '',
-        time: '',
-        source: 'walk-in',
-        status: 'pending',
+        date: new Date().toISOString().split('T')[0],
+        time: '09:00',
+        duration: 30,
+        source: 'DIRECT',
+        status: 'PENDING',
         notes: '',
       });
     }
   }, [editing, form, open]);
 
   const handleSubmit = (values: BookingFormValues) => {
-    onSave(values);
+    const start = new Date(`${values.date}T${values.time}:00`);
+    const end = new Date(start.getTime() + (values.duration || 30) * 60 * 1000);
+    
+    const payload = {
+      ...values,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    };
+    // @ts-ignore
+    delete payload.date;
+    // @ts-ignore
+    delete payload.time;
+    // @ts-ignore
+    delete payload.duration;
+
+    onSave(payload);
   };
 
   return (
@@ -93,6 +114,27 @@ export const BookingForm = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
+             <FormField
+              control={form.control}
+              name="branchId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Filial <span className="text-destructive">*</span></FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                       <SelectTrigger>
+                        <SelectValue placeholder="Filialni tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="main">Asosiy filial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="patientId"
@@ -120,7 +162,7 @@ export const BookingForm = ({
                   <FormLabel>Shifokor <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <SearchableSelect
-                      options={doctors.map(d => ({ value: d.id, label: `${d.firstName} ${d.lastName} (${d.specialty})` }))}
+                      options={doctors.map(d => ({ value: d.id, label: `${d.user?.name} (${d.specialty})` }))}
                       value={field.value}
                       onValueChange={field.onChange}
                       placeholder="Shifokorni tanlang"
@@ -141,7 +183,11 @@ export const BookingForm = ({
                     <SearchableSelect
                       options={services.map(s => ({ value: s.id, label: `${s.name} (${s.price} so'm)` }))}
                       value={field.value || ''}
-                      onValueChange={field.onChange}
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        const service = services.find(s => s.id === val);
+                        if (service) form.setValue('duration', service.duration);
+                      }}
                       placeholder="Xizmatni tanlang"
                     />
                   </FormControl>
@@ -182,6 +228,20 @@ export const BookingForm = ({
 
             <FormField
               control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Davomiyligi (daqiqa)</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="source"
               render={({ field }) => (
                 <FormItem>
@@ -194,7 +254,7 @@ export const BookingForm = ({
                     </FormControl>
                     <SelectContent>
                       {BOOKING_SOURCES.map((s) => (
-                        <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s as BookingSource]}</SelectItem>
+                        <SelectItem key={s} value={s}>{BOOKING_SOURCE_LABELS[s] || s}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -247,52 +307,6 @@ export const BookingForm = ({
             </Button>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-interface BookingDetailsProps {
-  booking: Booking | null;
-  onClose: () => void;
-  patients: Patient[];
-  doctors: Doctor[];
-}
-
-export const BookingDetails = ({ booking, onClose, patients, doctors }: BookingDetailsProps) => {
-  if (!booking) return null;
-
-  const patient = patients.find((p) => p.id === booking.patientId);
-  const doctor = doctors.find((d) => d.id === booking.doctorId);
-
-  return (
-    <Dialog open={!!booking} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Qabul tafsilotlari</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Bemor</span>
-            <span className="font-medium">{patient?.firstName} {patient?.lastName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Shifokor</span>
-            <span className="font-medium">{doctor ? `${doctor.firstName} ${doctor.lastName}` : '—'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Sana</span>
-            <span>{booking.date} — {booking.time}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Manba</span>
-            <SourceBadge source={booking.source} />
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Holat</span>
-            <StatusBadge status={booking.status} />
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );

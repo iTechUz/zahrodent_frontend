@@ -74,7 +74,7 @@ function DoctorsPageContent() {
 
   const [activeTab, setActiveTab] = useState<'list' | 'efficiency'>('list');
   const role = useStore(s => s.currentUser?.role);
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
 
   return (
     <div className="space-y-4">
@@ -193,7 +193,7 @@ function DoctorsPageContent() {
               </TableHeader>
               <TableBody>
                 {doctors.map((d) => {
-                  const eff = efficiency.find(e => e.id === d.id);
+                  const eff = efficiency.find(e => e.doctorId === d.id);
                   const workingDays = d.schedule?.filter(s => s.isWorking).map(s => {
                     return DOCTOR_WEEKDAY_LABELS[s.day];
                   }) || [];
@@ -205,18 +205,30 @@ function DoctorsPageContent() {
                           to={`/doctors/${d.id}`}
                           className="hover:text-primary transition-colors hover:underline"
                         >
-                          {d.firstName} {d.lastName}
+                          {d.name}
                         </Link>
                       </TableCell>
                       <TableCell>{d.specialty}</TableCell>
                       <TableCell>{d.phone}</TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {workingDays.map(day => (
-                            <Badge key={day} variant="outline" className="text-[10px] px-1 py-0 h-4">
-                              {day}
-                            </Badge>
-                          ))}
+                        <div className="flex items-center gap-1">
+                          {['D', 'S', 'Ch', 'P', 'J', 'Sh', 'Ya'].map((label, idx) => {
+                            const isWorking = d.schedule?.some(s => s.day === idx && s.isWorking);
+                            return (
+                              <div 
+                                key={idx}
+                                className={cn(
+                                  "w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold border transition-all",
+                                  isWorking 
+                                    ? "bg-primary/10 border-primary/30 text-primary shadow-sm" 
+                                    : "bg-muted/30 border-border text-muted-foreground/30"
+                                )}
+                                title={isWorking ? DOCTOR_WEEKDAY_LABELS[idx] : undefined}
+                              >
+                                {label}
+                              </div>
+                            );
+                          })}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium">

@@ -35,19 +35,29 @@ export interface Patient {
 export interface Doctor {
   id: string;
   userId: string;
-  user: {
-    name: string;
-    avatar?: string;
-  };
+  name: string;
+  firstName: string;
+  lastName: string;
   specialty: string;
   experienceYears: number;
   phone: string;
   bio?: string;
-  availabilities?: DoctorAvailability[];
+  avatar?: string;
+  isActive: boolean;
+  schedule: DoctorSchedule[];
+  daysOff?: string[];
+}
+
+export interface DoctorSchedule {
+  day: number;
+  startTime: string;
+  endTime: string;
+  isWorking: boolean;
 }
 
 export interface DoctorAvailability {
   id: string;
+  doctorId: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;

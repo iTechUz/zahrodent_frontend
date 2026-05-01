@@ -36,6 +36,14 @@ export async function loginRequest(body: { phone: string; password: string }) {
   });
 }
 
+export const authApi = {
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    apiRequest<{ success: boolean }>('/auth/change-password', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+};
+
 function qs(params: Record<string, string | number | undefined>) {
   const u = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
@@ -81,6 +89,7 @@ export const doctorsApi = {
   stats: () => apiRequest<{ total: number; activeToday: number; totalVisits: number }>('/doctors/stats'),
   efficiency: () => apiRequest<DoctorEfficiencyStats[]>('/doctors/efficiency'),
   get: (id: string) => apiRequest<Doctor>(`/doctors/${id}`),
+  me: () => apiRequest<Doctor>('/doctors/me'),
   create: (body: DoctorCreatePayload) =>
     apiRequest<Doctor>('/doctors', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: Partial<Doctor>) =>
@@ -207,3 +216,64 @@ export const branchesApi = {
     apiRequest<Branch>(`/branches/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   remove: (id: string) => apiRequest<{ id: string }>(`/branches/${id}`, { method: 'DELETE' }),
 };
+
+// ─── Subscription Plans & Tenants ────────────────────────────────────────────
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  features: string[];
+  isPopular: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { subscriptions: number };
+}
+
+export interface BranchSubscription {
+  id: string;
+  branchId: string;
+  planId: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'PAST_DUE' | 'CANCELED';
+  startDate: string;
+  endDate: string | null;
+  branch: { id: string; name: string; isActive: boolean };
+  plan: SubscriptionPlan;
+  createdAt: string;
+}
+
+export interface SaasMetrics {
+  totalPlans: number;
+  activeSubscriptions: number;
+  pastDueSubscriptions: number;
+  mrr: number;
+  arr: number;
+  subscriptions: BranchSubscription[];
+}
+
+export const subscriptionsApi = {
+  // Tariflar
+  getPlans: () => apiRequest<SubscriptionPlan[]>('/subscriptions/plans'),
+  createPlan: (body: Omit<SubscriptionPlan, 'id' | 'createdAt' | 'updatedAt' | '_count'>) =>
+    apiRequest<SubscriptionPlan>('/subscriptions/plans', { method: 'POST', body: JSON.stringify(body) }),
+  updatePlan: (id: string, body: Partial<SubscriptionPlan>) =>
+    apiRequest<SubscriptionPlan>(`/subscriptions/plans/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deletePlan: (id: string) =>
+    apiRequest<void>(`/subscriptions/plans/${id}`, { method: 'DELETE' }),
+
+  // Obunalar
+  getAll: () => apiRequest<BranchSubscription[]>('/subscriptions'),
+  getMy: () => apiRequest<BranchSubscription | null>('/subscriptions/my'),
+  getHistory: (branchId: string) => apiRequest<any[]>(`/subscriptions/history/${branchId}`),
+  assign: (body: { branchId: string; planId: string; endDate?: string }) =>
+    apiRequest<BranchSubscription>('/subscriptions/assign', { method: 'POST', body: JSON.stringify(body) }),
+  updateStatus: (branchId: string, status: BranchSubscription['status']) =>
+    apiRequest<BranchSubscription>(`/subscriptions/${branchId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  // SaaS Metrikalari
+  getMetrics: () => apiRequest<SaasMetrics>('/subscriptions/metrics'),
+};
+

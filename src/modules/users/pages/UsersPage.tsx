@@ -84,9 +84,9 @@ export function UsersPageContent() {
                         {u.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-background border border-border flex items-center justify-center shadow-sm">
-                        {u.role === 'admin' ? (
+                        {u.role === 'ADMIN' ? (
                           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                        ) : u.role === 'doctor' ? (
+                        ) : u.role === 'DOCTOR' ? (
                           <Shield className="w-3.5 h-3.5 text-info" />
                         ) : (
                           <UserCog className="w-3.5 h-3.5 text-warning" />

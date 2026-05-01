@@ -7,16 +7,21 @@ export const DoctorService = {
     firstName: '',
     lastName: '',
     specialty: '',
+    experienceYears: 0,
     phone: '',
+    password: '',
+    bio: '',
     schedule: defaultDoctorSchedule(),
     daysOffText: '',
   }),
-
+  
   mapToForm: (d: Doctor): DoctorFormValues => ({
     firstName: d.firstName,
     lastName: d.lastName,
     specialty: d.specialty,
+    experienceYears: d.experienceYears,
     phone: d.phone,
+    bio: d.bio || '',
     schedule: normalizeDoctorSchedule(d.schedule),
     daysOffText: d.daysOff?.length ? d.daysOff.join(', ') : '',
   }),

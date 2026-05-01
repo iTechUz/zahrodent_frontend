@@ -54,7 +54,7 @@ function PatientsPageContent() {
   } = usePatients();
 
   const role = useStore(s => s.currentUser?.role);
-  const isDoctor = role === 'doctor';
+  const isDoctor = role === 'DOCTOR';
 
   const columns: Column<Patient>[] = [
     { 

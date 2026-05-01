@@ -130,6 +130,19 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
             />
             <FormField
               control={form.control}
+              name="experienceYears"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tajriba (yil)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="5" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="phone"
               render={({ field }) => (
                 <FormItem>
@@ -228,6 +241,19 @@ export const DoctorForm = ({ open, onOpenChange, editing, onSave }: DoctorFormPr
               </div>
             </div>
 
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio (Ma'lumot)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Shifokor haqida qisqacha ma'lumot..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="daysOffText"

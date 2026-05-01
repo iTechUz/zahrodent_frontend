@@ -50,22 +50,22 @@ function BookingsPageContent() {
   } = useBookings();
 
   const role = useStore(s => s.currentUser?.role);
-  const isDoctor = role === 'doctor';
+  const isDoctor = role === 'DOCTOR';
 
   const columns: Column<Booking>[] = [
     { 
       header: 'Bemor', 
-      accessor: (b) => {
-        const p = patients.find(patient => patient.id === b.patientId);
-        return <span className="font-medium">{p?.firstName} {p?.lastName}</span>;
-      }
+      accessor: (b: any) => (
+        <span className="font-medium">{b.patient?.firstName} {b.patient?.lastName}</span>
+      )
     },
     { 
       header: 'Shifokor', 
-      accessor: (b) => {
-        const d = doctors.find(doctor => doctor.id === b.doctorId);
-        return <span className="text-muted-foreground hidden sm:inline">{d ? `Dr. ${d.firstName} ${d.lastName}` : '—'}</span>;
-      },
+      accessor: (b: any) => (
+        <span className="text-muted-foreground hidden sm:inline">
+          {b.doctor ? `Dr. ${b.doctor.name || ''}` : '—'}
+        </span>
+      ),
       className: 'hidden sm:table-cell'
     },
     { 

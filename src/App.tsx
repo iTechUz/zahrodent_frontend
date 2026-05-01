@@ -28,6 +28,7 @@ import {
   leadsRoutes,
   branchesRoutes
 } from "@/modules";
+import { subscriptionsRoutes } from "@/modules/subscriptions";
 
 import NotFound from "./pages/NotFound.tsx";
 
@@ -72,6 +73,7 @@ const AppRoutes = () => {
             ...userRoutes,
             ...leadsRoutes,
             ...branchesRoutes,
+            ...subscriptionsRoutes,
           ],
         },
       ],

@@ -19,8 +19,10 @@ export const roleAccess: Record<UserRole, string[]> = {
     '/leads',
     '/settings',
     '/users',
-    '/branches'
+    '/branches',
+    '/subscriptions',
   ],
+
   ADMIN: [
     '/',
     '/bookings',

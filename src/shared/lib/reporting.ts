@@ -39,9 +39,11 @@ export function getLastNCalendarMonths(n: number, ref = new Date()): MonthBucket
   return buckets;
 }
 
-function monthKeyFromDateString(dateStr: string | null | undefined): string {
-  if (!dateStr || typeof dateStr !== 'string') return '';
-  return dateStr.slice(0, 7);
+function monthKeyFromDateString(dateStr: string | Date | null | undefined): string {
+  if (!dateStr) return '';
+  if (typeof dateStr === 'string') return dateStr.slice(0, 7);
+  if (dateStr instanceof Date) return dateStr.toISOString().slice(0, 7);
+  return '';
 }
 
 /** Dashboard AreaChart: month + patients */

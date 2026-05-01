@@ -37,7 +37,7 @@ export const useDoctors = () => {
   const { data: efficiencyData } = useQuery({
     queryKey: ['doctors', 'efficiency'],
     queryFn: () => doctorsApi.efficiency(),
-    enabled: authed && useStore.getState().currentUser?.role === 'admin',
+    enabled: authed && (useStore.getState().currentUser?.role === 'ADMIN' || useStore.getState().currentUser?.role === 'SUPER_ADMIN'),
   });
 
   const { data: patientsData } = useQuery({
@@ -85,18 +85,24 @@ export const useDoctors = () => {
   const dialog = useDialogState<Doctor>(DoctorService.initialState());
 
   const handleSaveDoctor = useCallback(
-    (data: DoctorFormValues) => {
-      const { daysOffText, schedule, ...rest } = data;
+    (data: DoctorFormValues & { id?: string }) => {
+      const { daysOffText, schedule, id: explicitId, ...rest } = data;
       const daysOff = daysOffText
         ?.split(',')
         .map((s) => s.trim())
         .filter(Boolean);
       const body: any = {
         ...rest,
-        schedule: schedule as any,
-        ...(daysOff != null && daysOff.length > 0 ? { daysOff } : {}),
+        availabilities: (schedule as any[])
+          ?.filter((s) => s.isWorking)
+          .map((s) => ({
+            dayOfWeek: Number(s.day),
+            startTime: s.startTime,
+            endTime: s.endTime,
+            slotDuration: 30,
+          })),
       };
-      const id = dialog.editingItem?.id;
+      const id = explicitId || dialog.editingItem?.id;
       saveDoctorMut.mutate(
         (id ? { id, body } : { body }) as any,
         { onSettled: () => dialog.closeDialog() },

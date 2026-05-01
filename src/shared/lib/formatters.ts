@@ -23,3 +23,11 @@ export const formatDate = (dateString: string): string => {
 export const formatUzS = (amount: number): string => {
   return `${formatCurrency(amount)} so'm`;
 };
+
+/**
+ * Alias for formatUzS for consistency across the app
+ */
+export const formatMoney = (amount: number | string): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return formatUzS(num);
+};

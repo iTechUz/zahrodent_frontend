@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDate } from '@/shared/lib/formatters';
 import { DOCTOR_WEEKDAY_LABELS } from '@/shared/lib/doctor-schedule';
+import { cn } from '@/shared/lib/utils';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -67,17 +68,21 @@ export const DoctorCard = ({
 
       {doctor.schedule && (
         <div className="flex gap-1 mb-4">
-          {DOCTOR_WEEKDAY_LABELS.map((day, i) => {
+          {['D', 'S', 'Ch', 'P', 'J', 'Sh', 'Ya'].map((label, i) => {
             const sch = doctor.schedule?.find((s) => s.day === i);
             const isWorking = sch?.isWorking;
             return (
               <div 
                 key={i} 
-                className={`flex-1 text-center py-1 rounded text-[10px] font-medium ${isWorking ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'}`} 
+                className={cn(
+                  "flex-1 text-center py-1 rounded-md text-[9px] font-bold border transition-all",
+                  isWorking 
+                    ? "bg-primary/10 border-primary/20 text-primary shadow-sm" 
+                    : "bg-muted/50 border-transparent text-muted-foreground/30"
+                )} 
                 title={isWorking ? `${sch?.startTime} - ${sch?.endTime}` : 'Dam olish'}
               >
-                <span>{day}</span>
-                {isWorking && <p className="text-[8px] mt-0.5">{sch?.startTime?.slice(0, 5)}</p>}
+                {label}
               </div>
             );
           })}

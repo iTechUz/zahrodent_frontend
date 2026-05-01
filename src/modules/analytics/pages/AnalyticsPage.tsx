@@ -27,14 +27,72 @@ export default function AnalyticsPage() {
 
   const isGlobal = currentUser?.role === 'SUPER_ADMIN' && !activeBranchId;
 
+  if (isGlobal) {
+    return (
+      <div className="space-y-6 animate-fade-in pb-12">
+        <PageHeader 
+          title="SaaS Global Tahlillar" 
+          description="Platformaning barqarorlik ko'rsatkichlari, obuna va o'sish dinamikasi" 
+        />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* SaaS MRR Growth */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl border border-slate-700 p-6 shadow-xl text-white">
+            <div className="flex items-center gap-2 mb-6">
+              <TrendingUp className="w-5 h-5 text-teal-400" />
+              <h3 className="font-bold">MRR (SaaS Oylik Daromadi) O'sishi</h3>
+            </div>
+            <div className="h-[250px] w-full flex items-end justify-between gap-2">
+              {/* Dummy growth bars for MRR */}
+              {[40, 55, 75, 85, 100, 115].map((h, i) => (
+                <div key={i} className="flex-1 bg-teal-500/20 hover:bg-teal-500/40 transition-colors rounded-t-lg relative group">
+                  <div 
+                    className="absolute bottom-0 w-full bg-gradient-to-t from-teal-600 to-teal-400 rounded-t-lg shadow-[0_0_15px_rgba(45,212,191,0.5)]"
+                    style={{ height: `${h}%` }}
+                  />
+                  <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-xs py-1 px-2 rounded-md">
+                    {formatUzS(h * 30000)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-slate-400 mt-4">
+              <span>Noyabr</span><span>Dekabr</span><span>Yanvar</span><span>Fevral</span><span>Mart</span><span>Aprel</span>
+            </div>
+          </div>
+
+          {/* Platform GMV Dynamics */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-lg">
+            <div className="flex items-center gap-2 mb-6">
+              <DollarSign className="w-5 h-5 text-blue-500" />
+              <h3 className="font-bold text-slate-800 dark:text-white">Platforma Aylanmasi (GMV) Dinamikasi</h3>
+            </div>
+            <RevenueChart data={revenueGrowth} />
+            <p className="text-xs text-muted-foreground mt-4 text-center">Barcha filiallar bo'yicha birlashtirilgan tushumlar oqimi</p>
+          </div>
+
+          {/* Network Load */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-lg lg:col-span-2">
+            <div className="flex items-center gap-2 mb-6">
+              <Activity className="w-5 h-5 text-purple-500" />
+              <h3 className="font-bold text-slate-800 dark:text-white">Tizim Yuklamasi (Umumiy bemorlar oqimi)</h3>
+            </div>
+            <GrowthChart data={monthlyPatients} />
+            <div className="flex justify-center gap-6 mt-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-500"/> API so'rovlar stabil</div>
+              <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"/> Server quvvati: 24% band</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader 
-        title={isGlobal ? "Global Tahlillar" : "Tahlillar"} 
-        description={isGlobal 
-          ? "Barcha filiallararo umumiy ko'rsatkichlar va o'sish dinamikasi" 
-          : "Klinika samaradorligi va ko'rsatkichlari"
-        } 
+        title="Tahlillar" 
+        description="Klinika samaradorligi va ko'rsatkichlari"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

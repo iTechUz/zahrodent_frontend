@@ -17,6 +17,7 @@ import { Booking, Patient, Doctor, BookingStatus, Service } from '@/shared/types
 import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { BookingSchema, BookingFormValues } from '@/shared/lib/validation';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { cn } from '@/shared/lib/utils';
 
 interface BookingFormProps {
   open: boolean;
@@ -157,20 +158,48 @@ export const BookingForm = ({
             <FormField
               control={form.control}
               name="doctorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Shifokor <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <SearchableSelect
-                      options={doctors.map(d => ({ value: d.id, label: `${d.user?.name} (${d.specialty})` }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      placeholder="Shifokorni tanlang"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const selectedDoctor = doctors.find(d => d.id === field.value);
+                const workingDays = selectedDoctor?.schedule?.filter(s => s.isWorking) || [];
+                
+                return (
+                  <FormItem>
+                    <FormLabel>Shifokor <span className="text-destructive">*</span></FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={doctors.map(d => ({ value: d.id, label: `${d.name || ''} (${d.specialty})` }))}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Shifokorni tanlang"
+                      />
+                    </FormControl>
+                    {selectedDoctor && workingDays.length > 0 && (
+                      <div className="mt-2 p-2 bg-muted/50 rounded-md border border-border">
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Ish jadvali:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {['Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha', 'Ya'].map((label, idx) => {
+                            const isWorking = selectedDoctor.schedule?.some(s => s.day === idx && s.isWorking);
+                            return (
+                              <span 
+                                key={label} 
+                                className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded-sm border",
+                                  isWorking 
+                                    ? "bg-primary/10 border-primary/20 text-primary font-medium" 
+                                    : "bg-muted border-border text-muted-foreground/50 line-through"
+                                )}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
@@ -338,7 +367,7 @@ export const BookingDetails = ({ booking, onClose, patients, doctors }: BookingD
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Shifokor</span>
-            <span className="font-medium">{doctor?.user?.name || '—'}</span>
+            <span className="font-medium">{doctor?.name || '—'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Vaqt</span>

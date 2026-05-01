@@ -56,19 +56,19 @@ function NotificationsHistoryTab({
             <th className="text-left px-4 py-3 font-medium text-muted-foreground">Holat</th>
           </tr></thead>
           <tbody className={cn(table.isLoading && 'opacity-50')}>
-            {table.data.map((n: Notification & { doctorId?: string }) => {
-              const patient = n.patientId ? patients.find((p) => p.id === n.patientId) : null;
-              const doctor = n.doctorId ? doctors.find((d) => d.id === n.doctorId) : null;
+            {table.data.map((n: any) => {
               const isDoctor = !!n.doctorId;
+              const patient = n.patient;
+              const doctor = n.doctor;
               return (
                 <tr key={n.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     {isDoctor ? (
                       <>
                         <div className="font-medium text-foreground flex items-center gap-2">
-                          {doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : '—'} <Badge variant="secondary" className="text-[10px] py-0">Shifokor</Badge>
+                          {doctor ? `Dr. ${doctor.user?.name || ''}` : '—'} <Badge variant="secondary" className="text-[10px] py-0">Shifokor</Badge>
                         </div>
-                        <div className="text-[10px] text-muted-foreground">{doctor?.phone}</div>
+                        <div className="text-[10px] text-muted-foreground">{doctor?.user?.phone}</div>
                       </>
                     ) : (
                       <>
@@ -414,30 +414,6 @@ function NotificationsPageContent() {
     fetchFn: (params) => notificationsApi.list(params),
     perPage: 15,
   });
-
-  const patientIds = React.useMemo(() => {
-    const ids = table.data.map((n) => n.patientId).filter(Boolean) as string[];
-    return Array.from(new Set(ids)).sort();
-  }, [table.data]);
-
-  const doctorIds = React.useMemo(() => {
-    const ids = table.data.map((n: any) => n.doctorId).filter(Boolean) as string[];
-    return Array.from(new Set(ids)).sort();
-  }, [table.data]);
-
-  const { data: patientsData } = useQuery({
-    queryKey: ['patients-by-ids', patientIds.join(',')],
-    enabled: authed && patientIds.length > 0,
-    queryFn: async () => Promise.all(patientIds.map((id) => patientsApi.get(id))),
-  });
-  const patients = patientsData ?? [];
-
-  const { data: doctorsData } = useQuery({
-    queryKey: ['doctors-by-ids', doctorIds.join(',')],
-    enabled: authed && doctorIds.length > 0,
-    queryFn: async () => Promise.all(doctorIds.map((id) => doctorsApi.get(id))),
-  });
-  const doctors = doctorsData ?? [];
 
   return (
     <div className="space-y-6">

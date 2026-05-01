@@ -26,6 +26,7 @@ import { formatUzS } from '@/shared/lib/formatters';
 import { DOCTOR_WEEKDAY_LABELS, normalizeDoctorSchedule } from '@/shared/lib/doctor-schedule';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { motion } from 'framer-motion';
+import { cn } from '@/shared/lib/utils';
 import { DoctorForm } from '../components/DoctorForm';
 
 function DoctorDetailsContent() {
@@ -211,21 +212,34 @@ function DoctorDetailsContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {normalizedSchedule.map((s, i) => (
                 <div 
                   key={i} 
-                  className={`flex items-center justify-between p-3 rounded-lg border ${s.isWorking ? 'border-primary/20 bg-primary/5 shadow-sm shadow-primary/5' : 'border-border/50 bg-muted/10 opacity-60'}`}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300",
+                    s.isWorking 
+                      ? "border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 shadow-sm shadow-primary/5 ring-1 ring-primary/10" 
+                      : "border-border/50 bg-muted/20 opacity-40 grayscale"
+                  )}
                 >
-                  <span className="font-bold text-sm min-w-[40px]">{DOCTOR_WEEKDAY_LABELS[s.day]}</span>
+                  <span className={cn(
+                    "text-xs font-bold uppercase tracking-wider mb-2",
+                    s.isWorking ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {DOCTOR_WEEKDAY_LABELS[s.day]}
+                  </span>
+                  
                   {s.isWorking ? (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-background font-mono">{s.startTime}</Badge>
-                      <span className="text-xs text-muted-foreground opacity-50">—</span>
-                      <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-background font-mono">{s.endTime}</Badge>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[10px] font-mono font-bold bg-background/80 px-2 py-0.5 rounded border border-primary/10">{s.startTime}</span>
+                      <div className="w-px h-2 bg-primary/20" />
+                      <span className="text-[10px] font-mono font-bold bg-background/80 px-2 py-0.5 rounded border border-primary/10">{s.endTime}</span>
                     </div>
                   ) : (
-                    <span className="text-[10px] text-muted-foreground italic">Dam olish kuni</span>
+                    <div className="h-[42px] flex items-center justify-center">
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">OFF</span>
+                    </div>
                   )}
                 </div>
               ))}

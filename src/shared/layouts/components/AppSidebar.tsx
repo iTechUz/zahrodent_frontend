@@ -1,7 +1,7 @@
 import { useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, Stethoscope,
-  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList, ShieldCheck, MessageSquare, Building2
+  DollarSign, BarChart3, Bell, Settings, ChevronLeft, Sparkles, ClipboardList, ShieldCheck, MessageSquare, Building2, Crown
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -11,18 +11,19 @@ import { roleConfig } from '@/shared/config/roles';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 const allNavItems = [
-  { title: 'Bosh sahifa', path: '/', icon: LayoutDashboard },
-  { title: 'Filiallar', path: '/branches', icon: Building2 },
-  { title: 'Qabullar', path: '/bookings', icon: CalendarDays },
-  { title: 'Bemorlar', path: '/patients', icon: Users },
-  { title: 'Shifokorlar', path: '/doctors', icon: Stethoscope },
-  { title: 'Xizmatlar', path: '/services', icon: ClipboardList },
-  { title: 'Murojaatlar', path: '/leads', icon: MessageSquare },
-  { title: 'Moliya', path: '/finance', icon: DollarSign },
-  { title: 'Tahlillar', path: '/analytics', icon: BarChart3 },
+  { title: 'Bosh sahifa',       path: '/',             icon: LayoutDashboard },
+  { title: 'Filiallar',         path: '/branches',     icon: Building2 },
+  { title: 'Tariflar (Obunalar)', path: '/subscriptions', icon: Crown },
+  { title: 'Qabullar',         path: '/bookings',     icon: CalendarDays },
+  { title: 'Bemorlar',         path: '/patients',     icon: Users },
+  { title: 'Shifokorlar',      path: '/doctors',      icon: Stethoscope },
+  { title: 'Xizmatlar',        path: '/services',     icon: ClipboardList },
+  { title: 'Murojaatlar',      path: '/leads',        icon: MessageSquare },
+  { title: 'Moliya',           path: '/finance',      icon: DollarSign },
+  { title: 'Tahlillar',        path: '/analytics',    icon: BarChart3 },
   { title: 'Bildirishnomalar', path: '/notifications', icon: Bell },
-  { title: 'Sozlamalar', path: '/settings', icon: Settings },
-  { title: 'Qabulxona', path: '/users', icon: ShieldCheck },
+  { title: 'Sozlamalar',       path: '/settings',     icon: Settings },
+  { title: 'Qabulxona',        path: '/users',        icon: ShieldCheck },
 ];
 
 interface AppSidebarProps {
@@ -37,7 +38,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const isMobile = useIsMobile();
 
   // Strategik (Global) menyular — Super Admin filial tanlamaganida ko'rinadi
-  const strategicPaths = ['/', '/branches', '/finance', '/analytics', '/settings'];
+  const strategicPaths = ['/', '/branches', '/subscriptions', '/finance', '/analytics', '/settings'];
 
   const allowedPaths = roleAccess[role as keyof typeof roleAccess] || [];
   
@@ -63,13 +64,24 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border shrink-0">
-        <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shrink-0">
-          <Sparkles className="w-4 h-4 text-primary-foreground" />
+        <div className={cn(
+          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+          (role === 'SUPER_ADMIN' && !activeBranchId) ? "bg-slate-900 shadow-inner" : "gradient-primary"
+        )}>
+          {(role === 'SUPER_ADMIN' && !activeBranchId) ? (
+            <ShieldCheck className="w-4 h-4 text-teal-400" />
+          ) : (
+            <Sparkles className="w-4 h-4 text-primary-foreground" />
+          )}
         </div>
         {(!collapsed || isMobile) && (
           <div className="overflow-hidden">
-            <h1 className="font-display font-bold text-sm text-sidebar-primary-foreground leading-tight truncate">Zahro Dental</h1>
-            <p className="text-[10px] text-sidebar-foreground/60 leading-tight">Boshqaruv tizimi</p>
+            <h1 className="font-display font-bold text-sm text-sidebar-primary-foreground leading-tight truncate">
+              {(role === 'SUPER_ADMIN' && !activeBranchId) ? "Zahro SaaS HQ" : "Zahro Dental"}
+            </h1>
+            <p className="text-[10px] text-sidebar-foreground/60 leading-tight">
+              {(role === 'SUPER_ADMIN' && !activeBranchId) ? "Platforma Nazorati" : "Boshqaruv tizimi"}
+            </p>
           </div>
         )}
       </div>

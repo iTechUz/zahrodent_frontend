@@ -59,11 +59,20 @@ export const DoctorAvailabilitySchema = z.object({
 });
 
 export const DoctorSchema = z.object({
-  userId: requiredString('Foydalanuvchi'),
+  userId: z.string().optional(),
+  firstName: z.string().min(1, 'Ism kiritilishi shart'),
+  lastName: z.string().min(1, 'Familiya kiritilishi shart'),
   specialty: requiredString('Mutaxassislik'),
   experienceYears: positiveNumber('Tajriba (yil)'),
   phone: phoneSchema,
+  password: z.string().min(6, 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak').optional().or(z.literal('')),
   bio: z.string().optional(),
+  schedule: z.array(z.object({
+    day: z.number(),
+    startTime: z.string(),
+    endTime: z.string(),
+    isWorking: z.boolean(),
+  })).optional(),
   availabilities: z.array(DoctorAvailabilitySchema).optional(),
 });
 

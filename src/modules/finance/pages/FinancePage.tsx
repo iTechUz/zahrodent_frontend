@@ -25,6 +25,7 @@ import { PaymentStatusBadge } from '@/shared/components/StatusBadge';
 import { exportToExcel } from '@/shared/lib/excel';
 import { paymentsApi } from '@/lib/api/endpoints';
 import { useStore } from '@/store/useStore';
+import { useSubscriptions } from '@/modules/subscriptions/hooks/useSubscriptions';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -57,9 +58,10 @@ export function FinancePageContent() {
     openEdit,
     handleSave,
     handleDelete,
-    isLoading,
+    isLoading: financeLoading,
   } = useFinance();
 
+  const { metrics, isLoading: metricsLoading } = useSubscriptions();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -96,9 +98,8 @@ export function FinancePageContent() {
   const columns: Column<Payment>[] = [
     {
       header: 'Bemor',
-      accessor: (p) => {
-        const pt = patients.find(pt => pt.id === p.patientId);
-        return `${pt?.firstName ?? ''} ${pt?.lastName ?? ''}`.trim() || '—';
+      accessor: (p: any) => {
+        return `${p.patient?.firstName ?? ''} ${p.patient?.lastName ?? ''}`.trim() || '—';
       }
     },
     { header: 'Tavsif', accessor: 'description' },
@@ -132,15 +133,102 @@ export function FinancePageContent() {
 
   const { currentUser, activeBranchId } = useStore();
   const isGlobal = currentUser?.role === 'SUPER_ADMIN' && !activeBranchId;
+  const isLoading = financeLoading || metricsLoading;
+
+  if (isGlobal) {
+    return (
+      <div className="space-y-6 animate-fade-in pb-12">
+        <PageHeader 
+          title="SaaS Billing va Tariflar" 
+          description="Klinikalar tomonidan platformaga qilingan to'lovlar va obunalar nazorati" 
+        />
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            title="SaaS MRR (Kutilayotgan)"
+            value={formatUzS(metrics?.mrr || 0)}
+            icon={<DollarSign className="w-5 h-5 text-emerald-500" />}
+            trend={`${metrics?.activeSubscriptions || 0} ta faol litsenziya`}
+            trendUp
+          />
+          <StatCard
+            title="Muddati o'tganlar"
+            value={metrics?.pastDueSubscriptions || 0}
+            icon={<AlertTriangle className="w-5 h-5 text-warning" />}
+            trend="To'lov kutilmoqda"
+            trendUp={false}
+          />
+          <StatCard
+            title="Tarmoq Aylanmasi (GMV)"
+            value={formatUzS(totalRevenue)}
+            icon={<TrendingUp className="w-5 h-5 text-primary" />}
+            trend="Barcha filiallar bo'yicha"
+            trendUp
+          />
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-lg">
+          <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-primary" /> Joriy Obunalar Holati
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground uppercase bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                <tr>
+                  <th className="px-4 py-3 rounded-l-lg">Klinika / Tenent</th>
+                  <th className="px-4 py-3">Tarif</th>
+                  <th className="px-4 py-3">Summa</th>
+                  <th className="px-4 py-3">Tugash sanasi</th>
+                  <th className="px-4 py-3">Holat</th>
+                  <th className="px-4 py-3 rounded-r-lg text-right">Amallar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics?.subscriptions?.slice(0, 10).map((sub: any) => (
+                  <tr key={sub.id} className="border-b border-border/50 hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{sub.branch.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{sub.plan.name}</td>
+                    <td className="px-4 py-3 font-bold">{formatUzS(sub.plan.price)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {sub.endDate ? formatDate(sub.endDate) : 'Abadiy'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        sub.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 
+                        sub.status === 'PAST_DUE' ? 'bg-warning/10 text-warning' : 
+                        'bg-slate-500/10 text-slate-500'
+                      }`}>
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="ghost" size="sm" className="h-8 text-primary">PDF Faktura</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary"><DollarSign className="w-5 h-5"/></div>
+                <div>
+                  <h4 className="font-bold text-sm">Avtomatlashtirilgan Billing tizimi</h4>
+                  <p className="text-xs text-muted-foreground">Payme va Click orqali klinikalar to'g'ridan-to'g'ri obuna sotib olishi tez kunda qo'shiladi.</p>
+                </div>
+             </div>
+             <Button variant="outline">Sozlash</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={isGlobal ? "Global Moliya" : "Moliya"}
-        description={isGlobal 
-          ? "Barcha filiallar bo'yicha agregatsiyalangan daromad va xarajatlar" 
-          : "Daromad va to'lovlarni boshqarish"
-        }
+        title="Moliya"
+        description="Daromad va to'lovlarni boshqarish"
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport} disabled={isExporting}>

@@ -26,25 +26,23 @@ export const useSocket = () => {
       });
 
       socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
+        // WebSocket ulandi
       });
 
       socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server');
+        // WebSocket uzildi
       });
     }
 
     const handleNewLead = (lead: any) => {
-      console.log('New lead received via WebSocket:', lead);
-      // Invalidate leads query to refetch data
+      // Leads listini yangilash
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       
-      // Optional: show a notification
       toast.info(`Yangi murojaat: ${lead.name}`, {
         description: lead.phone,
         action: {
           label: "Ko'rish",
-          onClick: () => console.log("View lead", lead.id)
+          onClick: () => { /* navigate to lead */ }
         }
       });
     };

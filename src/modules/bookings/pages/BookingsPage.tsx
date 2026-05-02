@@ -18,6 +18,7 @@ import { StatusBadge, SourceBadge } from '@/shared/components/StatusBadge';
 import { formatDate } from '@/shared/lib/formatters';
 import { StatCard } from '@/shared/components/StatCard';
 import { StatsSkeleton } from '@/components/Skeletons';
+import { NotDoctor, DoctorOnly, useRole } from '@/shared/components/RoleGuard';
 
 function BookingsPageContent() {
   const {
@@ -49,8 +50,7 @@ function BookingsPageContent() {
     services,
   } = useBookings();
 
-  const role = useStore(s => s.currentUser?.role);
-  const isDoctor = role === 'DOCTOR';
+  const { isDoctor } = useRole();
 
   const columns: Column<Booking>[] = [
     { 
@@ -82,23 +82,25 @@ function BookingsPageContent() {
     },
     { 
       header: 'Holat', 
-      accessor: (b) => isDoctor ? (
-        <StatusBadge status={b.status} />
-      ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="focus:outline-none">
-              <StatusBadge status={b.status} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {BOOKING_STATUSES.map((s) => (
-              <DropdownMenuItem key={s} onClick={() => handleStatusChange(b.id, s)}>
-                {BOOKING_STATUS_LABELS[s]}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+      accessor: (b) => (
+        <DoctorOnly fallback={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="focus:outline-none">
+                <StatusBadge status={b.status} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {BOOKING_STATUSES.map((s) => (
+                <DropdownMenuItem key={s} onClick={() => handleStatusChange(b.id, s)}>
+                  {BOOKING_STATUS_LABELS[s]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }>
+          <StatusBadge status={b.status} />
+        </DoctorOnly>
       )
     },
   ];
@@ -108,12 +110,14 @@ function BookingsPageContent() {
       <PageHeader 
         title="Qabullar" 
         description="Qabullar va uchrashuvlarni boshqarish" 
-        action={!isDoctor && (
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Yangi qabul
-          </Button>
-        )} 
+        action={
+          <NotDoctor>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />
+              Yangi qabul
+            </Button>
+          </NotDoctor>
+        } 
       />
 
       {isLoading ? (

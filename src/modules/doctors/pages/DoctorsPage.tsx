@@ -38,6 +38,7 @@ import { useState } from 'react';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/shared/lib/utils';
 import { StatCard } from '@/shared/components/StatCard';
+import { AdminOnly, useRole } from '@/shared/components/RoleGuard';
 
 function DoctorsPageContent() {
   const {
@@ -73,8 +74,7 @@ function DoctorsPageContent() {
   } = useDoctors();
 
   const [activeTab, setActiveTab] = useState<'list' | 'efficiency'>('list');
-  const role = useStore(s => s.currentUser?.role);
-  const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const { isAdmin } = useRole();
 
   return (
     <div className="space-y-4">
@@ -82,10 +82,12 @@ function DoctorsPageContent() {
         title="Shifokorlar" 
         description="Shifokorlar va tashriflarni boshqarish" 
         action={
-          <Button onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Shifokor qo'shish
-          </Button>
+          <AdminOnly>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />
+              Shifokor qo'shish
+            </Button>
+          </AdminOnly>
         } 
       />
 

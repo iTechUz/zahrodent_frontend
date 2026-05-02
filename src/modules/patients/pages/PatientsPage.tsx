@@ -27,6 +27,7 @@ import { exportToExcel } from '@/shared/lib/excel';
 import { patientsApi } from '@/lib/api/endpoints';
 import { toast } from 'sonner';
 import { useState } from "react";
+import { NotDoctor, useRole } from '@/shared/components/RoleGuard';
 
 function PatientsPageContent() {
   const navigate = useNavigate();
@@ -53,8 +54,7 @@ function PatientsPageContent() {
     stats,
   } = usePatients();
 
-  const role = useStore(s => s.currentUser?.role);
-  const isDoctor = role === 'DOCTOR';
+  const { isDoctor } = useRole();
 
   const columns: Column<Patient>[] = [
     { 
@@ -140,12 +140,12 @@ function PatientsPageContent() {
               <Download className="w-4 h-4 mr-2" />
               Excel Export
             </Button>
-            {!isDoctor && (
+            <NotDoctor>
               <Button onClick={openCreate}>
                 <Plus className="w-4 h-4 mr-2" />
                 Bemor qo'shish
               </Button>
-            )}
+            </NotDoctor>
           </div>
         } 
       />
@@ -232,7 +232,7 @@ function PatientsPageContent() {
         data={patients} 
         columns={columns} 
         onEdit={openEdit} 
-        onDelete={!isDoctor ? setDeleteId : undefined}
+        onDelete={isDoctor ? undefined : setDeleteId}
         onView={(p) => navigate(`/patients/${p.id}`)}
         isLoading={isLoading}
       />

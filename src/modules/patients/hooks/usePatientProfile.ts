@@ -98,7 +98,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
   const [editForm, setEditForm] = useState({
     firstName: '',
     lastName: '',
-    age: '',
+    birthDate: '',
     phone: '',
     address: '',
     workplace: '',
@@ -158,7 +158,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
     updatePatientMut.mutate(
       {
         id: patient.id,
-        body: { ...editForm, age: Number(editForm.age) },
+        body: { ...editForm },
       },
       {
         onSuccess: () => {
@@ -287,13 +287,13 @@ export const usePatientProfile = (patientId: string | undefined) => {
     setEditForm({
       firstName: patient.firstName,
       lastName: patient.lastName,
-      age: String(patient.age || ''),
+      birthDate: patient.birthDate ? patient.birthDate.split('T')[0] : '',
       phone: patient.phone,
       address: patient.address || '',
-      workplace: patient.workplace || '',
+      workplace: '', // Patient model backend has no workplace
       assignedDoctorId: patient.assignedDoctorId || '',
       source: patient.source,
-      notes: patient.notes,
+      notes: patient.notes || '',
     });
     setEditOpen(true);
   };
@@ -313,7 +313,7 @@ export const usePatientProfile = (patientId: string | undefined) => {
       amount: String(balance),
       method: 'CASH',
       status: 'COMPLETED',
-      description: `${visit.date} - ${doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Tashrif'} uchun to'lov`,
+      description: `${visit.date} - ${doctor ? doctor.name : 'Tashrif'} uchun to'lov`,
       visitId: visit.id
     });
     setPaymentModal(true);

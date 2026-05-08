@@ -38,7 +38,7 @@ export function DoctorEfficiencyStats() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats?.map((doctor, index) => (
           <div 
-            key={doctor.id} 
+            key={doctor.doctorId} 
             className={cn(
               "relative bg-card rounded-2xl border border-border overflow-hidden transition-all hover:shadow-lg",
               index === 0 && "ring-2 ring-primary/20"
@@ -57,10 +57,10 @@ export function DoctorEfficiencyStats() {
               {/* Header */}
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
-                  {doctor.firstName[0]}{doctor.lastName[0]}
+                  {doctor.name[0]}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg leading-none">{doctor.firstName} {doctor.lastName}</h3>
+                  <h3 className="font-bold text-lg leading-none">{doctor.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{doctor.specialty}</p>
                 </div>
               </div>
@@ -69,13 +69,13 @@ export function DoctorEfficiencyStats() {
               <div className="grid grid-cols-2 gap-3">
                 <StatMini 
                   icon={<Users className="w-3.5 h-3.5" />} 
-                  label="Bemorlar" 
-                  value={doctor.totalVisits} 
+                  label="Bronlar" 
+                  value={doctor.totalBookings} 
                 />
                 <StatMini 
                   icon={<CalendarCheck className="w-3.5 h-3.5" />} 
-                  label="Bronlar" 
-                  value={doctor.totalBookings} 
+                  label="Yakunlangan" 
+                  value={doctor.completedBookings} 
                 />
               </div>
 

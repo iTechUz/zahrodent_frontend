@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { subscriptionsApi, SubscriptionPlan, BranchSubscription } from '@/lib/api/endpoints';
+import { subscriptionsApi } from '@/lib/api/endpoints';
+import { SubscriptionPlan, BranchSubscription } from '@/shared/types';
 import { useStore } from '@/store/useStore';
 import { toast } from 'sonner';
 

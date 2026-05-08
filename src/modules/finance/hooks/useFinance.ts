@@ -126,7 +126,7 @@ export const useFinance = () => {
       return {
         doctorId: ds.doctorId,
         total: ds.total,
-        name: doctor ? `${doctor.firstName} ${doctor.lastName}` : "Noma'lum",
+        name: doctor ? doctor.name : "Noma'lum",
         specialty: doctor?.specialty ?? '',
         percent: totalRevenue > 0 ? Math.round((ds.total / totalRevenue) * 100) : 0,
       };

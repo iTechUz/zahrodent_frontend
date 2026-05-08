@@ -147,21 +147,21 @@ export function BookingCalendar() {
               <div className="space-y-0.5">
                 {dayBookings.slice(0, 3).map((b) => {
                   const patient = patients.find((p) => p.id === b.patientId);
+                  const timeStr = new Date(b.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                   return (
                     <button
                       key={b.id}
                       onClick={() => setSelectedBooking(b)}
                       className={cn(
                         'w-full text-left text-[10px] md:text-xs px-1.5 py-0.5 rounded truncate transition-colors',
-                        b.status === 'confirmed' && 'bg-primary/15 text-primary hover:bg-primary/25',
-                        b.status === 'pending' && 'bg-warning/15 text-warning hover:bg-warning/25',
-                        b.status === 'completed' && 'bg-success/15 text-success hover:bg-success/25',
-                        b.status === 'cancelled' && 'bg-destructive/15 text-destructive hover:bg-destructive/25',
-                        b.status === 'arrived' && 'bg-info/15 text-info hover:bg-info/25',
-                        b.status === 'no-show' && 'bg-muted text-muted-foreground hover:bg-muted/80',
+                        b.status === 'CONFIRMED' && 'bg-primary/15 text-primary hover:bg-primary/25',
+                        b.status === 'PENDING' && 'bg-warning/15 text-warning hover:bg-warning/25',
+                        b.status === 'COMPLETED' && 'bg-success/15 text-success hover:bg-success/25',
+                        b.status === 'CANCELLED' && 'bg-destructive/15 text-destructive hover:bg-destructive/25',
+                        b.status === 'NOSHOW' && 'bg-muted text-muted-foreground hover:bg-muted/80',
                       )}
                     >
-                      <span className="hidden md:inline">{b.time} </span>
+                      <span className="hidden md:inline">{timeStr} </span>
                       {patient?.firstName}
                     </button>
                   );
@@ -182,11 +182,14 @@ export function BookingCalendar() {
           {selectedBooking && (() => {
             const patient = patients.find((p) => p.id === selectedBooking.patientId);
             const doctor = doctors.find((d) => d.id === selectedBooking.doctorId);
+            const start = new Date(selectedBooking.startTime);
+            const dateStr = start.toLocaleDateString();
+            const timeStr = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return (
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Bemor</span><span className="font-medium">{patient?.firstName} {patient?.lastName}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shifokor</span><span className="font-medium">{doctor?.name}</span></div>
-                <div className="flex justify-between items-center"><span className="text-muted-foreground">Vaqt</span><span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{selectedBooking.date} — {selectedBooking.time}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">Vaqt</span><span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{dateStr} — {timeStr}</span></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Manba</span><SourceBadge source={selectedBooking.source} /></div>
                 <div className="flex justify-between items-center"><span className="text-muted-foreground">Holat</span><StatusBadge status={selectedBooking.status} /></div>
               </div>

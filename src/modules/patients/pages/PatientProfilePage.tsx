@@ -81,6 +81,16 @@ export default function PatientProfilePage() {
     comments,
   } = usePatientProfile(id);
 
+  const calculateAge = (birthDate?: string) => {
+    if (!birthDate) return '?';
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
+
   if (isLoading) return <div className="p-6 text-center">Yuklanmoqda...</div>;
   if (!patient) return <div className="p-6 text-center text-muted-foreground">Bemor topilmadi</div>;
 
@@ -104,7 +114,7 @@ export default function PatientProfilePage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-display font-bold">{patient.firstName} {patient.lastName}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-              <span>{patient.age || '?'} yosh</span>
+              <span>{calculateAge(patient.birthDate)} yosh</span>
               <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{patient.phone}</span>
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(patient.createdAt).toLocaleDateString()}</span>
               <SourceBadge source={patient.source} />
@@ -115,14 +125,10 @@ export default function PatientProfilePage() {
                 <p className="text-xs font-medium">{patient.address || '—'}</p>
               </div>
               <div className="space-y-0.5">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Ish joyi</p>
-                <p className="text-xs font-medium">{patient.workplace || '—'}</p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Biriktirilgan shifokor</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Shifokor</p>
                 <p className="text-xs font-medium">
                   {patient.assignedDoctor 
-                    ? `Dr. ${patient.assignedDoctor.user?.name || ''}` 
+                    ? `Dr. ${patient.assignedDoctor.name || ''}` 
                     : 'Biriktirilmagan'}
                 </p>
               </div>
@@ -205,7 +211,7 @@ export default function PatientProfilePage() {
                     </div>
                     <div>
                       <span className="text-sm font-semibold">{new Date(v.date).toLocaleDateString()}</span>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor ? `Dr. ${doctor.user?.name || ''}` : '—'}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{doctor ? `Dr. ${doctor.name || ''}` : '—'}</p>
                     </div>
                   </div>
                   
@@ -288,7 +294,7 @@ export default function PatientProfilePage() {
               <div key={b.id} className="flex items-center justify-between p-3 rounded-lg bg-card border border-border">
                 <div>
                   <p className="text-sm font-medium">{new Date(b.startTime).toLocaleDateString()} — {new Date(b.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                  <p className="text-xs text-muted-foreground">{doctor ? `Dr. ${doctor.user?.name || ''}` : '—'}</p>
+                  <p className="text-xs text-muted-foreground">{doctor ? `Dr. ${doctor.name || ''}` : '—'}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <SourceBadge source={b.source} />
@@ -422,7 +428,7 @@ export default function PatientProfilePage() {
             <div className="space-y-2">
               <Label>Biriktirilgan shifokor</Label>
               <SearchableSelect
-                options={doctors.map(d => ({ value: d.id, label: `Dr. ${d.user?.name || ''} (${d.specialty})` }))}
+                options={doctors.map(d => ({ value: d.id, label: `Dr. ${d.name || ''} (${d.specialty})` }))}
                 value={editForm.assignedDoctorId}
                 onValueChange={v => setEditForm({ ...editForm, assignedDoctorId: v })}
                 placeholder="Shifokorni tanlang"
@@ -475,7 +481,7 @@ export default function PatientProfilePage() {
             <div><Label>Shifokor</Label>
               <Select value={visitForm.doctorId} onValueChange={v => setVisitForm({ ...visitForm, doctorId: v })}>
                 <SelectTrigger><SelectValue placeholder="Shifokorni tanlang" /></SelectTrigger>
-                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>Dr. {d.user?.name || ''}</SelectItem>)}</SelectContent>
+                <SelectContent>{doctors.map(d => <SelectItem key={d.id} value={d.id}>Dr. {d.name || ''}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">

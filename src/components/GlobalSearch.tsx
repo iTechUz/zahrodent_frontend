@@ -71,23 +71,27 @@ export function GlobalSearch() {
       }));
 
     const doctorResults: SearchResult[] = doctors
-      .filter(d => `${d.name} ${d.specialty}`.toLowerCase().includes(q))
+      .filter(d => `${d.user.name} ${d.specialty}`.toLowerCase().includes(q))
       .slice(0, 3)
       .map(d => ({
-        id: d.id, title: d.name, subtitle: d.specialty,
+        id: d.id, title: d.user.name, subtitle: d.specialty,
         type: 'doctor', path: '/doctors', icon: Stethoscope,
       }));
 
     const bookingResults: SearchResult[] = bookings
       .filter(b => {
         const patient = patients.find(p => p.id === b.patientId);
-        return `${patient?.firstName} ${patient?.lastName} ${b.date}`.toLowerCase().includes(q);
+        const dateStr = new Date(b.startTime).toLocaleDateString();
+        return `${patient?.firstName} ${patient?.lastName} ${dateStr}`.toLowerCase().includes(q);
       })
       .slice(0, 3)
       .map(b => {
         const patient = patients.find(p => p.id === b.patientId);
+        const start = new Date(b.startTime);
         return {
-          id: b.id, title: `${patient?.firstName} ${patient?.lastName}`, subtitle: `${b.date} ${b.time}`,
+          id: b.id, 
+          title: `${patient?.firstName} ${patient?.lastName}`, 
+          subtitle: `${start.toLocaleDateString()} ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           type: 'booking' as const, path: '/bookings', icon: CalendarDays,
         };
       });

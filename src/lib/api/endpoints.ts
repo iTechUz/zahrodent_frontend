@@ -10,6 +10,9 @@ import type {
   DoctorEfficiencyStats,
   PatientComment,
   Lead,
+  SubscriptionPlan,
+  BranchSubscription,
+  SaasMetrics,
 } from '@/shared/types';
 import type { SessionUser } from '@/shared/types/auth';
 import { apiRequest } from './client';
@@ -69,7 +72,7 @@ export const patientsApi = {
     apiRequest<PaginatedResponse<Patient>>(`/patients${qs(params ?? {})}`),
   stats: () => apiRequest<{ total: number; newThisMonth: number; topSource: string }>('/patients/stats'),
   get: (id: string) => apiRequest<Patient>(`/patients/${id}`),
-  create: (body: Partial<Patient> & Pick<Patient, 'firstName' | 'lastName' | 'age' | 'phone' | 'source'>) =>
+  create: (body: Partial<Patient> & Pick<Patient, 'firstName' | 'lastName' | 'phone' | 'source'> & { birthDate?: string }) =>
     apiRequest<Patient>('/patients', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: Partial<Patient>) =>
     apiRequest<Patient>(`/patients/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -79,9 +82,18 @@ export const patientsApi = {
     apiRequest<PatientComment>(`/patients/${id}/comments`, { method: 'POST', body: JSON.stringify(body) }),
 };
 
-/** POST /doctors — to‘rt majburiy maydon + qolgan Doctor maydonlari ixtiyoriy */
-export type DoctorCreatePayload = Pick<Doctor, 'firstName' | 'lastName' | 'specialty' | 'phone'> &
-  Partial<Doctor> & { password?: string };
+export type DoctorCreatePayload = {
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  phone?: string;
+  password?: string;
+  specialty: string;
+  experienceYears: number;
+  bio?: string;
+  availabilities?: any[];
+};
 
 export const doctorsApi = {
   list: (params?: ListParams & { specialty?: string }) =>
@@ -102,7 +114,7 @@ export const bookingsApi = {
     apiRequest<PaginatedResponse<Booking>>(`/bookings${qs(params ?? {})}`),
   stats: () => apiRequest<{ today: number; pending: number; completedToday: number }>('/bookings/stats'),
   get: (id: string) => apiRequest<Booking>(`/bookings/${id}`),
-  create: (body: Omit<Booking, 'id' | 'createdAt'> & { createdAt?: string }) =>
+  create: (body: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) =>
     apiRequest<Booking>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: Partial<Booking>) =>
     apiRequest<Booking>(`/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -137,7 +149,7 @@ export const paymentsApi = {
   stats: () => apiRequest<{ totalRevenue: number; pendingAmount: number; todayRevenue: number }>('/payments/stats'),
   doctorStats: () => apiRequest<{ doctorId: string; total: number }[]>('/payments/doctor-stats'),
   get: (id: string) => apiRequest<Payment>(`/payments/${id}`),
-  create: (body: Omit<Payment, 'id'> & { date?: string }) =>
+  create: (body: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'> & { date?: string }) =>
     apiRequest<Payment>('/payments', { method: 'POST', body: JSON.stringify(body) }),
   update: (id: string, body: Partial<Payment>) =>
     apiRequest<Payment>(`/payments/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -218,38 +230,6 @@ export const branchesApi = {
 };
 
 // ─── Subscription Plans & Tenants ────────────────────────────────────────────
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  features: string[];
-  isPopular: boolean;
-  createdAt: string;
-  updatedAt: string;
-  _count?: { subscriptions: number };
-}
-
-export interface BranchSubscription {
-  id: string;
-  branchId: string;
-  planId: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'PAST_DUE' | 'CANCELED';
-  startDate: string;
-  endDate: string | null;
-  branch: { id: string; name: string; isActive: boolean };
-  plan: SubscriptionPlan;
-  createdAt: string;
-}
-
-export interface SaasMetrics {
-  totalPlans: number;
-  activeSubscriptions: number;
-  pastDueSubscriptions: number;
-  mrr: number;
-  arr: number;
-  subscriptions: BranchSubscription[];
-}
 
 export const subscriptionsApi = {
   // Tariflar

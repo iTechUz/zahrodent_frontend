@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import { useBranches } from '@/modules/branches/hooks/useBranches';
-import { SubscriptionPlan, BranchSubscription } from '@/lib/api/endpoints';
+import { SubscriptionPlan, BranchSubscription } from '@/shared/types';
 import { formatUzS, formatDate } from '@/shared/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

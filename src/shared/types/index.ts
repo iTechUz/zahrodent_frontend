@@ -11,41 +11,49 @@ export interface Patient {
   branchId: string;
   firstName: string;
   lastName: string;
-  age: number;
   phone: string;
-  address?: string;
-  workplace?: string;
-  assignedDoctorId?: string;
-  assignedDoctor?: {
-    user: {
-      name: string;
-    };
-  };
-  source: string;
-  notes?: string;
-  avatar?: string;
   birthDate?: string;
   gender?: string;
-  createdAt: string;
-  toothChart?: Record<number, ToothRecord>;
+  address?: string;
+  source: string;
+  notes?: string;
   medicalHistory?: any;
-  balance?: number;
+  toothChart?: any;
+  balance: number;
+  assignedDoctorId?: string;
+  assignedDoctor?: Doctor;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  user?: {
+    id: string;
+    name: string;
+    phone: string;
+    avatar?: string;
+  };
 }
 
 export interface Doctor {
   id: string;
   userId: string;
-  name: string;
-  firstName: string;
-  lastName: string;
+  name: string; // Flattened from user.name
+  phone?: string; // Flattened from user.phone
+  email?: string; // Flattened from user.email
+  avatar?: string; // Flattened from user.avatar
   specialty: string;
   experienceYears: number;
-  phone: string;
   bio?: string;
-  avatar?: string;
   isActive: boolean;
-  schedule: DoctorSchedule[];
-  daysOff?: string[];
+  createdAt: string;
+  updatedAt: string;
+  availabilities?: DoctorAvailability[];
+  schedule?: DoctorSchedule[];
+  user?: { // Keep this just in case, though flattened is primary
+    id: string;
+    name: string;
+    phone: string;
+    avatar?: string;
+  };
 }
 
 export interface DoctorSchedule {
@@ -68,9 +76,10 @@ export interface Service {
   id: string;
   name: string;
   category: string;
-  price: number;
+  basePrice: number;
   duration: number;
   description?: string;
+  branchId?: string;
 }
 
 export interface Booking {
@@ -85,6 +94,7 @@ export interface Booking {
   source: string;
   notes?: string;
   createdAt: string;
+  updatedAt: string;
   patient?: Patient;
   doctor?: Doctor;
   service?: Service;
@@ -92,6 +102,7 @@ export interface Booking {
 
 export interface Visit {
   id: string;
+  branchId: string;
   patientId: string;
   doctorId: string;
   bookingId?: string;
@@ -101,19 +112,33 @@ export interface Visit {
   notes?: string;
   price: number;
   date: string;
+  createdAt: string;
+  patient?: Patient;
+  doctor?: Doctor;
+  service?: Service;
 }
 
 export interface Payment {
   id: string;
+  branchId: string;
   patientId: string;
+  doctorId?: string;
+  bookingId?: string;
+  visitId?: string;
+  serviceId?: string;
   amount: number;
+  discount?: number;
   type: PaymentType;
   method: PaymentMethod;
   status: string;
   currency: string;
+  referenceId?: string;
   date: string;
   description?: string;
-  referenceId?: string;
+  createdAt: string;
+  updatedAt: string;
+  patient?: Patient;
+  doctor?: Doctor;
 }
 
 export interface ToothRecord {
@@ -125,11 +150,78 @@ export interface ToothRecord {
 
 export interface Lead {
   id: string;
+  branchId?: string;
+  patientId?: string;
   name: string;
   phone: string;
   service?: string;
   message?: string;
   status: string;
   source: string;
+  notes?: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface DoctorEfficiencyStats {
+  doctorId: string;
+  name: string;
+  specialty: string;
+  totalBookings: number;
+  completedBookings: number;
+  totalRevenue: number;
+  conversionRate: number;
+  avgCheck: number;
+}
+
+export interface PatientComment {
+  id: string;
+  branchId: string;
+  patientId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+  author?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  features: string[];
+  isPopular: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    subscriptions: number;
+  };
+}
+
+export interface BranchSubscription {
+  id: string;
+  branchId: string;
+  planId: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'PAST_DUE' | 'CANCELED';
+  startDate: string;
+  endDate: string | null;
+  branch: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  };
+  plan: SubscriptionPlan;
+  createdAt: string;
+}
+
+export interface SaasMetrics {
+  totalPlans: number;
+  activeSubscriptions: number;
+  pastDueSubscriptions: number;
+  mrr: number;
+  arr: number;
+  subscriptions: BranchSubscription[];
 }

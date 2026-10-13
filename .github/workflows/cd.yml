@@ -61,7 +61,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .github/docker/Dockerfile
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
           load: true

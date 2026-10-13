@@ -13,36 +13,76 @@ import {
 import { toast } from "sonner";
 import { ArrowUpRight, MessageCircle, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
+import {
+  NAME_MAX,
+  NOTE_MAX,
+  cleanName,
+  formatPhone,
+  isValidDate,
+  isValidName,
+  isValidPhone,
+  maxBookingDate,
+  toE164,
+  todayTashkent,
+} from "@/lib/leadForm";
 
 const WHATSAPP = "https://wa.me/998901234567";
 const TELEGRAM = "https://t.me/zahrodentaluz";
 const API_URL = (import.meta.env.VITE_API_URL ?? "https://api.zahro.iqroagency.uz").replace(/\/+$/, "");
 
+type Errors = Partial<Record<"name" | "phone" | "service" | "date", string>>;
+
 export const Booking = () => {
   const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const [service, setService] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [date, setDate] = useState("");
+  const [note, setNote] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
+
+  const clear = (k: keyof Errors) => setErrors((e) => (e[k] ? { ...e, [k]: undefined } : e));
+
+  const validate = (): Errors => {
+    const e: Errors = {};
+    if (!isValidName(name)) e.name = t.booking.vName;
+    if (!isValidPhone(phone)) e.phone = t.booking.vPhone;
+    if (!service) e.service = t.booking.vService;
+    if (!isValidDate(date)) e.date = t.booking.vDate;
+    return e;
+  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const f = new FormData(form);
+    if (loading) return;
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length) {
+      const first = (["name", "phone", "service", "date"] as const).find((k) => found[k]);
+      document.getElementById(first!)?.focus();
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/public/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: String(f.get("name") ?? "").trim(),
-          phone: String(f.get("phone") ?? "").trim(),
-          service: service || undefined,
-          date: String(f.get("date") ?? "") || undefined,
-          note: String(f.get("note") ?? "").trim() || undefined,
+          name: name.trim(),
+          phone: toE164(phone),
+          service,
+          date,
+          note: note.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
-      form.reset();
+      setName("");
+      setPhone("");
       setService("");
+      setDate("");
+      setNote("");
+      setErrors({});
       toast.success(t.booking.ok);
     } catch {
       toast.error(t.booking.err);
@@ -50,6 +90,8 @@ export const Booking = () => {
       setLoading(false);
     }
   };
+
+  const errCls = "text-[12px] text-red-600 font-normal mt-1";
 
   return (
     <section
@@ -110,6 +152,7 @@ export const Booking = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             onSubmit={onSubmit}
+            noValidate
             className="lg:col-span-7 relative"
           >
             {/* offset gold frame */}
@@ -138,9 +181,15 @@ export const Booking = () => {
                       id="name"
                       name="name"
                       placeholder={t.booking.namePh}
-                      required
+                      value={name}
+                      onChange={(e) => { setName(cleanName(e.target.value)); clear("name"); }}
+                      autoComplete="name"
+                      maxLength={NAME_MAX}
+                      aria-invalid={!!errors.name}
+                      aria-describedby={errors.name ? "name-err" : undefined}
                       className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light placeholder:text-foreground/30"
                     />
+                    {errors.name && <p id="name-err" role="alert" className={errCls}>{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label
@@ -153,10 +202,17 @@ export const Booking = () => {
                       id="phone"
                       name="phone"
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       placeholder={t.booking.phonePh}
-                      required
+                      value={phone}
+                      onChange={(e) => { setPhone(formatPhone(e.target.value)); clear("phone"); }}
+                      maxLength={17}
+                      aria-invalid={!!errors.phone}
+                      aria-describedby={errors.phone ? "phone-err" : undefined}
                       className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light placeholder:text-foreground/30"
                     />
+                    {errors.phone && <p id="phone-err" role="alert" className={errCls}>{errors.phone}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label
@@ -165,9 +221,10 @@ export const Booking = () => {
                     >
                       03 — {t.booking.service}
                     </Label>
-                    <Select value={service} onValueChange={setService}>
+                    <Select value={service} onValueChange={(v) => { setService(v); clear("service"); }}>
                       <SelectTrigger
                         id="service"
+                        aria-invalid={!!errors.service}
                         className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus:ring-0 text-base font-light data-[placeholder]:text-foreground/30"
                       >
                         <SelectValue placeholder={t.booking.servicePh} />
@@ -180,6 +237,7 @@ export const Booking = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.service && <p id="service-err" role="alert" className={errCls}>{errors.service}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label
@@ -192,9 +250,15 @@ export const Booking = () => {
                       id="date"
                       name="date"
                       type="date"
-                      required
+                      value={date}
+                      onChange={(e) => { setDate(e.target.value); clear("date"); }}
+                      min={todayTashkent()}
+                      max={maxBookingDate()}
+                      aria-invalid={!!errors.date}
+                      aria-describedby={errors.date ? "date-err" : undefined}
                       className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light"
                     />
+                    {errors.date && <p id="date-err" role="alert" className={errCls}>{errors.date}</p>}
                   </div>
                 </div>
 
@@ -209,6 +273,9 @@ export const Booking = () => {
                     id="note"
                     name="note"
                     placeholder={t.booking.notePh}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    maxLength={NOTE_MAX}
                     rows={3}
                     className="rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light resize-none placeholder:text-foreground/30"
                   />

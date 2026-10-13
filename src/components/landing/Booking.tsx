@@ -16,21 +16,39 @@ import { useLang } from "@/i18n/LanguageContext";
 
 const WHATSAPP = "https://wa.me/998901234567";
 const TELEGRAM = "https://t.me/zahrodentaluz";
+const API_URL = (import.meta.env.VITE_API_URL ?? "https://api.zahro.iqroagency.uz").replace(/\/+$/, "");
 
 export const Booking = () => {
   const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const [service, setService] = useState("");
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      (e.target as HTMLFormElement).reset();
+    try {
+      const res = await fetch(`${API_URL}/public/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(f.get("name") ?? "").trim(),
+          phone: String(f.get("phone") ?? "").trim(),
+          service: service || undefined,
+          date: String(f.get("date") ?? "") || undefined,
+          note: String(f.get("note") ?? "").trim() || undefined,
+        }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset();
       setService("");
       toast.success(t.booking.ok);
-    }, 700);
+    } catch {
+      toast.error(t.booking.err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

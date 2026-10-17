@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
   workflow_dispatch:
 
@@ -86,7 +86,8 @@ jobs:
     name: Notify
     runs-on: ubuntu-24.04
     timeout-minutes: 2
-    environment: production
+    # PR'da base branch (main/dev), push va dispatch'da joriy branch bo'yicha tanlanadi.
+    environment: ${{ (github.base_ref || github.ref_name) == 'main' && 'production' || 'development' }}
     needs: [lint, typecheck, test, build]
     if: always()
     # Telegram xatosi CI'ni qizil qilmasin — aks holda CD (workflow_run success) skip bo'ladi.

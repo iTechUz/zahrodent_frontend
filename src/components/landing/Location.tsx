@@ -1,3 +1,4 @@
+import type { ElementType } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Clock, ArrowUpRight } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
@@ -76,7 +77,7 @@ export const Location = () => {
                   sub: t.location.hoursSun,
                 },
               ].map(({ n, Icon, label, value, sub, href }) => {
-                const Wrap: any = href ? "a" : "div";
+                const Wrap: ElementType = href ? "a" : "div";
                 const wrapProps = href
                   ? { href, className: "group block py-7" }
                   : { className: "block py-7" };

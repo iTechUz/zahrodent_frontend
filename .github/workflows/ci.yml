@@ -126,5 +126,4 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           COMMIT_MSG: ${{ github.event.head_commit.message || github.event.pull_request.title }}
           COMMIT_URL: ${{ github.event.head_commit.url || github.event.pull_request.html_url }}
-        run: bash .github/script/notify-telegram.sh
-        
+        run: bash .github/script/notify-telegram.sh 

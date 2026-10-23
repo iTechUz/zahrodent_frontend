@@ -67,6 +67,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # git describe tag'larni ko'rishi uchun to'liq tarix kerak
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -74,7 +77,16 @@ jobs:
       # TODO: lock fayl package.json bilan mos emas (sharp yo'q) va vite-imagetools@10
       # vite>=7 talab qiladi (loyihada vite@5). Tuzatilgach yana `npm ci`ga qaytarilsin.
       - run: npm install --legacy-peer-deps --no-audit --no-fund
+      # PR'da github.sha — merge commit; haqiqiy commit uchun head sha olinadi.
+      - name: Set build info
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "VERSION=$(git describe --tags --always "$HEAD_SHA")" >> "$GITHUB_ENV"
+          echo "COMMIT=${HEAD_SHA::7}" >> "$GITHUB_ENV"
       - run: npm run build
+      - name: Write version.json
+        run: printf '{"version":"%s","commit":"%s"}\n' "$VERSION" "$COMMIT" > dist/version.json
       - if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:

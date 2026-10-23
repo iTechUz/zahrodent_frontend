@@ -249,3 +249,4 @@ jobs:
           COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message || 'manual deploy' }}
           COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha || github.sha }}
         run: bash .github/script/notify-telegram.sh
+        

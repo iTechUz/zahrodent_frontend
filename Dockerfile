@@ -21,6 +21,9 @@ RUN printf '{"version":"%s","commit":"%s"}\n' "$VERSION" "$COMMIT" > dist/versio
 
 # ---------- runtime ----------
 FROM nginx:alpine
+# `apk upgrade` base image'dan yangi Alpine paketlarini (masalan brotli-libs) tortadi —
+# Trivy CRITICAL tekshiruvi o'tishi uchun.
+RUN apk upgrade --no-cache
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 

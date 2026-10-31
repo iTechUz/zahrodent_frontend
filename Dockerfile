@@ -2,11 +2,13 @@
 # Production image: node build -> nginx (port 80).
 
 # ---------- build ----------
-FROM node:20-alpine AS build
+FROM node:20.20.2-alpine3.23 AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 # TODO: lock fayl tuzatilgach `npm ci`ga o'tkazilsin (CI bilan bir xil sabab).
-RUN npm install --legacy-peer-deps --no-audit --no-fund
+# npm cache build'lar orasida saqlanadi (image'ga tushmaydi).
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --legacy-peer-deps --no-audit --no-fund
 COPY . .
 # Vite VITE_* ni build vaqtida bundle'ga yozadi.
 ARG VITE_API_URL
@@ -20,7 +22,7 @@ ARG COMMIT=unknown
 RUN printf '{"version":"%s","commit":"%s"}\n' "$VERSION" "$COMMIT" > dist/version.json
 
 # ---------- runtime ----------
-FROM nginx:alpine
+FROM nginx:1.31.8-alpine3.24
 # `apk upgrade` base image'dan yangi Alpine paketlarini (masalan brotli-libs) tortadi —
 # Trivy CRITICAL tekshiruvi o'tishi uchun.
 RUN apk upgrade --no-cache

@@ -1,45 +1,27 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowUpRight, MessageCircle, Send } from "lucide-react";
+import { ArrowUpRight, Bell, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import {
-  NAME_MAX,
-  NOTE_MAX,
-  cleanName,
-  formatPhone,
-  isValidDate,
-  isValidName,
-  isValidPhone,
-  maxBookingDate,
-  toE164,
-  todayTashkent,
-} from "@/lib/leadForm";
+import { NAME_MAX, cleanName, formatLocalPhone, isValidName, isValidPhone, toE164 } from "@/lib/leadForm";
 
-const WHATSAPP = "https://wa.me/998901234567";
 const TELEGRAM = "https://t.me/zahrodentaluz";
+/** Bot username without "@" (set VITE_TELEGRAM_BOT_USERNAME at build time); falls back to the clinic channel. */
+const BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME ?? "").trim().replace(/^@/, "");
+const BOT_URL = /^[A-Za-z0-9_]{3,64}$/.test(BOT_USERNAME) ? `https://t.me/${BOT_USERNAME}?start=lead` : TELEGRAM;
 const API_URL = (import.meta.env.VITE_API_URL ?? "https://api.zahro.iqroagency.uz").replace(/\/+$/, "");
 
-type Errors = Partial<Record<"name" | "phone" | "service" | "date", string>>;
+type Errors = Partial<Record<"name" | "phone", string>>;
 
 export const Booking = () => {
   const { t } = useLang();
   const [loading, setLoading] = useState(false);
-  const [service, setService] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [date, setDate] = useState("");
-  const [note, setNote] = useState("");
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
 
   const clear = (k: keyof Errors) => setErrors((e) => (e[k] ? { ...e, [k]: undefined } : e));
@@ -48,8 +30,6 @@ export const Booking = () => {
     const e: Errors = {};
     if (!isValidName(name)) e.name = t.booking.vName;
     if (!isValidPhone(phone)) e.phone = t.booking.vPhone;
-    if (!service) e.service = t.booking.vService;
-    if (!isValidDate(date)) e.date = t.booking.vDate;
     return e;
   };
 
@@ -59,7 +39,7 @@ export const Booking = () => {
     const found = validate();
     setErrors(found);
     if (Object.keys(found).length) {
-      const first = (["name", "phone", "service", "date"] as const).find((k) => found[k]);
+      const first = (["name", "phone"] as const).find((k) => found[k]);
       document.getElementById(first!)?.focus();
       return;
     }
@@ -71,18 +51,13 @@ export const Booking = () => {
         body: JSON.stringify({
           name: name.trim(),
           phone: toE164(phone),
-          service,
-          date,
-          note: note.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error(String(res.status));
       setName("");
       setPhone("");
-      setService("");
-      setDate("");
-      setNote("");
       setErrors({});
+      setSent(true);
       toast.success(t.booking.ok);
     } catch {
       toast.error(t.booking.err);
@@ -198,87 +173,53 @@ export const Booking = () => {
                     >
                       02 — {t.booking.phone}
                     </Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder={t.booking.phonePh}
-                      value={phone}
-                      onChange={(e) => { setPhone(formatPhone(e.target.value)); clear("phone"); }}
-                      maxLength={17}
-                      aria-invalid={!!errors.phone}
-                      aria-describedby={errors.phone ? "phone-err" : undefined}
-                      className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light placeholder:text-foreground/30"
-                    />
+                    <div
+                      className={`flex items-center h-11 border-b transition-colors focus-within:border-[hsl(var(--gold))] ${
+                        errors.phone ? "border-red-500" : "border-foreground/25"
+                      }`}
+                    >
+                      <span
+                        className="flex items-center gap-2 pr-3 mr-3 border-r border-foreground/15 text-base font-light text-foreground/70 select-none"
+                        aria-hidden="true"
+                      >
+                        <span className="text-[10px] font-bold tracking-widest text-foreground/40">UZ</span>
+                        +998
+                      </span>
+                      <input
+                        ref={phoneRef}
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        inputMode="numeric"
+                        autoComplete="tel-national"
+                        placeholder="90 123 45 67"
+                        value={phone}
+                        onChange={(e) => {
+                          const el = e.target;
+                          // keep the caret next to the same digit after re-grouping
+                          const digitsBefore = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, "").length;
+                          const next = formatLocalPhone(el.value);
+                          setPhone(next);
+                          clear("phone");
+                          requestAnimationFrame(() => {
+                            let seen = 0;
+                            let pos = 0;
+                            while (pos < next.length && seen < digitsBefore) {
+                              if (/\d/.test(next[pos])) seen++;
+                              pos++;
+                            }
+                            phoneRef.current?.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        maxLength={14}
+                        aria-label={`${t.booking.phone} +998`}
+                        aria-invalid={!!errors.phone}
+                        aria-describedby={errors.phone ? "phone-err" : undefined}
+                        className="flex-1 min-w-0 h-full bg-transparent outline-none text-base font-light tracking-wide placeholder:text-foreground/30"
+                      />
+                    </div>
                     {errors.phone && <p id="phone-err" role="alert" className={errCls}>{errors.phone}</p>}
                   </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="service"
-                      className="text-[10px] uppercase tracking-[0.28em] font-bold text-foreground/50"
-                    >
-                      03 — {t.booking.service}
-                    </Label>
-                    <Select value={service} onValueChange={(v) => { setService(v); clear("service"); }}>
-                      <SelectTrigger
-                        id="service"
-                        aria-invalid={!!errors.service}
-                        className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus:ring-0 text-base font-light data-[placeholder]:text-foreground/30"
-                      >
-                        <SelectValue placeholder={t.booking.servicePh} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {t.services.items.map((s) => (
-                          <SelectItem key={s.title} value={s.title}>
-                            {s.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.service && <p id="service-err" role="alert" className={errCls}>{errors.service}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="date"
-                      className="text-[10px] uppercase tracking-[0.28em] font-bold text-foreground/50"
-                    >
-                      04 — {t.booking.date}
-                    </Label>
-                    <Input
-                      id="date"
-                      name="date"
-                      type="date"
-                      value={date}
-                      onChange={(e) => { setDate(e.target.value); clear("date"); }}
-                      min={todayTashkent()}
-                      max={maxBookingDate()}
-                      aria-invalid={!!errors.date}
-                      aria-describedby={errors.date ? "date-err" : undefined}
-                      className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light"
-                    />
-                    {errors.date && <p id="date-err" role="alert" className={errCls}>{errors.date}</p>}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="note"
-                    className="text-[10px] uppercase tracking-[0.28em] font-bold text-foreground/50"
-                  >
-                    05 — {t.booking.note}
-                  </Label>
-                  <Textarea
-                    id="note"
-                    name="note"
-                    placeholder={t.booking.notePh}
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    maxLength={NOTE_MAX}
-                    rows={3}
-                    className="rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light resize-none placeholder:text-foreground/30"
-                  />
                 </div>
 
                 <button
@@ -293,20 +234,35 @@ export const Booking = () => {
                   <span className="absolute inset-0 bg-[hsl(var(--gold))] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 </button>
 
-                <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                <div
+                  className={`border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${
+                    sent ? "border-[#229ED9] bg-[#229ED9]/5" : "border-foreground/15"
+                  }`}
+                  role={sent ? "status" : undefined}
+                >
+                  <Bell className="w-5 h-5 text-[#229ED9] shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-foreground/80">
+                      {sent ? t.booking.botDone : t.booking.botTitle}
+                    </p>
+                    {!sent && <p className="mt-1 text-[12px] leading-relaxed text-foreground/55 font-light">{t.booking.botDesc}</p>}
+                  </div>
                   <a
-                    href={WHATSAPP}
+                    href={BOT_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#25D366] hover:text-[#25D366] transition-colors"
+                    className="inline-flex items-center justify-center gap-2 h-11 px-5 bg-[#229ED9] text-white text-[11px] uppercase tracking-[0.2em] font-semibold hover:opacity-90 transition-opacity shrink-0"
                   >
-                    <MessageCircle className="w-4 h-4" /> {t.booking.whatsapp}
+                    <Send className="w-4 h-4" /> {t.booking.botBtn}
                   </a>
+                </div>
+
+                <div className="pt-2">
                   <a
                     href={TELEGRAM}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#229ED9] hover:text-[#229ED9] transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#229ED9] hover:text-[#229ED9] transition-colors"
                   >
                     <Send className="w-4 h-4" /> {t.booking.telegram}
                   </a>

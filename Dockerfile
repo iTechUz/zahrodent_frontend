@@ -13,6 +13,9 @@ COPY . .
 # Vite VITE_* ni build vaqtida bundle'ga yozadi.
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
+# Formadagi "Telegram bot" tugmasi uchun bot username ("@"siz). Bo'sh bo'lsa klinika kanaliga olib boradi.
+ARG VITE_TELEGRAM_BOT_USERNAME
+ENV VITE_TELEGRAM_BOT_USERNAME=${VITE_TELEGRAM_BOT_USERNAME}
 RUN npm run build
 
 # Build info: har commit'da o'zgaradi, shuning uchun cache'ni buzmaslik uchun

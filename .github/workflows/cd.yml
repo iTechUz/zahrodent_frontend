@@ -74,6 +74,7 @@ jobs:
           context: .
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
+            VITE_TELEGRAM_BOT_USERNAME=${{ vars.VITE_TELEGRAM_BOT_USERNAME }}
             VERSION=${{ env.VERSION }}
             COMMIT=${{ env.COMMIT }}
           load: true

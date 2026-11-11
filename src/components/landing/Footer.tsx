@@ -1,8 +1,18 @@
-import { Instagram, Send, Youtube } from "lucide-react";
+import { Facebook, Instagram, MessageCircle, Send, Youtube } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
+import { resolveAddress, siteConfig } from "@/config/site";
 
 export const Footer = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  // Faqat sozlangan havolalar ko'rsatiladi (o'lik "#" ikonkalar yo'q).
+  type Social = { href: string | null; Icon: typeof Send; label: string };
+  const socials: Social[] = [
+    { href: siteConfig.instagramUrl, Icon: Instagram, label: t.footer.social.instagram },
+    { href: siteConfig.telegramChannelUrl, Icon: Send, label: t.footer.social.telegram },
+    { href: siteConfig.youtubeUrl, Icon: Youtube, label: t.footer.social.youtube },
+    { href: siteConfig.facebookUrl, Icon: Facebook, label: t.footer.social.facebook },
+    { href: siteConfig.whatsappUrl, Icon: MessageCircle, label: t.footer.social.whatsapp },
+  ].flatMap((s) => (s.href ? [{ ...s, href: s.href }] : []));
   return (
     <footer className="bg-foreground text-background/70 pt-24 pb-10 relative overflow-hidden">
       {/* Enormous editorial wordmark */}
@@ -49,11 +59,13 @@ export const Footer = () => {
               {t.footer.tagline}
             </p>
             <div className="mt-8 flex gap-3">
-              {[Instagram, Send, Youtube].map((Icon, i) => (
+              {socials.map(({ href, Icon, label }) => (
                 <a
-                  key={i}
-                  href="#"
-                  aria-label="social"
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
                   className="w-11 h-11 rounded-full border border-background/15 hover:border-[hsl(var(--gold))] hover:text-[hsl(var(--gold))] grid place-items-center transition-colors"
                 >
                   <Icon className="w-4 h-4" strokeWidth={1.5} />
@@ -94,11 +106,13 @@ export const Footer = () => {
               — {t.footer.contacts}
             </h4>
             <ul className="space-y-3 text-[14px] font-light text-background/70">
-              <li className="font-display italic text-xl text-background">
-                {t.location.phone}
-              </li>
-              <li>info@zahrodental.uz</li>
-              <li>{t.location.address}</li>
+              {siteConfig.phone && (
+                <li className="font-display italic text-xl text-background">
+                  <a href={`tel:${siteConfig.phone.e164}`}>{siteConfig.phone.display}</a>
+                </li>
+              )}
+              {siteConfig.email && <li>{siteConfig.email}</li>}
+              <li>{resolveAddress(siteConfig, lang, t.location.address)}</li>
               <li className="pt-2 text-[12px] text-background/50">
                 {t.location.hoursWeek} · {t.location.hoursSun}
               </li>

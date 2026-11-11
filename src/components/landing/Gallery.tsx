@@ -26,12 +26,13 @@ const Comparison = ({
   labelBefore: string;
   labelAfter: string;
 }) => {
+  const { t } = useLang();
   const [pos, setPos] = useState(50);
   return (
     <div className="relative overflow-hidden border border-foreground/15 bg-foreground select-none aspect-[4/3] shadow-[0_18px_50px_-24px_hsl(var(--primary)/0.35)]">
       <img
         src={after}
-        alt="after"
+        alt={t.gallery.altAfter}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         loading="lazy"
       />
@@ -41,7 +42,7 @@ const Comparison = ({
       >
         <img
           src={before}
-          alt="before"
+          alt={t.gallery.altBefore}
           className="w-full h-full object-cover"
           style={{ width: `${100 / (pos / 100)}%`, maxWidth: "none" }}
           loading="lazy"
@@ -68,7 +69,7 @@ const Comparison = ({
         value={pos}
         onChange={(e) => setPos(Number(e.target.value))}
         className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize"
-        aria-label="Before/after slider"
+        aria-label={t.gallery.slider}
       />
     </div>
   );

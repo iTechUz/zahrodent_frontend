@@ -55,3 +55,28 @@ export function maxBookingDate(now: Date = new Date()): string {
 
 export const isValidDate = (v: string, now: Date = new Date()) =>
   /^\d{4}-\d{2}-\d{2}$/.test(v) && v >= todayTashkent(now) && v <= maxBookingDate(now);
+
+/** Spam himoyasi: forma ochilgandan keyin shu vaqtdan tez yuborilsa — bot deb hisoblanadi. */
+export const MIN_SUBMIT_MS = 2000;
+
+export function isTooFast(mountedAt: number, now: number, min: number = MIN_SUBMIT_MS): boolean {
+  return now - mountedAt < min;
+}
+
+/** Backend PublicLeadDto: `website` — honeypot, odamlar bo'sh qoldiradi. */
+export function buildLeadPayload(f: { name: string; phone: string; website: string }) {
+  return { name: f.name.trim(), phone: toE164(f.phone), website: f.website };
+}
+
+export type LeadErrorKind = "rateLimit" | "validation" | "offline" | "generic";
+
+/**
+ * Yuborish xatosini turga ajratadi.
+ * `status` — HTTP kodi; `undefined` — javob umuman kelmadi (tarmoq xatosi).
+ */
+export function classifyLeadError(status: number | undefined): LeadErrorKind {
+  if (status === undefined) return "offline";
+  if (status === 429) return "rateLimit";
+  if (status === 400) return "validation";
+  return "generic";
+}

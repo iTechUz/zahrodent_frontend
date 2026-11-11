@@ -2,14 +2,14 @@ import type { ElementType } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Clock, ArrowUpRight } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
+import { mapDirectionsUrl, mapEmbedUrl, resolveAddress, siteConfig } from "@/config/site";
 
-const LAT = 41.311081;
-const LNG = 69.279737;
-const EMBED = `https://www.google.com/maps?q=${LAT},${LNG}&hl=en&z=16&output=embed`;
-const DIR = `https://www.google.com/maps/dir/?api=1&destination=${LAT},${LNG}`;
+const EMBED = mapEmbedUrl(siteConfig.coords);
+const DIR = mapDirectionsUrl(siteConfig.coords);
+const fmtCoord = (n: number, pos: string, neg: string) => `${Math.abs(n).toFixed(4)}° ${n >= 0 ? pos : neg}`;
 
 export const Location = () => {
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   return (
     <section
@@ -37,7 +37,7 @@ export const Location = () => {
           </div>
           <div className="lg:col-span-5 lg:justify-self-end">
             <p className="text-[13px] uppercase tracking-[0.3em] font-semibold text-foreground/60">
-              41.3110° N · 69.2797° E
+              {fmtCoord(siteConfig.coords.lat, "N", "S")} · {fmtCoord(siteConfig.coords.lng, "E", "W")}
             </p>
           </div>
         </div>
@@ -58,23 +58,28 @@ export const Location = () => {
                   n: "01",
                   Icon: MapPin,
                   label: "Manzil",
-                  value: t.location.address,
+                  value: resolveAddress(siteConfig, lang, t.location.address),
                   sub: "Mirzo Ulug‘bek tumani",
+                  href: undefined as string | undefined,
                 },
+                // Telefon sozlanmagan bo'lsa qator butunlay yashiriladi.
+                ...(siteConfig.phone
+                  ? [{
+                      n: "02",
+                      Icon: Phone,
+                      label: "Telefon",
+                      value: siteConfig.phone.display,
+                      sub: t.location.hoursWeek,
+                      href: `tel:${siteConfig.phone.e164}` as string | undefined,
+                    }]
+                  : []),
                 {
-                  n: "02",
-                  Icon: Phone,
-                  label: "Telefon",
-                  value: t.location.phone,
-                  sub: "Har kuni · 09:00 – 20:00",
-                  href: `tel:${t.location.phone.replace(/\s/g, "")}`,
-                },
-                {
-                  n: "03",
+                  n: siteConfig.phone ? "03" : "02",
                   Icon: Clock,
                   label: t.location.hoursLabel,
                   value: t.location.hoursWeek,
                   sub: t.location.hoursSun,
+                  href: undefined as string | undefined,
                 },
               ].map(({ n, Icon, label, value, sub, href }) => {
                 const Wrap: ElementType = href ? "a" : "div";

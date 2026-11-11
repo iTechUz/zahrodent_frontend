@@ -70,7 +70,7 @@ export const CtaBanner = () => {
               <span className="absolute inset-0 bg-[hsl(var(--primary))] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
             </a>
             <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-[hsl(var(--primary-foreground))]/45 text-right">
-              — bepul konsultatsiya · 15 daqiqada javob
+              — {t.ctaBanner.note}
             </p>
           </motion.div>
         </div>

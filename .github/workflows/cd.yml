@@ -5,7 +5,8 @@ name: CD
 #         -> deploy (run + health check + commit tekshiruvi, xato bo'lsa eski image'ga rollback) -> notify
 # Environment'lar: production (main) va development (dev). Har birida:
 #   SERVER_HOST, SERVER_USER, DOCKERHUB_USERNAME, IMAGE_NAME, CONTAINER_NAME,
-#   SSH_PRIVATE_KEY, DOCKERHUB_TOKEN, VITE_API_URL (build-arg)
+#   SSH_PRIVATE_KEY, DOCKERHUB_TOKEN, VITE_API_URL (build-arg, MAJBURIY — bo'sh bo'lsa build yiqiladi).
+#   Ixtiyoriy build-arg'lar (vars.*): .env.example'dagi VITE_* ro'yxatiga qarang.
 # Build info: VERSION va COMMIT build-arg sifatida image'ga kiradi (LABEL + /version.json).
 on:
   workflow_run:
@@ -75,6 +76,20 @@ jobs:
           build-args: |
             VITE_API_URL=${{ vars.VITE_API_URL }}
             VITE_TELEGRAM_BOT_USERNAME=${{ vars.VITE_TELEGRAM_BOT_USERNAME }}
+            VITE_CLINIC_PHONE=${{ vars.VITE_CLINIC_PHONE }}
+            VITE_CLINIC_EMAIL=${{ vars.VITE_CLINIC_EMAIL }}
+            VITE_CLINIC_ADDRESS_UZ=${{ vars.VITE_CLINIC_ADDRESS_UZ }}
+            VITE_CLINIC_ADDRESS_RU=${{ vars.VITE_CLINIC_ADDRESS_RU }}
+            VITE_CLINIC_ADDRESS_EN=${{ vars.VITE_CLINIC_ADDRESS_EN }}
+            VITE_CLINIC_LAT=${{ vars.VITE_CLINIC_LAT }}
+            VITE_CLINIC_LNG=${{ vars.VITE_CLINIC_LNG }}
+            VITE_CLINIC_OPENING_HOURS=${{ vars.VITE_CLINIC_OPENING_HOURS }}
+            VITE_TELEGRAM_CHANNEL_URL=${{ vars.VITE_TELEGRAM_CHANNEL_URL }}
+            VITE_INSTAGRAM_URL=${{ vars.VITE_INSTAGRAM_URL }}
+            VITE_YOUTUBE_URL=${{ vars.VITE_YOUTUBE_URL }}
+            VITE_FACEBOOK_URL=${{ vars.VITE_FACEBOOK_URL }}
+            VITE_WHATSAPP_URL=${{ vars.VITE_WHATSAPP_URL }}
+            VITE_SITE_URL=${{ vars.VITE_SITE_URL }}
             VERSION=${{ env.VERSION }}
             COMMIT=${{ env.COMMIT }}
           load: true

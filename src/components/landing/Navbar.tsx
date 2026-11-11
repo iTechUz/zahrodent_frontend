@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 import type { Lang } from "@/i18n/translations";
+import { siteConfig } from "@/config/site";
 
 const langCodes: Lang[] = ["uz", "ru", "en"];
 const langLabels: Record<Lang, string> = { uz: "O‘Z", ru: "RU", en: "EN" };
@@ -95,13 +96,15 @@ export const Navbar = () => {
           </ul>
 
           <div className="hidden lg:flex items-center gap-3">
-            <a
-              href="tel:+998901234567"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-primary transition-colors"
-            >
-              <Phone className="w-4 h-4" />
-              +998 90 123 45 67
-            </a>
+            {siteConfig.phone && (
+              <a
+                href={`tel:${siteConfig.phone.e164}`}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-foreground/80 hover:text-primary transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                {siteConfig.phone.display}
+              </a>
+            )}
             <LangSwitch />
             <Button asChild size="sm" className="px-5">
               <a href="#contact" onClick={(e) => handleNav(e, "#contact")}>{t.nav.cta}</a>
@@ -109,13 +112,15 @@ export const Navbar = () => {
           </div>
 
           <div className="flex lg:hidden items-center gap-2">
-            <a
-              href="tel:+998901234567"
-              aria-label="Call"
-              className="grid place-items-center w-9 h-9 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-            >
-              <Phone className="w-4 h-4" />
-            </a>
+            {siteConfig.phone && (
+              <a
+                href={`tel:${siteConfig.phone.e164}`}
+                aria-label={t.nav.call}
+                className="grid place-items-center w-9 h-9 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+              </a>
+            )}
             <LangSwitch />
           </div>
         </nav>

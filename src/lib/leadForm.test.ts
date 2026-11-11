@@ -49,3 +49,31 @@ describe("leadForm", () => {
     expect(isValidDate("", now)).toBe(false);
   });
 });
+
+describe("spam defence helpers", () => {
+  it("isTooFast flags submissions under 2s after mount", async () => {
+    const { isTooFast, MIN_SUBMIT_MS } = await import("./leadForm");
+    expect(isTooFast(1000, 1500)).toBe(true);
+    expect(isTooFast(1000, 1000 + MIN_SUBMIT_MS - 1)).toBe(true);
+    expect(isTooFast(1000, 1000 + MIN_SUBMIT_MS)).toBe(false);
+  });
+  it("buildLeadPayload sends E.164 phone, trimmed name and the honeypot (no extra fields)", async () => {
+    const { buildLeadPayload } = await import("./leadForm");
+    expect(buildLeadPayload({ name: " Ali ", phone: "90 123 45 67", website: "" })).toEqual({
+      name: "Ali",
+      phone: "+998901234567",
+      website: "",
+    });
+  });
+});
+
+describe("classifyLeadError", () => {
+  it("maps statuses to error kinds", async () => {
+    const { classifyLeadError } = await import("./leadForm");
+    expect(classifyLeadError(429)).toBe("rateLimit");
+    expect(classifyLeadError(400)).toBe("validation");
+    expect(classifyLeadError(undefined)).toBe("offline");
+    expect(classifyLeadError(500)).toBe("generic");
+    expect(classifyLeadError(403)).toBe("generic");
+  });
+});

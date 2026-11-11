@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowUp, MessageCircle } from "lucide-react";
+import { ArrowUp, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 
-const Telegram = "https://t.me/bahod1rovich77";
+import { siteConfig } from "@/config/site";
+
+// Tugma sozlangan klinika Telegram kanaliga olib boradi (shaxsiy akkaunt emas).
+const TELEGRAM = siteConfig.telegramChannelUrl;
 
 export const FloatingButtons = () => {
   const { t } = useLang();
@@ -18,15 +21,15 @@ export const FloatingButtons = () => {
   return (
     <>
       <a
-        href={Telegram}
+        href={TELEGRAM}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t.floating.telegram}
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 6rem)" }}
-        className="fixed right-4 md:right-7 md:!bottom-7 z-40 grid place-items-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#25D366] text-white shadow-elevated hover:scale-110 transition-transform"
+        className="fixed right-4 md:right-7 md:!bottom-7 z-40 grid place-items-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#229ED9] text-white shadow-elevated hover:scale-110 transition-transform"
       >
-        <MessageCircle className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" />
-        <span className="absolute inline-flex w-full h-full rounded-full bg-[#25D366] opacity-50 animate-ping" />
+        <Send className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" />
+        <span className="absolute inline-flex w-full h-full rounded-full bg-[#229ED9] opacity-50 animate-ping" />
       </a>
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

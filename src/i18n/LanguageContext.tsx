@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { translations, Lang, TranslationDict } from "./translations";
+import { applySeo } from "@/lib/seo";
+import { siteConfig } from "@/config/site";
 
 type Ctx = {
   lang: Lang;
@@ -13,12 +15,12 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [lang, setLangState] = useState<Lang>(() => {
     if (typeof window === "undefined") return "uz";
     const saved = localStorage.getItem("lang") as Lang | null;
-    return saved === "ru" || saved === "uz" ? saved : "uz";
+    return saved === "ru" || saved === "uz" || saved === "en" ? saved : "uz";
   });
 
   useEffect(() => {
     localStorage.setItem("lang", lang);
-    document.documentElement.lang = lang;
+    applySeo(document, siteConfig, lang, translations[lang]);
   }, [lang]);
 
   const setLang = (l: Lang) => setLangState(l);

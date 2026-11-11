@@ -5,13 +5,22 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { ArrowUpRight, Bell, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { NAME_MAX, cleanName, formatLocalPhone, isValidName, isValidPhone, toE164 } from "@/lib/leadForm";
+import {
+  NAME_MAX,
+  buildLeadPayload,
+  classifyLeadError,
+  cleanName,
+  formatLocalPhone,
+  isTooFast,
+  isValidName,
+  isValidPhone,
+} from "@/lib/leadForm";
+import { siteConfig } from "@/config/site";
 
-const TELEGRAM = "https://t.me/zahrodentaluz";
-/** Bot username without "@" (set VITE_TELEGRAM_BOT_USERNAME at build time); falls back to the clinic channel. */
-const BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME ?? "").trim().replace(/^@/, "");
-const BOT_URL = /^[A-Za-z0-9_]{3,64}$/.test(BOT_USERNAME) ? `https://t.me/${BOT_USERNAME}?start=lead` : TELEGRAM;
-const API_URL = (import.meta.env.VITE_API_URL ?? "https://api.zahro.iqroagency.uz").replace(/\/+$/, "");
+const TELEGRAM = siteConfig.telegramChannelUrl;
+/** Bot sozlanmagan bo'lsa (null) bot bloki butunlay yashiriladi — kanalga fallback yo'q. */
+const BOT_URL = siteConfig.telegramBotUrl;
+const API_URL = siteConfig.apiUrl;
 
 type Errors = Partial<Record<"name" | "phone", string>>;
 
@@ -21,6 +30,8 @@ export const Booking = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const phoneRef = useRef<HTMLInputElement>(null);
+  const mountedAt = useRef(Date.now());
+  const [website, setWebsite] = useState(""); // honeypot
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
 
@@ -43,24 +54,36 @@ export const Booking = () => {
       document.getElementById(first!)?.focus();
       return;
     }
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/public/leads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: toE164(phone),
-        }),
-      });
-      if (!res.ok) throw new Error(String(res.status));
+    const done = () => {
       setName("");
       setPhone("");
       setErrors({});
       setSent(true);
       toast.success(t.booking.ok);
-    } catch {
-      toast.error(t.booking.err);
+    };
+    // Bot belgisi: forma ochilishi bilan darrov yuborilsa, API'ga chiqmay "muvaffaqiyat" ko'rsatamiz.
+    if (isTooFast(mountedAt.current, Date.now())) {
+      done();
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/public/leads`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildLeadPayload({ name, phone, website })),
+      });
+      if (!res.ok) throw Object.assign(new Error(String(res.status)), { status: res.status });
+      done();
+    } catch (err) {
+      const kind = classifyLeadError((err as { status?: number }).status);
+      if (kind === "validation") {
+        setErrors({ phone: t.booking.errPhone });
+        document.getElementById("phone")?.focus();
+        toast.error(t.booking.errPhone);
+      } else if (kind === "rateLimit") toast.error(t.booking.errRate);
+      else if (kind === "offline") toast.error(t.booking.errOffline);
+      else toast.error(t.booking.err);
     } finally {
       setLoading(false);
     }
@@ -104,11 +127,7 @@ export const Booking = () => {
               </p>
 
               <div className="mt-10 space-y-4 border-t border-foreground/15 pt-6 max-w-sm">
-                {[
-                  { k: "01", v: "Ma’lumotlarni yuboring" },
-                  { k: "02", v: "15 daqiqada javob beramiz" },
-                  { k: "03", v: "Qulay vaqtni tanlaymiz" },
-                ].map((s) => (
+                {t.booking.steps.map((v, i) => ({ k: `0${i + 1}`, v })).map((s) => (
                   <div key={s.k} className="flex items-baseline gap-4">
                     <span className="font-display text-[hsl(var(--gold))] tabular-nums text-sm">
                       {s.k}
@@ -136,10 +155,10 @@ export const Booking = () => {
             <div className="relative bg-[hsl(var(--card))] border border-foreground/15 p-8 md:p-12 z-10">
               <div className="flex items-center justify-between mb-8 pb-5 border-b border-foreground/15">
                 <span className="text-[10px] uppercase tracking-[0.32em] font-bold text-foreground/50">
-                  — Formulaire N° 01
+                  {t.booking.formNo}
                 </span>
                 <span className="text-[10px] uppercase tracking-[0.32em] font-bold text-[hsl(var(--gold))]">
-                  Bepul · Free
+                  {t.booking.free}
                 </span>
               </div>
 
@@ -222,6 +241,18 @@ export const Booking = () => {
                   </div>
                 </div>
 
+                {/* Honeypot: odamga ko'rinmaydi, botlar to'ldiradi (backend `website`). */}
+                <input
+                  type="text"
+                  name="website"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-10000px", width: 1, height: 1, opacity: 0, overflow: "hidden" }}
+                />
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -234,11 +265,25 @@ export const Booking = () => {
                   <span className="absolute inset-0 bg-[hsl(var(--gold))] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 </button>
 
+                <p className="-mt-4 text-[11px] leading-relaxed text-foreground/50 font-light text-center">
+                  {t.booking.consent}
+                </p>
+
+                {sent && (
+                  <div role="status" className="border border-[hsl(var(--gold))]/60 bg-[hsl(var(--gold))]/5 p-5">
+                    <p className="text-[13px] font-semibold text-foreground/80">{t.booking.ok}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-foreground/60 font-light">{t.booking.sentNote}</p>
+                    <p className="mt-2 text-[12px] text-foreground/60">
+                      {t.location.hoursLabel}: {t.location.hoursWeek} · {t.location.hoursSun}
+                    </p>
+                  </div>
+                )}
+
+                {BOT_URL && (
                 <div
                   className={`border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${
                     sent ? "border-[#229ED9] bg-[#229ED9]/5" : "border-foreground/15"
                   }`}
-                  role={sent ? "status" : undefined}
                 >
                   <Bell className="w-5 h-5 text-[#229ED9] shrink-0" />
                   <div className="flex-1">
@@ -256,6 +301,7 @@ export const Booking = () => {
                     <Send className="w-4 h-4" /> {t.booking.botBtn}
                   </a>
                 </div>
+                )}
 
                 <div className="pt-2">
                   <a

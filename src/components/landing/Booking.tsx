@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpRight, Bell, MessageCircle, Send } from "lucide-react";
+import { ArrowUpRight, Bell, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
-import { NAME_MAX, cleanName, formatPhone, isValidName, isValidPhone, toE164 } from "@/lib/leadForm";
+import { NAME_MAX, cleanName, formatLocalPhone, isValidName, isValidPhone, toE164 } from "@/lib/leadForm";
 
-const WHATSAPP = "https://wa.me/998901234567";
 const TELEGRAM = "https://t.me/zahrodentaluz";
 /** Bot username without "@" (set VITE_TELEGRAM_BOT_USERNAME at build time); falls back to the clinic channel. */
 const BOT_USERNAME = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME ?? "").trim().replace(/^@/, "");
@@ -21,6 +20,7 @@ export const Booking = () => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [sent, setSent] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
 
@@ -173,20 +173,51 @@ export const Booking = () => {
                     >
                       02 — {t.booking.phone}
                     </Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      placeholder={t.booking.phonePh}
-                      value={phone}
-                      onChange={(e) => { setPhone(formatPhone(e.target.value)); clear("phone"); }}
-                      maxLength={17}
-                      aria-invalid={!!errors.phone}
-                      aria-describedby={errors.phone ? "phone-err" : undefined}
-                      className="h-11 rounded-none border-0 border-b border-foreground/25 bg-transparent px-0 focus-visible:ring-0 focus-visible:border-[hsl(var(--gold))] text-base font-light placeholder:text-foreground/30"
-                    />
+                    <div
+                      className={`flex items-center h-11 border-b transition-colors focus-within:border-[hsl(var(--gold))] ${
+                        errors.phone ? "border-red-500" : "border-foreground/25"
+                      }`}
+                    >
+                      <span
+                        className="flex items-center gap-2 pr-3 mr-3 border-r border-foreground/15 text-base font-light text-foreground/70 select-none"
+                        aria-hidden="true"
+                      >
+                        <span className="text-[10px] font-bold tracking-widest text-foreground/40">UZ</span>
+                        +998
+                      </span>
+                      <input
+                        ref={phoneRef}
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        inputMode="numeric"
+                        autoComplete="tel-national"
+                        placeholder="90 123 45 67"
+                        value={phone}
+                        onChange={(e) => {
+                          const el = e.target;
+                          // keep the caret next to the same digit after re-grouping
+                          const digitsBefore = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, "").length;
+                          const next = formatLocalPhone(el.value);
+                          setPhone(next);
+                          clear("phone");
+                          requestAnimationFrame(() => {
+                            let seen = 0;
+                            let pos = 0;
+                            while (pos < next.length && seen < digitsBefore) {
+                              if (/\d/.test(next[pos])) seen++;
+                              pos++;
+                            }
+                            phoneRef.current?.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        maxLength={14}
+                        aria-label={`${t.booking.phone} +998`}
+                        aria-invalid={!!errors.phone}
+                        aria-describedby={errors.phone ? "phone-err" : undefined}
+                        className="flex-1 min-w-0 h-full bg-transparent outline-none text-base font-light tracking-wide placeholder:text-foreground/30"
+                      />
+                    </div>
                     {errors.phone && <p id="phone-err" role="alert" className={errCls}>{errors.phone}</p>}
                   </div>
                 </div>
@@ -226,20 +257,12 @@ export const Booking = () => {
                   </a>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-3 pt-2">
-                  <a
-                    href={WHATSAPP}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#25D366] hover:text-[#25D366] transition-colors"
-                  >
-                    <MessageCircle className="w-4 h-4" /> {t.booking.whatsapp}
-                  </a>
+                <div className="pt-2">
                   <a
                     href={TELEGRAM}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#229ED9] hover:text-[#229ED9] transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 h-12 border border-foreground/20 text-[11px] uppercase tracking-[0.22em] font-semibold text-foreground/70 hover:border-[#229ED9] hover:text-[#229ED9] transition-colors"
                   >
                     <Send className="w-4 h-4" /> {t.booking.telegram}
                   </a>

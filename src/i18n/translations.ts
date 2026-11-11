@@ -122,7 +122,6 @@ const dict = {
       botDesc: "Telegram botni ishga tushiring va telefon raqamingizni yuboring — ariza holati o‘zgarganda va qabul eslatmalarini shu yerda olasiz. Botning o‘zida ham ariza qoldirishingiz mumkin.",
       botBtn: "Telegram botni ochish",
       botDone: "Ariza yuborildi! Holat o‘zgarganda xabar olish uchun botni ishga tushiring.",
-      whatsapp: "WhatsApp",
       telegram: "Telegram",
     },
     location: {
@@ -301,7 +300,6 @@ const dict = {
       botDesc: "Запустите Telegram-бота и отправьте номер телефона — вы получите уведомления об изменении статуса заявки и напоминания о приёме. Заявку можно оставить и прямо в боте.",
       botBtn: "Открыть Telegram-бота",
       botDone: "Заявка отправлена! Запустите бота, чтобы получать уведомления о статусе.",
-      whatsapp: "WhatsApp",
       telegram: "Telegram",
     },
     location: {
@@ -480,7 +478,6 @@ const dict = {
       botDesc: "Start our Telegram bot and share your phone number — you will get a message when your request status changes, plus appointment reminders. You can also leave a request in the bot itself.",
       botBtn: "Open Telegram bot",
       botDone: "Request sent! Start the bot to get status updates.",
-      whatsapp: "WhatsApp",
       telegram: "Telegram",
     },
     location: {

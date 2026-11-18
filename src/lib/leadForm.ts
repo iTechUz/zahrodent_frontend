@@ -3,19 +3,27 @@
 export const NAME_MAX = 60;
 export const NOTE_MAX = 500;
 
-/** Digits of the local part (after +998), max 9. Accepts pasted "+998…", "998…", "8…" or local digits. */
+/**
+ * Digits of the local part (after +998), max 9. Accepts pasted "+998…", "998…" or local digits.
+ * The country code is stripped only when it is really one ("+" typed, or more than 9 digits) —
+ * a local number may legitimately start with 99 8… (operator code 99).
+ */
 export function localDigits(input: string): string {
   let d = input.replace(/\D/g, "");
-  if (d.startsWith("998")) d = d.slice(3);
+  if (d.startsWith("998") && (input.trim().startsWith("+") || d.length > 9)) d = d.slice(3);
   return d.slice(0, 9);
+}
+
+/** Local part grouped as you type: "90 123 45 67" ("" when nothing typed). Used next to a fixed "+998" prefix. */
+export function formatLocalPhone(input: string): string {
+  const d = localDigits(input);
+  return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(" ");
 }
 
 /** "+998 90 123 45 67" as you type; "" when nothing typed. */
 export function formatPhone(input: string): string {
-  const d = localDigits(input);
-  if (!d) return "";
-  const parts = [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean);
-  return `+998 ${parts.join(" ")}`;
+  const local = formatLocalPhone(input);
+  return local ? `+998 ${local}` : "";
 }
 
 /** E.164 for the API, e.g. "+998901234567". */

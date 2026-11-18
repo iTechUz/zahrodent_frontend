@@ -8,7 +8,7 @@ import { imagetools } from "vite-imagetools";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8083,
     hmr: {
       overlay: false,
     },

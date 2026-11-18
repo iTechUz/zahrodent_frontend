@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanName, formatPhone, isValidDate, isValidName, isValidPhone, toE164 } from "./leadForm";
+import { cleanName, formatLocalPhone, formatPhone, isValidDate, isValidName, isValidPhone, toE164 } from "./leadForm";
 
 describe("leadForm", () => {
   it("formats the phone while typing", () => {
@@ -14,6 +14,18 @@ describe("leadForm", () => {
     expect(formatPhone("998 90 123-45-67")).toBe("+998 90 123 45 67");
     expect(formatPhone("abc")).toBe("");
     expect(toE164("+998 90 123 45 67")).toBe("+998901234567");
+  });
+  it("formats only the local part for the fixed +998 prefix field", () => {
+    expect(formatLocalPhone("")).toBe("");
+    expect(formatLocalPhone("9012")).toBe("90 12");
+    expect(formatLocalPhone("90 123 45 67")).toBe("90 123 45 67");
+    expect(formatLocalPhone("+998 90 123 45 67")).toBe("90 123 45 67");
+    expect(formatLocalPhone("998901234567")).toBe("90 123 45 67");
+  });
+  it("keeps local numbers that start with 998 (operator code 99)", () => {
+    expect(formatLocalPhone("998123456")).toBe("99 812 34 56");
+    expect(toE164("99 812 34 56")).toBe("+998998123456");
+    expect(isValidPhone("99 812 34 56")).toBe(true);
   });
   it("validates the phone", () => {
     expect(isValidPhone("+998 90 123 45 6")).toBe(false);

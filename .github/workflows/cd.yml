@@ -163,9 +163,8 @@ jobs:
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       CONTAINER: ${{ vars.CONTAINER_NAME }}
-      # Host port: dev (8083) va production (8082) bitta serverda — bir xil port ikkalasini to'qnashtiradi.
-      # Environment ichida PORT variable berilsa, o'sha ishlatiladi.
-      APP_PORT: ${{ vars.PORT || (github.event.workflow_run.head_branch == 'main' && '8082' || github.event.workflow_run.head_branch == 'dev' && '8083' || github.ref_name == 'main' && '8082' || '8083') }}
+      HOST_PORT: ${{ vars.HOST_PORT }}
+      
     steps:
       # Image va commit
       - name: Set image
@@ -178,7 +177,7 @@ jobs:
         run: |
           missing=""
 
-          for k in SERVER_HOST SERVER_USER CONTAINER APP_PORT IMAGE_NAME; do
+          for k in SERVER_HOST SERVER_USER CONTAINER HOST_PORT IMAGE_NAME; do
             [ -z "${!k}" ] && missing="$missing $k"
           done
 
@@ -187,15 +186,15 @@ jobs:
             exit 1
           fi
 
-          if ! [[ "$APP_PORT" =~ ^[0-9]+$ ]] || \
-             [ "$APP_PORT" -lt 1 ] || [ "$APP_PORT" -gt 65535 ]; then
-            echo "::error::APP_PORT noto'g'ri: $APP_PORT"
+          if ! [[ "$HOST_PORT" =~ ^[0-9]+$ ]] || \
+             [ "$HOST_PORT" -lt 1 ] || [ "$HOST_PORT" -gt 65535 ]; then
+            echo "::error::HOST_PORT noto'g'ri: $HOST_PORT"
             exit 1
           fi
 
           echo "Deploy environment: $DEPLOY_ENV"
           echo "Container: $CONTAINER"
-          echo "Host port: $APP_PORT"
+          echo "Host port: $HOST_PORT"
 
       # SSH
       - name: Setup SSH
@@ -212,7 +211,6 @@ jobs:
             "$SERVER_HOST" "$SERVER_USER" > ~/.ssh/config
 
       # Deploy + Health check + Version check + Rollback
-      
       - name: Deploy
         run: |
           # shellcheck disable=SC2029

@@ -164,7 +164,7 @@ jobs:
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       CONTAINER: ${{ vars.CONTAINER_NAME }}
       HOST_PORT: ${{ vars.HOST_PORT }}
-
+      
     steps:
       # Image va commit
       - name: Set image
@@ -210,7 +210,7 @@ jobs:
           printf 'Host server\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id\n' \
             "$SERVER_HOST" "$SERVER_USER" > ~/.ssh/config
 
-
+      # Deploy + Health check + Version check + Rollback
       - name: Deploy
         run: |
           # shellcheck disable=SC2029
@@ -317,7 +317,7 @@ jobs:
 
             exit 1
           EOF
-
+          
       # Docker image cleanup
       - name: Cleanup
         if: always()

@@ -163,8 +163,9 @@ jobs:
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       CONTAINER: ${{ vars.CONTAINER_NAME }}
-      APP_PORT: ${{ vars.APP_PORT }}
-
+      # Host port: dev (8083) va production (8082) bitta serverda — bir xil port ikkalasini to'qnashtiradi.
+      # Environment ichida PORT variable berilsa, o'sha ishlatiladi.
+      APP_PORT: ${{ vars.PORT || (github.event.workflow_run.head_branch == 'main' && '8082' || github.event.workflow_run.head_branch == 'dev' && '8083' || github.ref_name == 'main' && '8082' || '8083') }}
     steps:
       # Image va commit
       - name: Set image
@@ -211,28 +212,29 @@ jobs:
             "$SERVER_HOST" "$SERVER_USER" > ~/.ssh/config
 
       # Deploy + Health check + Version check + Rollback
+      
       - name: Deploy
         run: |
           # shellcheck disable=SC2029
-          ssh server "IMAGE='$IMAGE' CONTAINER='$CONTAINER' COMMIT='$COMMIT' APP_PORT='$APP_PORT' bash -s" << 'EOF'
+          ssh server "IMAGE='$IMAGE' CONTAINER='$CONTAINER' COMMIT='$COMMIT' HOST_PORT='$HOST_PORT' bash -s" << 'EOF'
             set -u
 
             echo "================================"
             echo "Environment deploy"
             echo "Image: $IMAGE"
             echo "Container: $CONTAINER"
-            echo "Port: $APP_PORT"
+            echo "Port: $HOST_PORT"
             echo "Commit: $COMMIT"
             echo "================================"
 
-            # Port tekshirish
-            if ! [[ "$APP_PORT" =~ ^[0-9]+$ ]] || \
-               [ "$APP_PORT" -lt 1 ] || [ "$APP_PORT" -gt 65535 ]; then
-              echo "❌ Invalid APP_PORT"
+            # Port validation
+            if ! [[ "$HOST_PORT" =~ ^[0-9]+$ ]] || \
+               [ "$HOST_PORT" -lt 1 ] || [ "$HOST_PORT" -gt 65535 ]; then
+              echo "❌ Invalid HOST_PORT"
               exit 1
             fi
 
-            # Oldingi image saqlanadi
+            # Oldingi image
             PREV=$(docker inspect -f '{{.Config.Image}}' "$CONTAINER" 2>/dev/null || true)
 
             echo "Oldingi image: ${PREV:-none}"
@@ -246,15 +248,15 @@ jobs:
               docker run -d \
                 --name "$CONTAINER" \
                 --restart unless-stopped \
-                -p "127.0.0.1:${APP_PORT}:80" \
-                "$image"
+                -p "127.0.0.1:${HOST_PORT}:80" \
+                "$image" >/dev/null
             }
 
             # Health check
             healthy() {
               for _ in $(seq 1 30); do
                 if curl -fsS \
-                  "http://127.0.0.1:${APP_PORT}/healthz" \
+                  "http://127.0.0.1:${HOST_PORT}/healthz" \
                   >/dev/null 2>&1; then
                   return 0
                 fi
@@ -265,33 +267,33 @@ jobs:
               return 1
             }
 
-            # Commit tekshirish
+            # Commit check
             version_ok() {
               curl -fsS \
-                "http://127.0.0.1:${APP_PORT}/version.json" \
+                "http://127.0.0.1:${HOST_PORT}/version.json" \
                 2>/dev/null |
                 grep -q "\"commit\":\"$COMMIT\""
             }
 
-            # Yangi image deploy
-            echo "🚀 Starting new deployment..."
+            # New deployment
+            echo "🚀 Starting deployment..."
 
             if run "$IMAGE" && healthy && version_ok; then
               echo "================================"
               echo "✅ DEPLOY SUCCESSFUL"
               echo "Image: $IMAGE"
               echo "Commit: $COMMIT"
-              echo "Port: $APP_PORT"
+              echo "Port: $HOST_PORT"
               echo "================================"
               exit 0
             fi
 
             echo "❌ Health/version/deploy failed"
 
-            # Xatolik diagnostikasi
+            # Diagnostics
             echo "Version response:"
             curl -sS \
-              "http://127.0.0.1:${APP_PORT}/version.json" || true
+              "http://127.0.0.1:${HOST_PORT}/version.json" || true
 
             echo ""
             echo "Container logs:"
@@ -312,12 +314,12 @@ jobs:
                 docker logs --tail 100 "$CONTAINER" 2>&1 || true
               fi
             else
-              echo "⚠️ Previous image not found. Rollback unavailable."
+              echo "⚠️ Previous image not found"
             fi
 
             exit 1
           EOF
-
+          
       # Docker image cleanup
       - name: Cleanup
         if: always()

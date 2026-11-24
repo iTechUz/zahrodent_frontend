@@ -146,13 +146,16 @@ jobs:
           # shellcheck disable=SC2029 # IMAGE runner'da ochiladi (ataylab)
           ssh server "docker pull '$IMAGE'"
 
+
   deploy:
     name: Deploy
     needs: prepare
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+
     environment:
       name: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_branch == 'main' && 'production' || github.event_name == 'workflow_dispatch' && github.ref_name == 'main' && 'production' || 'development' }}
+
     env:
       DEPLOY_ENV: ${{ github.event.workflow_run.head_branch == 'main' && 'production' || github.event.workflow_run.head_branch == 'dev' && 'development' || github.ref_name == 'main' && 'production' || 'development' }}
       SERVER_HOST: ${{ vars.SERVER_HOST }}
@@ -160,13 +163,40 @@ jobs:
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       CONTAINER: ${{ vars.CONTAINER_NAME }}
+      APP_PORT: ${{ vars.APP_PORT }}
+
     steps:
-      # Tag = qisqa commit sha (7 belgi), masalan 10449/zahrodent_admin:8d777fa
+      # Image va commit
       - name: Set image
         run: |
           echo "IMAGE=$IMAGE_NAME:${SHA::7}" >> "$GITHUB_ENV"
           echo "COMMIT=${SHA::7}" >> "$GITHUB_ENV"
 
+      # Variables tekshirish
+      - name: Check variables
+        run: |
+          missing=""
+
+          for k in SERVER_HOST SERVER_USER CONTAINER APP_PORT IMAGE_NAME; do
+            [ -z "${!k}" ] && missing="$missing $k"
+          done
+
+          if [ -n "$missing" ]; then
+            echo "::error::$DEPLOY_ENV environment'da yo'q:$missing"
+            exit 1
+          fi
+
+          if ! [[ "$APP_PORT" =~ ^[0-9]+$ ]] || \
+             [ "$APP_PORT" -lt 1 ] || [ "$APP_PORT" -gt 65535 ]; then
+            echo "::error::APP_PORT noto'g'ri: $APP_PORT"
+            exit 1
+          fi
+
+          echo "Deploy environment: $DEPLOY_ENV"
+          echo "Container: $CONTAINER"
+          echo "Host port: $APP_PORT"
+
+      # SSH
       - name: Setup SSH
         env:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -174,49 +204,126 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id
           chmod 600 ~/.ssh/id
-          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          printf 'Host server\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id\n' "$SERVER_HOST" "$SERVER_USER" > ~/.ssh/config
 
-      # Health check yoki commit tekshiruvi o'tmasa oldingi image bilan container qayta ko'tariladi.
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          printf 'Host server\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id\n' \
+            "$SERVER_HOST" "$SERVER_USER" > ~/.ssh/config
+
+      # Deploy + Health check + Version check + Rollback
       - name: Deploy
         run: |
-          # shellcheck disable=SC2029 # qiymatlar runner'da ochiladi (ataylab)
-          ssh server "IMAGE='$IMAGE' CONTAINER='$CONTAINER' COMMIT='$COMMIT' bash -s" << 'EOF'
+          # shellcheck disable=SC2029
+          ssh server "IMAGE='$IMAGE' CONTAINER='$CONTAINER' COMMIT='$COMMIT' APP_PORT='$APP_PORT' bash -s" << 'EOF'
             set -u
+
+            echo "================================"
+            echo "Environment deploy"
+            echo "Image: $IMAGE"
+            echo "Container: $CONTAINER"
+            echo "Port: $APP_PORT"
+            echo "Commit: $COMMIT"
+            echo "================================"
+
+            # Port tekshirish
+            if ! [[ "$APP_PORT" =~ ^[0-9]+$ ]] || \
+               [ "$APP_PORT" -lt 1 ] || [ "$APP_PORT" -gt 65535 ]; then
+              echo "❌ Invalid APP_PORT"
+              exit 1
+            fi
+
+            # Oldingi image saqlanadi
             PREV=$(docker inspect -f '{{.Config.Image}}' "$CONTAINER" 2>/dev/null || true)
+
             echo "Oldingi image: ${PREV:-none}"
+
+            # Container ishga tushirish
             run() {
+              local image="$1"
+
               docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
-              docker run -d --name "$CONTAINER" --restart unless-stopped \
-                -p 127.0.0.1:8083:80 \
-                "$1" >/dev/null
+
+              docker run -d \
+                --name "$CONTAINER" \
+                --restart unless-stopped \
+                -p "127.0.0.1:${APP_PORT}:80" \
+                "$image"
             }
+
+            # Health check
             healthy() {
               for _ in $(seq 1 30); do
-                curl -fsS http://127.0.0.1:8083/healthz >/dev/null 2>&1 && return 0
+                if curl -fsS \
+                  "http://127.0.0.1:${APP_PORT}/healthz" \
+                  >/dev/null 2>&1; then
+                  return 0
+                fi
+
                 sleep 3
               done
+
               return 1
             }
-            # Ishlayotgan konteyner aynan shu commit'dan build bo'lganini tasdiqlaydi.
+
+            # Commit tekshirish
             version_ok() {
-              curl -fsS http://127.0.0.1:8083/version.json 2>/dev/null | grep -q "\"commit\":\"$COMMIT\""
+              curl -fsS \
+                "http://127.0.0.1:${APP_PORT}/version.json" \
+                2>/dev/null |
+                grep -q "\"commit\":\"$COMMIT\""
             }
-            run "$IMAGE"
-            if healthy && version_ok; then echo "✅ Healthy: $IMAGE (commit $COMMIT)"; exit 0; fi
-            echo "❌ Health/version check failed"
-            curl -sS http://127.0.0.1:8083/version.json || true
-            docker logs --tail 100 "$CONTAINER"
-            if [ -n "$PREV" ]; then
-              echo "↩️ Rollback: $PREV"
-              run "$PREV"
-              healthy && echo "Rollback healthy" || echo "Rollback ham ishlamadi!"
+
+            # Yangi image deploy
+            echo "🚀 Starting new deployment..."
+
+            if run "$IMAGE" && healthy && version_ok; then
+              echo "================================"
+              echo "✅ DEPLOY SUCCESSFUL"
+              echo "Image: $IMAGE"
+              echo "Commit: $COMMIT"
+              echo "Port: $APP_PORT"
+              echo "================================"
+              exit 0
             fi
+
+            echo "❌ Health/version/deploy failed"
+
+            # Xatolik diagnostikasi
+            echo "Version response:"
+            curl -sS \
+              "http://127.0.0.1:${APP_PORT}/version.json" || true
+
+            echo ""
+            echo "Container logs:"
+            docker logs --tail 100 "$CONTAINER" 2>&1 || true
+
+            # Rollback
+            if [ -n "$PREV" ]; then
+              echo "================================"
+              echo "↩️ ROLLBACK STARTED"
+              echo "Previous image: $PREV"
+              echo "================================"
+
+              if run "$PREV" && healthy; then
+                echo "✅ Rollback successful"
+                echo "Restored image: $PREV"
+              else
+                echo "❌ ROLLBACK FAILED"
+                docker logs --tail 100 "$CONTAINER" 2>&1 || true
+              fi
+            else
+              echo "⚠️ Previous image not found. Rollback unavailable."
+            fi
+
             exit 1
           EOF
 
+      # Docker image cleanup
       - name: Cleanup
-        run: ssh server 'docker image prune -af --filter "until=168h" >/dev/null || true'
+        if: always()
+        run: |
+          ssh server \
+            'docker image prune -af --filter "until=168h" >/dev/null || true'
 
   notify:
     name: Notify

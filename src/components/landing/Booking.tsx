@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowUpRight, Bell, Send } from "lucide-react";
+import { ArrowUpRight, Bell, CheckCircle2, Send } from "lucide-react";
 import { useLang } from "@/i18n/LanguageContext";
 import { NAME_MAX, cleanName, formatLocalPhone, isValidName, isValidPhone, toE164 } from "@/lib/leadForm";
 
@@ -58,7 +58,6 @@ export const Booking = () => {
       setPhone("");
       setErrors({});
       setSent(true);
-      toast.success(t.booking.ok);
     } catch {
       toast.error(t.booking.err);
     } finally {
@@ -144,6 +143,23 @@ export const Booking = () => {
               </div>
 
               <div className="space-y-8">
+                {sent ? (
+                  <div role="status" className="py-6 text-center space-y-4">
+                    <CheckCircle2 className="w-14 h-14 mx-auto text-[hsl(var(--gold))]" strokeWidth={1.25} />
+                    <h3 className="font-display text-2xl md:text-3xl font-light">{t.booking.okTitle}</h3>
+                    <p className="text-[15px] leading-[1.7] text-foreground/60 font-light max-w-sm mx-auto">
+                      {t.booking.okDesc}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSent(false)}
+                      className="text-[11px] uppercase tracking-[0.28em] font-semibold text-foreground/60 underline underline-offset-4 hover:text-[hsl(var(--gold))] transition-colors"
+                    >
+                      {t.booking.again}
+                    </button>
+                  </div>
+                ) : (
+                  <>
                 <div className="grid sm:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <Label
@@ -233,19 +249,14 @@ export const Booking = () => {
                   </span>
                   <span className="absolute inset-0 bg-[hsl(var(--gold))] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 </button>
+                  </>
+                )}
 
-                <div
-                  className={`border p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${
-                    sent ? "border-[#229ED9] bg-[#229ED9]/5" : "border-foreground/15"
-                  }`}
-                  role={sent ? "status" : undefined}
-                >
+                <div className="border border-foreground/15 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                   <Bell className="w-5 h-5 text-[#229ED9] shrink-0" />
                   <div className="flex-1">
-                    <p className="text-[13px] font-semibold text-foreground/80">
-                      {sent ? t.booking.botDone : t.booking.botTitle}
-                    </p>
-                    {!sent && <p className="mt-1 text-[12px] leading-relaxed text-foreground/55 font-light">{t.booking.botDesc}</p>}
+                    <p className="text-[13px] font-semibold text-foreground/80">{t.booking.botTitle}</p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-foreground/55 font-light">{t.booking.botDesc}</p>
                   </div>
                   <a
                     href={BOT_URL}
